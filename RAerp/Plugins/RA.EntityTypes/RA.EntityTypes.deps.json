@@ -2763,36 +2763,6 @@
       "System.Threading.Tasks.Dataflow/8.0.0": {},
       "System.Threading.Tasks.Extensions/4.6.0": {},
       "System.ValueTuple/4.5.0": {},
-      "RA.Core/1.0.0": {
-        "dependencies": {
-          "EntityFramework": "6.5.1",
-          "Microsoft.AspNetCore.Mvc.ViewFeatures": "2.3.0",
-          "Microsoft.EntityFrameworkCore": "9.0.4",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.4"
-        },
-        "runtime": {
-          "RA.Core.dll": {
-            "assemblyVersion": "1.0.0.0",
-            "fileVersion": "1.0.0.0"
-          }
-        }
-      },
-      "RA.Data/1.0.0": {
-        "dependencies": {
-          "EntityFramework": "6.5.1",
-          "FluentMigrator": "7.1.0",
-          "Microsoft.AspNetCore.Mvc.ViewFeatures": "2.3.0",
-          "Microsoft.EntityFrameworkCore": "9.0.4",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.4",
-          "RA.Core": "1.0.0"
-        },
-        "runtime": {
-          "RA.Data.dll": {
-            "assemblyVersion": "1.0.0.0",
-            "fileVersion": "1.0.0.0"
-          }
-        }
-      },
       "RA.WebFramework/1.0.0": {
         "dependencies": {
           "EntityFramework": "6.5.1",
@@ -4381,16 +4351,6 @@
       "sha512": "sha512-okurQJO6NRE/apDIP23ajJ0hpiNmJ+f0BwOlB/cSqTLQlw5upkf+5+96+iG2Jw40G1fCVCyPz/FhIABUjMR+RQ==",
       "path": "system.valuetuple/4.5.0",
       "hashPath": "system.valuetuple.4.5.0.nupkg.sha512"
-    },
-    "RA.Core/1.0.0": {
-      "type": "project",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "RA.Data/1.0.0": {
-      "type": "project",
-      "serviceable": false,
-      "sha512": ""
     },
     "RA.WebFramework/1.0.0": {
       "type": "project",

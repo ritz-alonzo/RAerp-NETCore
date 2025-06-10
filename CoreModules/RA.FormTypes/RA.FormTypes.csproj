@@ -23,9 +23,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Libraries\RA.Core\RA.Core.csproj" />
-    <ProjectReference Include="..\..\Libraries\RA.Data\RA.Data.csproj" />
-    <ProjectReference Include="..\..\RAerp\RAerp.csproj" />
+	  <ProjectReference Include="..\..\Libraries\RA.Core\RA.Core.csproj">
+		  <Private>False</Private>
+		  <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+		  <CopyLocal>False</CopyLocal>
+	  </ProjectReference>
+	  <ProjectReference Include="..\..\Libraries\RA.Data\RA.Data.csproj">
+		  <Private>False</Private>
+		  <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+		  <CopyLocal>False</CopyLocal>
+	  </ProjectReference>
+	  <ProjectReference Include="..\..\RAerp\RAerp.csproj">
+		  <Private>False</Private>
+		  <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+		  <CopyLocal>False</CopyLocal>
+	  </ProjectReference>
   </ItemGroup>
 
 </Project>
