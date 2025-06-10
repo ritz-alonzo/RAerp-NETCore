@@ -1,0 +1,75 @@
+﻿@model BusinessEntityModel
+
+<div class="row">
+    <div class="form-content-header-group">
+        @HtmlContentConstants.AddressHeader
+    </div>
+    <div class="custom-input-set col-md-4">
+        <label asp-for="@Model.Address.RegionCode" class="form-label"></label>
+        <select asp-for="Address.RegionCode"
+                class="select2 form-select shadow-none"
+                asp-items="@(new SelectList(Model.Address.Regions, "Value", "Text"))">
+        </select>
+        <span asp-validation-for="@Model.Address.RegionCode" class="text-danger"></span>
+        <input asp-for="@Model.Address.Id" type="hidden" />
+    </div>
+    <div class="custom-input-set col-md-4">
+        <label asp-for="@Model.Address.CityCode" class="form-label"></label>
+        @if (Model.Address.CityCode == null)
+        {
+            <select asp-for="Address.CityCode"
+                    class="select2 form-select shadow-none"
+                    asp-items="@(new SelectList(Model.Address.Cities, "Value", "Text"))"
+                    readonly >
+            </select>
+        }
+        else
+        {
+            <select asp-for="Address.CityCode"
+                    class="select2 form-select shadow-none"
+                    asp-items="@(new SelectList(Model.Address.Cities, "Value", "Text"))">
+            </select>
+        }
+        <span asp-validation-for="@Model.Address.CityCode" class="text-danger"></span>
+    </div>
+    <div class="custom-input-set col-md-4">
+        <label asp-for="@Model.Address.BarangayCode" class="form-label"></label>
+        @if (Model.Address.BarangayCode == null)
+        {
+            <select asp-for="Address.BarangayCode"
+                    class="select2 form-select shadow-none"
+                    asp-items="@(new SelectList(Model.Address.Barangays, "Value", "Text"))"
+                    readonly >
+            </select>
+        }
+        else
+        {
+            <select asp-for="Address.BarangayCode"
+                    class="select2 form-select shadow-none"
+                    asp-items="@(new SelectList(Model.Address.Barangays, "Value", "Text"))">
+            </select>
+        }
+        <span asp-validation-for="@Model.Address.BarangayCode" class="text-danger"></span>
+    </div>
+    <div class="custom-input-set col-md-6">
+        <label asp-for="@Model.Address.AddressLine1" class="form-label"></label>
+        <textarea asp-for="@Model.Address.AddressLine1" class="form-control"></textarea>
+        <span asp-validation-for="@Model.Address.AddressLine1" class="form-label"></span>
+    </div>
+    <div class="custom-input-set col-md-6">
+        <label asp-for="@Model.Address.AddressLine2" class="form-label"></label>
+        <textarea asp-for="@Model.Address.AddressLine2" class="form-control"></textarea>
+        <span asp-validation-for="@Model.Address.AddressLine2" class="form-label"></span>
+    </div>
+    <div class="custom-input-set col-md-6">
+        <label asp-for="@Model.Address.AddressLine3" class="form-label"></label>
+        <textarea asp-for="@Model.Address.AddressLine3" class="form-control"></textarea>
+        <span asp-validation-for="@Model.Address.AddressLine3" class="form-label"></span>
+    </div>
+
+    <div class="custom-input-set col-md-6">
+        <label asp-for="@Model.Address.ZipCode" class="form-label"></label>
+        <input asp-for="@Model.Address.ZipCode" type="text" class="form-control" />
+        <span asp-validation-for="@Model.Address.ZipCode" class="form-label"></span>
+    </div>
+</div>

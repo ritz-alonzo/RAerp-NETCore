@@ -1,0 +1,54 @@
+﻿@* Old implementation using cloudscribe 
+    
+for now use 100 totalItems
+
+passing Model.TotalItems doesn't seem to work dont know why *@
+@*<cs-pager 
+          cs-paging-pagenumber=@Model.PageNumber
+          cs-paging-totalitems=@Model.TotalItems
+          cs-paging-pagesize=@Model.PageSize
+          asp-controller=@ViewData["Controller"]
+          asp-action=@ViewData["Action"]
+          cs-pagenumber-param="page"
+          cs-pager-li-current-class="page-item active"
+          cs-pager-li-other-class="page-item"
+          cs-pager-li-non-active-class="page-item disabled"
+          cs-pager-link-current-class="page-link"
+          cs-pager-link-other-class="page-link"
+          cs-pager-ul-class="pagination justify-content-end"
+          cs-show-numbered="true"
+          cs-previous-page-text="<i class='fa fa-arrow-left'></i>"
+          cs-next-page-text="<i class='fa fa-arrow-right'></i>">
+</cs-pager>*@
+
+<div class="row">
+    <div class="col-md-6">
+        <h4 class="text-muted">Total records shown: @Model.Items.Count</h4>
+    </div>
+    <div class="col-md-6">
+        <nav aria-label="Page navigation" class="float-right">
+            <ul class="pagination">
+                @if (Model.PageNumber > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" href="?page=@(Model.PageNumber - 1)&pageSize=@Model.PageSize">Previous</a>
+                    </li>
+                }
+
+                @for (int i = 1; i <= Model.TotalItems; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" href="?page=@i&pageSize=@Model.PageSize">@i</a>
+                    </li>
+                }
+
+                @if (Model.PageNumber < Model.TotalItems)
+                {
+                    <li class="page-item">
+                        <a class="page-link" href="?page=@(Model.PageNumber + 1)&pageSize=@Model.PageSize">Next</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    </div>
+</div>

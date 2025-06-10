@@ -1,0 +1,9 @@
+﻿@model EntityTypeModel
+
+@Html.HiddenFor(c => c.ParentEntityTypeId)
+<div class="form-group">
+    <div class="mb-2">
+        <label for="@Model.EntityName" class="form-label">Entity Name:</label>
+        <input asp-for="@Model.EntityName" type="text" class="form-control" autocomplete="off" />
+    </div>
+</div>

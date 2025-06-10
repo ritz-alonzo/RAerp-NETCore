@@ -1,0 +1,7 @@
+﻿{
+  "ApplicationName": "RAerp",
+  "Version": "1.000.000",
+  "Framework": "ASP.NET CORE 8",
+  "Database": "MSSQL",
+  "DevelopmentEnvironment": "Visual Studio 2019"
+}

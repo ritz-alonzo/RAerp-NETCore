@@ -1,0 +1,64 @@
+﻿@model CategorySearchModel
+@{
+    ViewData["Title"] = @Model.EntityTypeName;
+    Layout = "~/Views/Shared/Layouts/_AdminLayout.cshtml";
+    HtmlActiveNodeMenu.SetActivePluginMenu(Context, Model.EntityTypeSystemName);
+}
+
+<div class="float-right">
+    <a asp-action="Create" 
+    class="btn btn-primary" 
+    asp-route-entityTypeId="@Model.SearchEntityTypeId" 
+    asp-controller="Categories">
+    <i class="fa fa-plus"></i> 
+    Create
+    </a>
+</div>
+<div class="col-md-9">
+    <h2>@Model.EntityTypeName</h2>
+</div>
+<form-search id="categories_search">
+    @Html.HiddenFor(c => c.SearchEntityTypeId)
+    @Html.HiddenFor(c => c.EntityTypeName)
+    @Html.HiddenFor(c => c.PageNumber)
+    @Html.HiddenFor(c => c.PageSize)
+    @Html.HiddenFor(c => c.TotalItems)
+    <div id="search">
+        <div class="card">
+            <div class="card-header-search">
+                <h4 class="text-muted">Search</h4>
+            </div>
+            <div class="card-body-search">
+                 <div class="row">
+                     <div class="col-md-6">
+                        <div class="input-group">
+                            <div class="input-group-append">
+                                <span class="input-group-text"><i class="fa fa-search"></i></span>
+                            </div>
+                            <input asp-for="SearchQuery" class="form-control" placeholder="Search.." autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Date: </span>
+                            </div>
+                            <input asp-for="SearchCreatedOn" id="datepicker-autoclose" class="form-control" type="date" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form-search>
+
+<div id="categories">
+    @await Html.PartialAsync("~/Plugins/RA.Categories/Views/_CategoryList.cshtml", Model.Categories)
+</div>
+
+
+@section scripts{
+    <script>
+
+    </script>
+}

@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - RAerp</title>
+    <link rel="stylesheet" type="text/css" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link href="~/css/admin.style.css" rel="stylesheet" />
+    <!-- Custom CSS -->
+    <link href="~/assets/libs/flot/css/float-chart.css" rel="stylesheet" />
+    <!-- Custom CSS -->
+    <link href="~/css/style.min.css" rel="stylesheet" />
+    <!-- Font Awesome CSS -->
+    @* <link href="~/css/font-awesome/css/fontawesome.min.css" rel="stylesheet" />
+    <link href="~/css/font-awesome/css/fontawesome-all.css" rel="stylesheet" /> *@
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="~/assets/libs/toastr/build/toastr.min.css" rel="stylesheet" />
+    <link rel="icon" href="~/assets/images/logo-icon.png" type="image/x-icon">
+    <link href="~/css/login.style.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.13/css/bootstrap-multiselect.css">
+</head>
+<body class="layout-body">
+    <div class="container">
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    @* <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2023 - RAerp - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer> *@
+    <script src="~/assets/libs/jquery/dist/jquery.min.js"></script>
+    <!-- Bootstrap tether Core JavaScript -->
+    <script src="~/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
+    <script src="~/assets/extra-libs/sparkline/sparkline.js"></script>
+    <!--Wave Effects -->
+    <script src="~/js/waves.js"></script>
+    <!--Menu sidebar -->
+    <script src="~/js/sidebarmenu.js"></script>
+    <!--Custom JavaScript -->
+    <script src="~/js/custom.min.js"></script>
+    <!--This page JavaScript -->
+    <!-- <script src="~/dist/js/pages/dashboards/dashboard1.js"></script> -->
+    <!-- Charts js Files -->
+    <script src="~/assets/libs/select2/dist/js/select2.full.min.js"></script>
+    <script src="~/assets/libs/select2/dist/js/select2.min.js"></script>
+    <script src="~/assets/libs/flot/excanvas.js"></script>
+    <script src="~/assets/libs/flot/jquery.flot.js"></script>
+    <script src="~/assets/libs/flot/jquery.flot.pie.js"></script>
+    <script src="~/assets/libs/flot/jquery.flot.time.js"></script>
+    <script src="~/assets/libs/flot/jquery.flot.stack.js"></script>
+    <script src="~/assets/libs/flot/jquery.flot.crosshair.js"></script>
+    <script src="~/assets/libs/flot.tooltip/js/jquery.flot.tooltip.min.js"></script>
+    <script src="~/js/pages/chart/chart-page-init.js"></script>
+    @*<script src="~/lib/jquery/dist/jquery.min.js"></script>*@
+    @*<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>*@
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/assets/libs/toastr/toastr.js"></script>
+    <script src="~/js/admin.js"></script>
+    <script src="~/assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.13/js/bootstrap-multiselect.js"></script>
+    
+    <script>
+        var jsFunction = '';
+        var message = '';
+        @if (TempData.ContainsKey("notificationScript") && TempData.ContainsKey("notificationMessage"))
+        {
+            <text>
+                jsFunction = '@TempData["notificationScript"]'
+                message = '@TempData["notificationMessage"]'
+            </text>
+        }
+        if (jsFunction != null || jsFunction != "" || jsFunction != '') {
+            initializeNotification(jsFunction, message);
+        }
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,36 @@
+﻿@model WebServiceEndpointModel
+
+<div class="col-md-12">
+    <div class="card">
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs" id="formTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active"id="general-form-tab" data-bs-toggle="tab" data-bs-target="#generalForm" type="button" role="tab" aria-controls="generalForm" aria-selected="true">
+                    @HtmlContentConstants.GeneralTab
+                </button>
+            </li>
+            @* <li class="nav-item" role="presentation">
+                <button class="nav-link" id="config-main-tab"data-bs-toggle="tab" data-bs-target="#configMain" type="button" role="tab"aria-controls="configMain" aria-selected="true">
+                    @HtmlContentConstants.MainTab
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="config-mapping-tab" data-bs-toggle="tab" data-bs-target="#configMapping" type="button" role="tab" aria-controls="configMapping" aria-selected="false">
+                    @HtmlContentConstants.MappingsTab
+                </button>
+            </li> *@
+        </ul>
+        <div class="tab-content" id="formTabContent">
+            <div class="tab-pane fade show active" id="generalForm" role="tabpanel" aria-labelledby="general-form-tab">
+                <div class="card-body">
+                    @await Html.PartialAsync("~/Plugins/RA.WebServiceEndpoints/Views/_CreateAndEdit.General.cshtml", Model)
+
+                    @await Html.PartialAsync("~/Plugins/RA.WebServiceEndpoints/Views/_CreateAndEdit.System.cshtml", Model)
+                </div>
+            </div>
+            @*<div class="tab-pane fade" id="configMapping" role="tabpanel" aria-labelledby="config-mapping-tab">
+            @await Html.PartialAsync("~/Plugins/RA.BusinessEntities/Views/_Configuration.Mapping.cshtml", Model)
+            </div>*@
+        </div>
+    </div>
+</div>

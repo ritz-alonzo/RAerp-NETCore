@@ -1,0 +1,130 @@
+﻿@model AccessRightsListModel
+
+@{
+    Layout = null;
+}
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive table-hover">
+            <table id="accessRightsTable" class="table">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Roles</th>
+                        @{
+                            foreach (var accessRecord in Model.Items)
+                            {
+                                <th style="text-align:center">
+                                    @accessRecord.Name
+                                </th>
+                            }
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        foreach (var role in Model.UserRoles)
+                        {
+                            <tr>
+                                <td>
+                                    @role.Rolename
+                                </td>
+                            @foreach (var accessRightsRecord in Model.Items)
+                            {
+                                <td data-name="@accessRightsRecord.Name"
+                                    data-systemname="@accessRightsRecord.SystemName" 
+                                    data-classification="@accessRightsRecord.Classification" 
+                                    data-accesstype="@accessRightsRecord.AccessRecordTypeId"
+                                    data-roleid="@role.Id"
+                                    style="text-align: center">
+                                    @if (Model.AccessRightsRecords.Any(c => c.RoleId == role.Id && c.SystemName == accessRightsRecord.SystemName))
+                                    {
+                                        <input type="checkbox" class="form-check-input" checked />
+                                    }
+                                    else
+                                    {
+                                        <input type="checkbox" class="form-check-input"  />
+                                    }
+                                </td>
+                            }
+                            </tr>
+                        }
+                    }
+                </tbody>
+                <tfoot></tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+@* Needed to add necessary scripts to run jquery *@
+<script type="text/javascript" src="~/assets/libs/jquery/dist/jquery.min.js"></script>
+<script src="~/js/admin.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+
+        $('#accessRights_search').on("change", function (e) {
+            // will prevent looping
+            e.stopImmediatePropagation();
+            // when focus was removed
+            var formSearchId = 'accessRights_search';
+            var url = '@Url.Action("AccessRightsList", "AccessRights")'
+            var partialViewId = 'accessRights';
+            SearchFunction(formSearchId, url, partialViewId);
+        });
+
+        $('td input[type="checkbox"]').on("click", (e) => {
+            var selectedCheckbox = $(e.currentTarget);
+            var parentTableData = selectedCheckbox.parent('td');
+
+            var recordName = parentTableData.attr('data-name');
+            if (recordName == '' || recordName == undefined) {
+                console.log('Failed to load record name');
+            }
+            var systemName = parentTableData.attr('data-systemname');
+            if (systemName == '' || systemName == undefined) {
+                console.log('Failed to load system name');
+            }
+            var classification = parentTableData.attr('data-classification');
+            if (classification == '' || classification == undefined) {
+                console.log('Failed to load classification');
+            }
+            var accessTypeId = parentTableData.attr('data-accesstype');
+            if (accessTypeId == '' || accessTypeId == undefined) {
+                console.log('Failed to load Access Type');
+            }
+            var roleId = parentTableData.attr('data-roleid');
+            if (roleId == '' || roleId == undefined) {
+                console.log('Failed to load roleId');
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: '/AccessRights/Save',
+                data: {
+                    recordName: recordName,
+                    systemName: systemName,
+                    classification: classification,
+                    accessTypeId: accessTypeId,
+                    roleId: roleId,
+                    isChecked: selectedCheckbox.is(':checked')
+                }
+            })
+                .done((data) => {
+                    console.log("Successfully saved Access Rights");
+                    toastr.success("Successfully saved Access Rights");
+                    var formSearchId = 'accessRights_search';
+                    var url = '@Url.Action("AccessRightsList", "AccessRights")'
+                    var partialViewId = 'accessRights';
+                    var data = SearchFunction(formSearchId, url, partialViewId);
+                })
+                .fail((data) => {
+                    console.log("Failed to save Access Rights");
+                    toastr.error(data.responseJSON.error);
+                });
+        });
+    })
+    
+</script>
+
+

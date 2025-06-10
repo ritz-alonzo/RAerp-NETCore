@@ -1,0 +1,44 @@
+﻿@using RAerp.Services.PluginNavigationServices;
+@using RAerp.Helpers.HtmlHelper;
+@inject INavigationService navigationService;
+
+@{
+    var selectedMenuSystemName = HtmlActiveNodeMenu.GetActivePluginMenu(Context);
+    var selectedMenuController = HtmlActiveNodeMenu.GetActivePluginMenuController(Context);
+
+    var pluginNodes = await navigationService.GetPluginNodesMenu();
+
+    foreach (var node in pluginNodes.OrderBy(c => c.DisplayOrder))
+    {
+        if (node.Visible)
+        {
+            /// Main node
+            <li class="sidebar-item @if (selectedMenuController == node.MenuTitle.Replace(" ", "")) { <text>selected</text> }">
+                <a class="sidebar-link has-arrow waves-effect waves-dark sidebar-link @if (selectedMenuController == node.MenuTitle.Replace(" ", "")) { <text>active</text> }" 
+                    href="javascript:void(0)" aria-expanded="false">
+                    <i class="@node.IconClass"></i>
+                    <span class="hide-menu">@node.MenuTitle</span>
+                </a>
+                <ul aria-expanded="false" class="collapse first-level @if (selectedMenuController == node.MenuTitle.Replace(" ", "")) { <text>in</text> }">
+                    @if (node.RelatedNodes.Count > 0)
+                    {
+                        // Child node
+                        foreach (var relatedNode in node.RelatedNodes.OrderBy(c => c.DisplayOrder))
+                        {
+                            @if (!string.IsNullOrEmpty(relatedNode.Url) && relatedNode.Visible)
+                            {
+                                <li class="sidebar-item @if (relatedNode.SystemName == selectedMenuSystemName) { <text>active</text> } ">
+                                    <a href="@relatedNode.Url" class="sidebar-link @if (relatedNode.SystemName == selectedMenuSystemName) { <text>active</text> } ">
+                                        <i class="@relatedNode.IconClass"></i>
+                                        <span class="hide-menu">@relatedNode.MenuTitle</span>
+                                    </a>
+                                </li>
+                            }
+                        }
+                    }
+                </ul>
+            </li>
+        }
+    }
+}
+

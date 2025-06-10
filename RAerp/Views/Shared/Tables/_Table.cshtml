@@ -1,0 +1,356 @@
+﻿@model DataTablesModel
+
+@{
+    if (Model == null)
+        return;
+
+    if (!Model.ColumnCollection.Any())
+        return;
+
+    var gridColumnDataCollection = Model.ColumnCollection.Select(c => c.RecordData).ToList();
+}
+
+<div class="table-responsive table-hover">
+    <table id="@Model.GridName" class="table">
+        <thead class="@Model.ClassName">
+            <tr>
+                @{
+                    foreach (var columnHeader in Model.ColumnCollection)
+                    {
+                        if (columnHeader.IsPrimaryKey || columnHeader.ShowConfiguration)
+                            continue;
+
+                        <th>@columnHeader.Title</th>
+                    }
+
+                    var formSearchId = Model.GridName.Replace("table", "search");
+                    var partialViewId = Model.GridName.Replace("_table", "");
+                    var gridUrlAction = Url.Action(Model.UrlGridPartialViewAction, Model.UrlController);
+
+                    if (!string.IsNullOrEmpty(gridUrlAction))
+                    {
+                        <th style="text-align:right">
+                            <button type="button"
+                                    class="btn btn-secondary btn-sm"
+                                    style="background-color:inherit; border:none"
+                                    id="refreshGridBtn"
+                                    data-grid-searchId="@formSearchId"
+                                    data-grid-partialViewId="@partialViewId"
+                                    data-grid-action="@gridUrlAction">
+                                <i class="fa fa-sync"></i>
+                            </button>
+                        </th>
+                    }
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                if (Model.Records.Count == 0)
+                {
+                    <tr>
+                        <td>
+                            <span style="color: red">No Records to display</span>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var columnRecord in Model.Records)
+                    {
+                        <tr>
+                            @{
+                                var propertyList = columnRecord.GetType().GetProperties().Where(c => gridColumnDataCollection.Contains(c.Name)).ToList();
+
+                                var rowDataArrangement = new Dictionary<int, string>();
+
+                                var useCodeAsRedirection = false;
+
+                                foreach (var property in propertyList)
+                                {
+                                    var currentPropertyIndex = 0;
+
+                                    currentPropertyIndex = Model.ColumnCollection.FindIndex(c => c.RecordData.Equals(property.Name, StringComparison.InvariantCultureIgnoreCase));
+
+                                    var propertyValue = property.GetValue(columnRecord);
+
+                                    if (propertyValue == null)
+                                        propertyValue = "";
+
+                                    var columnDefinition = Model.ColumnCollection.ElementAt(currentPropertyIndex);
+
+                                    if (!string.IsNullOrEmpty(propertyValue.ToString()))
+                                    {
+                                        var propertyValueType = propertyValue.GetType();
+                                        if (propertyValueType.IsClass && !propertyValueType.FullName.StartsWith("System."))
+                                        {
+                                            var valueProperties = propertyValueType.GetProperties();
+                                            if (valueProperties.Any())
+                                            {
+                                                if (columnDefinition != null && !string.IsNullOrEmpty(columnDefinition.PropertyValueHolder))
+                                                {
+                                                    propertyValue = valueProperties.Where(c => c.Name.Equals(columnDefinition.PropertyValueHolder)).First().GetValue(propertyValue);
+                                                    if (propertyValue == null)
+                                                        propertyValue = "";
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    rowDataArrangement.Add(currentPropertyIndex, propertyValue.ToString());
+                                }
+
+                                var rowDataId = Guid.Empty;
+
+                                var configurationUrl = "";
+
+                                var configurationSystemName = "";
+
+                                foreach (var data in rowDataArrangement.OrderBy(c => c.Key))
+                                {
+                                    // needed to know column control type (checkbox, int, dropdown etc.)
+                                    var columnDefinition = Model.ColumnCollection.ElementAt(data.Key);
+                                    if (columnDefinition == null)
+                                        continue;
+
+                                    // check if column definition is primary key
+                                    if (columnDefinition.IsPrimaryKey)
+                                    {
+                                        var rowHasId = Guid.TryParse(data.Value, out rowDataId);
+                                        // sanity check
+                                        if (!rowHasId)
+                                            rowDataId = Guid.Empty;
+                                    }
+                                    else
+                                    {
+                                        if (!columnDefinition.Visible && !columnDefinition.ShowConfiguration)
+                                        {
+                                            continue;
+                                        }
+                                        else if (columnDefinition.Visible && !columnDefinition.ShowConfiguration)
+                                        {
+                                            // column alignment
+                                            var dataAlignment = "";
+                                            switch (columnDefinition.ColumnAlignment)
+                                            {
+                                                case ColumnAlignment.Default:
+                                                    break;
+
+                                                case ColumnAlignment.Right:
+                                                    dataAlignment = "text-right";
+                                                    break;
+
+                                                case ColumnAlignment.Left:
+                                                    dataAlignment = "text-left";
+                                                    break;
+
+                                                case ColumnAlignment.Center:
+                                                    dataAlignment = "text-center";
+                                                    break;
+                                            }
+
+                                            var columnTableData = "";
+
+                                            if (columnDefinition.RedirectUsingCodeEnabled)
+                                            {
+                                                useCodeAsRedirection = true;
+                                                if (!string.IsNullOrEmpty(Model.UrlController) && (rowDataId != Guid.Empty))
+                                                {
+                                                    <td class="@dataAlignment"><a class="link-info" asp-action="Index" asp-controller="@Model.UrlController" asp-route-id="@rowDataId" target="_self">@data.Value</a></td>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                // will need to add control type (enum) in ColumnDefinition model
+                                                switch (columnDefinition.ControlType)
+                                                {
+                                                    case ControlType.Text:
+                                                        // remain as is
+                                                        columnTableData = $"<td class='{dataAlignment}'>{data.Value}</td>";
+                                                        break;
+
+                                                    case ControlType.Number:
+                                                        // remain as is
+                                                        columnTableData = $"<td class='{dataAlignment}'>{data.Value}</td>";
+                                                        break;
+
+                                                    case ControlType.Button:
+                                                        // will add render here
+                                                        break;
+
+                                                    case ControlType.Checkbox:
+                                                        var checkBoxValue = Boolean.Parse(data.Value);
+                                                        var isChecked = "";
+                                                        if (checkBoxValue)
+                                                            isChecked = "checked";
+
+                                                        columnTableData = $"<td class='{dataAlignment}'><input type='checkbox' {isChecked} disabled /></td>";
+                                                        break;
+
+                                                    case ControlType.Link:
+                                                        if (!string.IsNullOrEmpty(Model.UrlController) && (rowDataId != Guid.Empty))
+                                                        {
+                                                            <td class="@dataAlignment"><a asp-action="Index" asp-controller="@Model.UrlController" asp-route-id="@rowDataId" target="_self">@data.Value</a></td>
+                                                        }
+                                                        break;
+                                                }
+
+                                                if (columnDefinition.ControlType != ControlType.Link)
+                                                    @Html.Raw(columnTableData);
+                                            }
+                                            
+                                            
+                                            if (columnDefinition.IsSystemName && columnDefinition.Visible)
+                                            {
+                                                configurationSystemName = data.Value;
+                                            }
+                                        }
+                                        else if (!columnDefinition.Visible && columnDefinition.ShowConfiguration)
+                                        {
+                                            // means there's configuration to show
+                                            configurationUrl = data.Value;
+                                        }
+                                    }
+
+                                }
+
+                                @if (Model.CreateEnabled || Model.EditEnabled || Model.DeleteEnabled || Model.ConfigurationEnabled)
+                                {
+                                    <td class="text-center">
+                                        @{
+                                            // configuration and sanity check
+                                            if (!string.IsNullOrEmpty(configurationUrl))
+                                            {
+                                                var actionIndex = configurationUrl.LastIndexOf("/");
+                                                var controllerIndex = configurationUrl.IndexOf("/");
+                                                var configurationAction = configurationUrl.Substring(actionIndex + 1);
+                                                var configurationController = configurationUrl.Substring(controllerIndex + 1, actionIndex - 1);
+
+                                                var isModalConfigure = columnRecord.GetType().GetProperties().Where(c => c.Name == "ModalConfigureEnabled").FirstOrDefault();
+                                                if (isModalConfigure != null)
+                                                {
+                                                    var enabled = isModalConfigure.GetValue(columnRecord).ToString();
+                                                    if (enabled.ToLower() == "true")
+                                                    {
+                                                        if (!string.IsNullOrEmpty(configurationSystemName))
+                                                        {
+                                                            var originalSystemName = configurationSystemName;
+
+                                                            configurationSystemName = configurationController + " " + $"({configurationSystemName.Substring(configurationSystemName.LastIndexOf(".") + 1)})";
+
+                                                            <button type="button" class="plugin-config-modal-trigger btn btn-secondary"
+                                                                    data-plugin-config-url="@configurationUrl"
+                                                                    data-plugin-config-title="@configurationSystemName"
+                                                                    data-plugin-config-origName="@originalSystemName"
+                                                                    data-plugin-type-id="@rowDataId"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#pluginConfigurationModal">
+                                                                <i class="fa fa-cog"></i>
+                                                            </button>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button type="button" class="plugin-config-modal-trigger btn btn-secondary"
+                                                                    data-plugin-config-url="@configurationUrl"
+                                                                    data-plugin-config-title="@configurationController"
+                                                                    data-plugin-type-id="@rowDataId"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#pluginConfigurationModal">
+                                                                <i class="fa fa-cog"></i>
+                                                            </button>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <a class="btn btn-secondary" asp-action="@configurationAction" asp-controller="@configurationController" asp-route-id="@rowDataId"><i class="fa fa-cog"></i></a>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <a class="btn btn-secondary" asp-action="@configurationAction" asp-controller="@configurationController" asp-route-id="@rowDataId"><i class="fa fa-cog"></i></a>
+                                                }
+                                            }
+
+                                            // add here the grid crud functions
+                                            if (!string.IsNullOrEmpty(Model.UrlCreate))
+                                            {
+                                                
+                                            }
+
+                                            if (!string.IsNullOrEmpty(Model.UrlEdit) && !useCodeAsRedirection)
+                                            {
+                                                <a class="btn btn-info" asp-action="@Model.UrlEdit" asp-controller="@Model.UrlController" asp-route-id="@rowDataId"><i class="fa fa-edit"></i></a>
+                                            }
+
+                                            if (!string.IsNullOrEmpty(Model.UrlDelete))
+                                            {
+                                                <a class="btn btn-danger" asp-action="@Model.UrlDelete" asp-controller="@Model.UrlController" asp-route-id="@rowDataId"><i class="fa fa-trash"></i></a>
+                                            }
+                                        }
+                                    </td>
+                                }
+                            }
+                        </tr>
+                    }
+                }
+            }
+        </tbody>
+        @* Will functionality for show/hide table footer*@
+        <tfoot>
+            <tr>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+@* Needed to add necessary scripts to run jquery *@
+<script type="text/javascript" src="~/assets/libs/jquery/dist/jquery.min.js"></script>
+<script src="~/js/admin.js"></script>
+@* Will add render functions here*@
+<script type="text/javascript">
+    $(document).ready(function () {
+        @* Render scripts/function defined in List view will be added here, if there's any *@
+
+        @* Add refresh scripts here *@
+        $('#refreshGridBtn').on('click', (e) => {
+            console.log('refreshing grid');
+            var selectedButton = $(e.currentTarget);
+            var formSearchId = selectedButton.attr('data-grid-searchId');
+            if (formSearchId == '' || formSearchId == "") {
+                alert('Failed to refresh grid');
+            }
+            var partialViewId = selectedButton.attr('data-grid-partialViewId');
+            if (partialViewId == '' || partialViewId == "") {
+                alert('Failed to refresh grid');
+            }
+            var gridAction = selectedButton.attr('data-grid-action');
+            if (gridAction == '' || gridAction == "") {
+                alert('Failed to refresh grid');
+            }
+
+            $('#loader').css("display", "flex");
+            console.log('showing loader');
+                setTimeout(function () {
+                    var selectedButton = $(e.currentTarget);
+                    var formSearchId = selectedButton.attr('data-grid-searchId');
+                    if (formSearchId == '' || formSearchId == "") {
+                        alert('Failed to refresh grid');
+                    }
+                    var partialViewId = selectedButton.attr('data-grid-partialViewId');
+                    if (partialViewId == '' || partialViewId == "") {
+                        alert('Failed to refresh grid');
+                    }
+                    var gridAction = selectedButton.attr('data-grid-action');
+                    if (gridAction == '' || gridAction == "") {
+                        alert('Failed to refresh grid');
+                    }
+                    SearchFunction(formSearchId, gridAction, partialViewId);
+
+                    console.log('hide loader');
+                    $('#loader').css("display", "none");
+                }, 2000);
+        });
+
+        
+    });
+</script>

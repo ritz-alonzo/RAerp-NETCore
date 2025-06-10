@@ -1,0 +1,165 @@
+﻿.login-form-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    flex-direction: row;
+    margin-top: 200px;
+    margin-left: 350px;
+    margin-bottom: 300px;
+    margin-right: 350px;
+    width: 400px;
+    height: 280px;
+    border-radius: 10px;
+}
+
+.layout-body {
+    background-color: #282727;
+}
+
+.login-form-logo {
+    color: white;
+    width: 400px;
+    text-align: center;
+    font-size: 29px;
+    border: 0;
+}
+
+.login-form-title {
+    color: white;
+    width: 400px;
+    text-align: center;
+    font-size: 29px;
+    border: 0;
+    padding-bottom: 15px;
+}
+
+.login-form-container .card {
+    display: flex;
+    width: 400px;
+    height: 350px;
+    border: 2px solid rgb(239, 236, 236);
+    border-radius: 10px;
+    box-shadow: rgb(128, 128, 128) 0px 0px 15px;
+}
+
+.login-form-container .card .card-body {
+}
+
+.login-form-group {
+    font-size: 15px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/*.login-form-label {
+    width: 100%;
+    transition: ease-in-out 0.2s;
+}
+
+.login-form-control {
+    width: 100%;
+    height: 34px;
+    margin-bottom: 5px;
+    border-radius: 3px;
+    border-bottom-color: rgb(13, 211, 213);
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    transition: ease-in-out 0.2s;
+}*/
+
+.login-form-control {
+    width: 100%;
+    height: 34px;
+    margin-top: 30px;
+    margin-bottom: 5px;
+    border-radius: 3px;
+    border-bottom-color: rgb(13, 211, 213);
+    border-bottom-width: 1px;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    transition: ease-in-out 0.2s;
+    position: relative;
+}
+
+.login-form-label-username, .login-form-label-password {
+    position: absolute;
+    left: 18px;
+    padding-top: 25px;
+    cursor: text;
+    color: gray;
+    transition: ease-in-out 0.5s;
+}
+
+.login-form-control:focus {
+    border-bottom-width: 4px;
+}
+
+    .login-form-control:focus + .login-form-label-username {
+        color: rgb(13, 211, 213);
+        top: -15px;
+    }
+
+    .login-form-control:focus + .login-form-label-password {
+        color: rgb(13, 211, 213);
+        top: 50px;
+    }
+
+.login-form-button {
+    margin-top: 20px;
+    width: 100%;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    background-color: rgb(13, 211, 213);
+    border-color: rgb(13, 211, 213);
+}
+
+    .login-form-button:hover {
+        background-color: rgb(32, 190, 181);
+        border-color: rgb(13, 211, 213);
+    }
+
+.login-form-social-header {
+    display: flex;
+    justify-content: center;
+    height: 50px;
+    align-items: center;
+    padding-top: 10px;
+}
+
+.login-form-social-header .line {
+    height: 1px;
+    flex: 1 1 0%;
+    background-color: rgb(27, 142, 135);
+}
+
+.login-form-social-label {
+    font-size: 15px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: bold;
+    color: rgb(27, 142, 135);
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.login-form-social { 
+    display: flex;
+    justify-content: space-evenly;
+    height: 50px;
+    align-items: end;
+}
+
+.login-form-social a {
+    color: black;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+
+@media only screen and (max-width: 800px) {
+    .login-form-container {
+        margin-left: 50px;
+    }
+}

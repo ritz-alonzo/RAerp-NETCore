@@ -1,0 +1,107 @@
+﻿@model UserListModel
+
+@{
+    Layout = null;
+}
+
+<div class="card">
+    <div class="card-body">
+            @{
+                // working data table creation
+                // just needed to know the arrangement of records for tbody
+                var gridTable = new DataTablesModel();
+                gridTable.GridName = "user_table";
+                gridTable.ClassName = "table-dark";
+                gridTable.UrlController = "Users";
+                gridTable.UrlEdit = "Profile";
+                gridTable.UrlDelete = "Delete";
+                gridTable.UrlGridPartialViewAction = "UserListSearch";
+                gridTable.EditEnabled = true;
+                gridTable.DeleteEnabled = true;
+                gridTable.Records = Model.Items;
+
+                gridTable.ColumnCollection = new List<ColumnDefinition>
+                {
+                    new ColumnDefinition(nameof(UserModel.Id))
+                    {
+                        IsPrimaryKey = true,
+                        Visible = false,
+                    },
+                    new ColumnDefinition(nameof(UserModel.FirstName))
+                    {
+                        Title = modelAttributeHelper.GetAdminModelAttributeDisplayNameValue<UserModel>(nameof(UserModel.FirstName)),
+                        ControlType = ControlType.Text,
+                        Visible = true,
+                    },
+                    new ColumnDefinition(nameof(UserModel.LastName))
+                    {
+                        Title = modelAttributeHelper.GetAdminModelAttributeDisplayNameValue<UserModel>(nameof(UserModel.LastName)),
+                        ControlType = ControlType.Text,
+                        Visible = true,
+                    },
+                    new ColumnDefinition(nameof(UserModel.Email))
+                    {
+                        Title = modelAttributeHelper.GetAdminModelAttributeDisplayNameValue<UserModel>(nameof(UserModel.Email)),
+                        ControlType = ControlType.Text,
+                        Visible = true,
+                    },
+                    new ColumnDefinition(nameof(UserModel.CreatedOn))
+                    {
+                        Title = modelAttributeHelper.GetAdminModelAttributeDisplayNameValue<UserModel>(nameof(UserModel.CreatedOn)),
+                        ControlType = ControlType.Text,
+                        Visible = true,
+                    },
+                    new ColumnDefinition(nameof(UserModel.ModifiedOn))
+                    {
+                        Title = modelAttributeHelper.GetAdminModelAttributeDisplayNameValue<UserModel>(nameof(UserModel.ModifiedOn)),
+                        ControlType = ControlType.Text,
+                        Visible = true,
+                    },
+                    new ColumnDefinition(nameof(UserModel.AccountStatus))
+                    {
+                        Title = modelAttributeHelper.GetAdminModelAttributeDisplayNameValue<UserModel>(nameof(UserModel.AccountStatusId)),
+                        ControlType = ControlType.Text,
+                        Visible = true,
+                    },
+                    new ColumnDefinition(nameof(UserModel.Deleted))
+                    {
+                        Title = modelAttributeHelper.GetAdminModelAttributeDisplayNameValue<UserModel>(nameof(UserModel.Deleted)),
+                        ControlType = ControlType.Checkbox,
+                        Visible = true,
+                    },
+                };
+
+            @await Html.PartialAsync("~/Views/Shared/Tables/_Table.cshtml", gridTable)
+        }       
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/Tables/_Pagination.cshtml", Model)
+
+<script type="text/javascript">
+    // need to create javascript for this
+    // working pressing enter key search use on.keydown
+    $('#user_search').on("change", function (e) {
+        // will prevent looping
+        e.stopImmediatePropagation();
+        // when focus was removed
+        var formSearchId = 'user_search';
+        var url = '@Url.Action("UserListSearch", "Users")'
+        var partialViewId = 'users';
+        SearchFunction(formSearchId, url, partialViewId);
+        // when enter is pressed
+        //if (e.keyCode == 13) {
+        //    var formSearchId = 'user_search';
+        //    var url = '@Url.Action("UserListSearch", "Users")'
+        //    var partialViewId = 'users';
+        //    SearchFunction(formSearchId, url, partialViewId);
+        //}
+        // else do nothing
+    });
+    var tableId = "user_table";
+    formatStatus(tableId);
+
+</script>
+
+
+

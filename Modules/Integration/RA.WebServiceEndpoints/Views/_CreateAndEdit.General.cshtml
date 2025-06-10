@@ -1,0 +1,30 @@
+﻿@model WebServiceEndpointModel
+
+<div class="row">
+    <div class="form-content-header-group">
+        @HtmlContentConstants.InfoHeader
+    </div>
+    <div class="custom-input-set col-md-6">
+        <label asp-for="@Model.EndpointName" class="form-label" data-required="true"></label>@*working - for testing add data-required=true for fields that are required*@
+        <input asp-for="@Model.EndpointName" type="text" class="form-control" autocomplete="off" />
+        <span asp-validation-for="@Model.EndpointName" class="text-danger"></span>
+    </div>
+    @* <div class="custom-input-set col-md-6">
+        <label asp-for="@Model.EndpointDomain" class="form-label"></label>
+        <input asp-for="@Model.EndpointDomain" type="text" class="form-control" autocomplete="off" />
+        <span asp-validation-for="@Model.EndpointDomain" class="text-danger"></span>
+    </div> *@
+    <div class="custom-input-set col-md-6">
+        <label asp-for="@Model.EndpointDescription" class="form-label"></label>
+        <input asp-for="@Model.EndpointDescription" type="text" class="form-control" autocomplete="off" />
+        <span asp-validation-for="@Model.EndpointDescription" class="text-danger"></span>
+    </div>
+    <div class="custom-input-set col-md-6">
+        <label asp-for="@Model.EndpointEntityTypeId" class="form-label"></label>
+        <select asp-for="EndpointEntityTypeId"
+                class="select2 form-select shadow-none"
+                asp-items="@(new SelectList(Model.AvailableEntityTypes, "Value", "Text"))">
+        </select>
+        <span asp-validation-for="@Model.EndpointEntityTypeId" class="text-danger"></span>
+    </div>
+</div>

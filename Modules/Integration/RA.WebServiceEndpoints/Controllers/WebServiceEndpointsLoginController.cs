@@ -1,0 +1,87 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using RA.Core.Domain;
+using RA.WebServiceEndpoints.Models;
+using RAerp.Helpers.Security;
+using RAerp.Services.UserServices;
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Net;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace RA.WebServiceEndpoints.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class WebServiceEndpointsLoginController : ControllerBase
+    {
+        private readonly IUserService _userService;
+        private string _jwtSecretKey;
+        private string _clientId;
+        private string _clientSecret;
+
+        public WebServiceEndpointsLoginController(IUserService userService, IConfiguration configuration)
+        {
+            _userService = userService;
+            _jwtSecretKey = configuration.GetValue<string>("ApiSettings:JWTSecretKey");
+            _clientId = configuration.GetValue<string>("ApiSettings:ClientId");
+            _clientSecret = configuration.GetValue<string>("ApiSettings:ClientSecret");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Login([FromBody] WebServiceEndpointLoginRequestModel model)
+        {
+            if (model == null)
+                return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "No username and password entered." });
+
+            if (model.UserName == null || model.Password == null)
+                return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "Username or password should have value." });
+
+            var user = await _userService.GetUserByUsername(model.UserName);
+
+            if (user == null)
+                return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "User doesn't exists in the system. " });
+
+            var decrpytedPassword = await EncryptionHelper.DecryptData(user.Password, user.Salt);
+
+            if (decrpytedPassword == model.Password)
+            {
+                // JWT Token Generation
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.ASCII.GetBytes(_jwtSecretKey);
+
+                var tokenDescriptor = new SecurityTokenDescriptor()
+                {
+                    Subject = new ClaimsIdentity(new Claim[]
+                    {
+                        new Claim(ClaimTypes.Name, user.Id.ToString()),
+                        new Claim(ClaimTypes.System, _clientId),
+                        new Claim(ClaimTypes.Sid, _clientSecret)
+                    }),
+                    Expires = DateTime.Now.AddDays(1),
+                    SigningCredentials = new(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                };
+
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                var loginResponse = new WebServiceEndpointLoginResponseModel();
+                loginResponse.UserName = user.Username;
+                loginResponse.FirstName = user.FirstName;
+                loginResponse.LastName = user.LastName;
+                loginResponse.Status = HttpStatusCode.OK.ToString();
+                loginResponse.Token = tokenHandler.WriteToken(token);
+
+                
+                return Ok(loginResponse);
+            }
+            else
+            {
+                return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "Username doesn't match with provided password. " });
+            }
+        }
+    }
+}

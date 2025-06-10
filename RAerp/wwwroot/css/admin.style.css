@@ -1,0 +1,281 @@
+﻿/* Custom style for MMS */
+
+.card-title h4 {
+    margin-top: 15px;
+    margin-left: 20px;
+}
+
+.card-header-search {
+    border-bottom: inset;
+    padding-left: 15px;
+    padding-top: 10px;
+    font-weight: bold;
+}
+
+.card-body-search {
+    padding: 15px;
+}
+
+.card-body {
+    padding: 0px !important;
+    padding-top: 20px !important;
+    padding-bottom: 20px !important;
+    padding-right: 10px !important;
+    padding-left: 10px !important;
+}
+
+.tab-content .card-body {
+    padding-top: 0px !important;
+    padding-right: 10px !important;
+    padding-left: 10px !important;
+    padding-bottom: 15px !important;
+}
+
+
+
+/* Loader css */
+#loader {
+    width: 50px;
+    height: 50px;
+    border: 10px solid lightgray;
+    border-top: 10px solid black;
+    border-radius: 50%;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    animation-duration: 1s;
+    animation-name: rotateLoader;
+    animation-iteration-count: infinite;
+    z-index: 2;
+    display: none;
+}
+
+@keyframes rotateLoader {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.modal-backdrop {
+    background-color: transparent;
+}
+
+/* Configuration Tab CSS */
+#configTab .nav-link.active {
+    border-bottom-color: #28b779;
+    border-bottom-width: 2px;
+}
+
+#configTab button,
+button:active,
+button:focus {
+    outline: none;
+}
+
+#configTab button:hover {
+    outline-color: #28b779;
+    outline-style: solid;
+    outline-width: 0.2px;
+}
+
+#configTabContent {
+    margin-top: 20px;
+}
+
+label[data-required=true]:after {
+    content: "*";
+    font-weight: bold;
+    color: red;
+    margin-left: 3px;
+}
+
+
+.modal-header {
+    background-color: steelblue;
+    color: white;
+}
+
+
+/* Form Input Controls */
+
+.custom-input-set {
+    display: flex;
+    flex-direction: column;
+    width: auto;
+    position: static;
+    margin-bottom: 10px;
+}
+
+    .custom-input-set label.form-label {
+        color: #05557a;
+        font-weight: 700;
+        position: relative;
+        padding: 0 3px;
+        background: #fff;
+        width: fit-content;
+        border-radius: 20px;
+        transition: ease-in-out 0.1s;
+    }
+
+    .custom-input-set input[type=text].form-control,
+    .custom-input-set input[type=number].form-control,
+    .custom-input-set input[type=date].form-control,
+    .custom-input-set input[type=email].form-control,
+    .custom-input-set input[type=password].form-control,
+    .custom-input-set select.select2,
+    .custom-input-set textarea {
+        padding: 11px 10px;
+        border: 2px #1eb4fa solid;
+        border-radius: 5px;
+        height: auto;
+    }
+        .custom-input-set input[type=text].form-control:focus,
+        .custom-input-set input[type=number].form-control:focus,
+        .custom-input-set input[type=date].form-control:focus,
+        .custom-input-set input[type=email].form-control:focus,
+        .custom-input-set input[type=password].form-control:focus,
+        .custom-input-set select.select2:focus,
+        .custom-input-set textarea:focus {
+            outline: 2px #1eb4fa solid;
+            box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px;
+        }
+
+        /*.coolinput input[type=text].input:hover {
+            border: 2px #1227ef solid;
+            box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
+        }*/
+
+/* Form Input Controls END */
+
+/* Form tabs nav */
+
+#formTab .nav-link.active {
+    color: dodgerblue;
+    background-color: transparent;
+    border-color: transparent transparent #f3f3f3;
+    border-bottom: 4px solid !important;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#formTab .nav-link {
+    display: block;
+    border: 1px solid transparent;
+    background-color: transparent;
+    border-top-left-radius: .25rem;
+    border-top-right-radius: .25rem;
+    color: dimgrey;
+    font-size: 20px;
+    padding: 10px 20px;
+    width: 200px;
+}
+
+
+#formTab li button:hover {
+    color: blue;
+}
+
+/* Form tabs nav END */
+
+
+.badge.badge-pill {
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+/* Form Content Custom CSS */
+
+.form-content-header-title {
+    font-weight: bold;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.form-content-header-control {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+    .form-content-header-control .form-content-back-redirection-control {
+        padding-top: 5px;
+    }
+
+.form-content-header-group {
+    display: flex;
+    width: fit-content;
+    color: rgb(142, 143, 138);
+    font-size: 17px;
+    border-bottom: 2px solid rgb(142, 143, 138);
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    margin-top: 13px !important;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+}
+
+    .form-content-header-group:before {
+        content: ">";
+        margin-right: 5px;
+        font-weight: bolder;
+        font-size: large;
+    }
+
+/* Content Custom CSS END */
+
+
+/* Common Content CSS */
+.common-content-header-title {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    font-weight: bold;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.common-content-header-title a, .common-content-header-title button {
+    height: 32px;
+    margin-top: 5px;
+}
+
+
+/* Common Content CSS */
+
+.pb-3 .col-md-9 {
+    margin-bottom: 20px;
+}
+
+
+.table-responsive table tbody td input[type=checkbox] {
+    position: inherit !important;
+}
+
+
+/* Access Rights Table */
+#accessRightsTable {
+    /*table-layout: fixed;*/
+}
+
+    #accessRightsTable thead th {
+        position: sticky;
+        z-index: 1;
+    }
+
+        #accessRightsTable thead th:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+        }
+
+        #accessRightsTable tbody td:first-child {
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 2;
+        }

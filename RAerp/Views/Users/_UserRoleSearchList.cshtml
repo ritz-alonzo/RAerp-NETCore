@@ -1,0 +1,141 @@
+﻿@model UserRoleListModel
+
+@{
+    Layout = null;
+}
+
+<div class="card">
+    <div class="card-body">
+            @{
+                // working data table creation
+                // just needed to know the arrangement of records for tbody
+                var gridTable = new DataTablesModel();
+                gridTable.GridName = "userRole_table";
+                gridTable.ClassName = "table-dark";
+                gridTable.UrlController = "Users";
+                gridTable.UrlEdit = "EditUserRole";
+                gridTable.UrlDelete = "DeleteUserRole";
+                gridTable.UrlGridPartialViewAction = "UserRoleListSearch";
+                gridTable.EditEnabled = true;
+                gridTable.DeleteEnabled = true;
+                gridTable.Records = Model.Items;
+
+                gridTable.ColumnCollection = new List<ColumnDefinition>
+                {
+                    new ColumnDefinition(nameof(UserRoleModel.Id))
+                    {
+                        IsPrimaryKey = true,
+                        Visible = false,
+                    },
+                    new ColumnDefinition(nameof(UserRoleModel.Rolename))
+                    {
+                        Title = modelAttributeHelper.GetAdminModelAttributeDisplayNameValue<UserRoleModel>(nameof(UserRoleModel.Rolename)),
+                        Visible = true,
+                    },
+                    new ColumnDefinition(nameof(UserRoleModel.CreatedOn))
+                    {
+                        Title = modelAttributeHelper.GetAdminModelAttributeDisplayNameValue<UserRoleModel>(nameof(UserRoleModel.CreatedOn)),
+                        Visible = true,
+                    },
+                    new ColumnDefinition(nameof(UserRoleModel.ModifiedOn))
+                    {
+                        Title = modelAttributeHelper.GetAdminModelAttributeDisplayNameValue<UserRoleModel>(nameof(UserRoleModel.ModifiedOn)),
+                        Visible = true,
+                    },
+                    new ColumnDefinition(nameof(UserRoleModel.Deleted))
+                    {
+                        Title = modelAttributeHelper.GetAdminModelAttributeDisplayNameValue<UserRoleModel>(nameof(UserRoleModel.Deleted)),
+                        ControlType = ControlType.Checkbox,
+                        Visible = true,
+                    },
+                };
+
+            @await Html.PartialAsync("~/Views/Shared/Tables/_Table.cshtml", gridTable)
+        }       
+    </div>
+</div>
+
+@* Modal of User Role Creation *@
+<div class="modal fade" id="userRoleCreationModal" tabindex="-1" aria-labelledby="userRoleCreationModalLabel"
+     aria-hidden="true" style="padding-top: 100px;">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userRoleCreationModalLabel"></h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">x</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form-ajax id="userRoleCreationData" data-config-post-action="">
+
+                </form-ajax>
+            </div>
+            <div class="modal-footer">
+                <button id="userRoleCreationSaveBtn" class="btn btn-success btn-sm" type="button">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/Tables/_Pagination.cshtml", Model)
+
+<script type="text/javascript">
+
+    // need to create javascript for this
+    // working pressing enter key search use on.keydown
+    $('#userRole_search').on("change", function (e) {
+        // will prevent looping
+        e.stopImmediatePropagation();
+        // when focus was removed
+        var formSearchId = 'userRole_search';
+        var url = '@Url.Action("UserRoleListSearch", "Users")'
+        var partialViewId = 'userRoles';
+        var data = SearchFunction(formSearchId, url, partialViewId);
+    });
+
+
+    $('.create-role-modal-trigger').on('click', (e) => {
+
+        e.stopImmediatePropagation();
+        var selectedButton = $(e.currentTarget);
+        var createUserRoleUrl = selectedButton.attr('data-create-role-url');
+        if (createUserRoleUrl == null || createUserRoleUrl == '') {
+            alert('Failed to load creation form');
+        }
+        var createuserRoleTitle = selectedButton.attr('data-create-role-title');
+        $('#userRoleCreationModalLabel').html(createuserRoleTitle);
+
+        $.ajax({
+            url: createUserRoleUrl,
+            method: 'GET',
+        })
+            .done((data) => {
+                $('#userRoleCreationData').html(data);
+                $('#userRoleCreationData').attr('data-config-post-action', createUserRoleUrl);
+            })
+            .fail((data) => {
+                console.log('Failed to show modal');
+            });
+    })
+
+    // post save action of modal
+    $('#userRoleCreationSaveBtn').on('click', (e) => {
+        var createPostAction = $('#userRoleCreationData').attr('data-config-post-action');
+        if (createPostAction == null || createPostAction == '') {
+            alert('Save Action not found.');
+        }
+        var createEntityDataId = 'userRoleCreationData';
+
+        // CreateuserRolePost(createEntityDataId, createPostAction);
+    });
+
+    $('#userRoleCreationModal').on('hidden.bs.modal', (e) => {
+        console.log('hiding modal');
+        $('#userRoleCreationData').html("");
+        $('#userRoleCreationModalLabel').html("");
+    });
+</script>
+
+
+
