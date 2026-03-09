@@ -21,6 +21,8 @@ namespace RA.EntityTypes.Data
         public bool DeleteEnabled { get; set; }
         public bool Installed { get; set; }
         public bool Enabled { get; set; }
-        public bool AddressEnabled {  get; set; }
+        public bool AddressEnabled { get; set; }
+        public bool InventoryEnabled { get; set; }
+        public bool RedirectByCodeEnabled { get; set; }
     }
 }

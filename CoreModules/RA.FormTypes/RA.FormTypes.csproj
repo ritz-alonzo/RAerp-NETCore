@@ -3,12 +3,26 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
+	  <OutputPath>..\..\RAerp\Plugins\RA.FormTypes</OutputPath>
+	  <OutDir>$(OutputPath)</OutDir>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Domain\Mappings\" />
-    <Folder Include="Factories\" />
-    <Folder Include="Helpers\" />
+    <Compile Remove="Domain\Mappings\**" />
+    <EmbeddedResource Remove="Domain\Mappings\**" />
+    <None Remove="Domain\Mappings\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Views\List.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\_FormTypeList.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\_ViewImports.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

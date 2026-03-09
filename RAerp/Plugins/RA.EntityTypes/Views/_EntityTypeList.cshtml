@@ -67,7 +67,7 @@
                 },
             };
 
-                                        @await Html.PartialAsync("~/Views/Shared/Tables/_Table.cshtml", gridTable)
+            @await Html.PartialAsync("~/Views/Shared/Tables/_Table.cshtml", gridTable)
         }
     </div>
 </div>
@@ -100,25 +100,13 @@
 
 <script type="text/javascript">
     var timeOut = null;
-    // need to create javascript for this
-    // working pressing enter key search use on.keydown
-    $('#entityTypes_search').on("keyup", function (e) {
-        // will prevent looping
-        e.stopImmediatePropagation();
-        // when focus was removed
+    $('#entityTypes_search').on("input", function (e) {
+        if (e.key === 'Enter' || e.keyCode === 13) return;
         var formSearchId = 'entityTypes_search';
         var url = '@Url.Action("EntityTypeListSearch", "EntityTypes")'
         var partialViewId = 'entityTypes';
-        clearTimeout(timeOut);
+        clearTimeout(timeOut); 
         timeOut = setTimeout(function (e) { SearchFunction(formSearchId, url, partialViewId); }, 500);
-        // when enter is pressed
-        //if (e.keyCode == 13) {
-        //    var formSearchId = 'entityTypes_search';
-        //    var url = '@Url.Action("EntityTypeListSearch", "EntityTypes")'
-        //    var partialViewId = 'entityTypes';
-        //    SearchFunction(formSearchId, url, partialViewId);
-        //}
-        // else do nothing
     });
 
     // cannot use id because it will be the same for all buttons

@@ -34,12 +34,15 @@ namespace RA.WebServiceEndpoints.Controllers
     [Route("api/[controller]/{endpoint}")]
     public class WebServiceEndpointsAPIController : ControllerBase
     {
+        #region Constants
         private readonly IWebServiceEndpointService _webServiceEndpointService;
         private readonly IEntityTypeManager _entityTypeManager;
         private readonly IBusinessEntityService _businessEntityService;
         private readonly IUserService _userService;
         private readonly ICategoryService _categoryService;
+        #endregion
 
+        #region Ctor
         public WebServiceEndpointsAPIController(IWebServiceEndpointService webServiceEndpointService,
             IEntityTypeManager entityTypeManager,
             IBusinessEntityService businessEntityService,
@@ -52,6 +55,7 @@ namespace RA.WebServiceEndpoints.Controllers
             _userService = userService;
             _categoryService = categoryService;
         }
+        #endregion
 
         #region CRUD
 
@@ -60,8 +64,6 @@ namespace RA.WebServiceEndpoints.Controllers
         public async Task<IActionResult> GetList(string endpoint)
         {
             // TODO: will add checking of access rights here
-            //
-
             if (string.IsNullOrEmpty(endpoint))
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint cannot be empty"));
 
@@ -69,7 +71,7 @@ namespace RA.WebServiceEndpoints.Controllers
             if (webServiceEndpoint == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint doesn't exists, create this endpoint in Web Service Endpoints screen"));
 
-            var currentUser = await GetCurrentUser();
+            var currentUser = await GetCurrentUserAsync();
             if (currentUser == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "User has not yet logged in"));
 
@@ -78,13 +80,13 @@ namespace RA.WebServiceEndpoints.Controllers
             switch (webServiceEndpoint.EndpointDomain)
             {
                 case "BusinessEntity":
-                    var businessEntityList = await _businessEntityService.GetList(webServiceEndpoint.EndpointEntityTypeId.Value);
+                    var businessEntityList = await _businessEntityService.GetListAsync(webServiceEndpoint.EndpointEntityTypeId.Value);
                     if (businessEntityList.Any())
                         return Ok(GenerateEntityListResponseModel(HttpStatusCode.OK, "Successful GET", businessEntityList));
                     break;
 
                 case "Category":
-                    var categoryEntityList = await _categoryService.GetList(webServiceEndpoint.EndpointEntityTypeId.Value);
+                    var categoryEntityList = await _categoryService.GetListAsync(webServiceEndpoint.EndpointEntityTypeId.Value);
                     if (categoryEntityList.Any())
                         return Ok(GenerateEntityListResponseModel(HttpStatusCode.OK, "Successful GET", categoryEntityList));
                     break;
@@ -108,7 +110,7 @@ namespace RA.WebServiceEndpoints.Controllers
             if (webServiceEndpoint == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint doesn't exists, create this endpoint in Web Service Endpoints screen"));
 
-            var currentUser = await GetCurrentUser();
+            var currentUser = await GetCurrentUserAsync();
             if (currentUser == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "User has not yet logged in"));
 
@@ -124,13 +126,13 @@ namespace RA.WebServiceEndpoints.Controllers
             switch (webServiceEndpoint.EndpointDomain)
             {
                 case "BusinessEntity":
-                    var businessEntity = await _businessEntityService.GetById(entityId);
+                    var businessEntity = await _businessEntityService.GetByIdAsync(entityId);
                     if (businessEntity != null)
                         return Ok(GenerateEntityResponseModel(HttpStatusCode.OK, "Successful GET", businessEntity));
                     break;
 
                 case "Category":
-                    var categoryEntity = await _categoryService.GetById(entityId);
+                    var categoryEntity = await _categoryService.GetByIdAsync(entityId);
                     if (categoryEntity != null)
                         return Ok(GenerateEntityResponseModel(HttpStatusCode.OK, "Successful GET", categoryEntity));
                     break;
@@ -154,7 +156,7 @@ namespace RA.WebServiceEndpoints.Controllers
             if (webServiceEndpoint == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint doesn't exists, create this endpoint in Web Service Endpoints screen"));
 
-            var currentUser = await GetCurrentUser();
+            var currentUser = await GetCurrentUserAsync();
             if (currentUser == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "User has not yet logged in"));
 
@@ -165,12 +167,14 @@ namespace RA.WebServiceEndpoints.Controllers
 
             switch (webServiceEndpoint.EndpointDomain)
             {
+                #region Entity Types
+
                 case "BusinessEntity":
                     var businessEntityRequest = (BusinessEntity)CreateEntityFromDictionary(typeof(BusinessEntity), data);
                     if (businessEntityRequest == null)
                         return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Incorrect object mapping"));
 
-                    var businessEntitySettings = await _entityTypeManager.GetSettingDataOfEntity<BusinessEntity, BusinessEntitySetting>(businessEntityRequest.EntityTypeId);
+                    var businessEntitySettings = await _entityTypeManager.GetSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(businessEntityRequest.EntityTypeId);
                     if (businessEntitySettings != null)
                     {
                         if (businessEntitySettings.AutoGeneratedTemplate)
@@ -181,7 +185,7 @@ namespace RA.WebServiceEndpoints.Controllers
                     businessEntityRequest.ModifiedOn = null;
                     businessEntityRequest.ModifiedById = null;
 
-                    await _businessEntityService.Insert(businessEntityRequest);
+                    await _businessEntityService.InsertAsync(businessEntityRequest);
                     return Ok(GenerateEntityResponseModel(HttpStatusCode.OK, "Successfully created Business Entity", businessEntityRequest));
 
                 case "Category":
@@ -189,7 +193,7 @@ namespace RA.WebServiceEndpoints.Controllers
                     if (categoryEntityRequest == null)
                         return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Incorrect object mapping"));
 
-                    var categoryEntitySettings = await _entityTypeManager.GetSettingDataOfEntity<Category, CategorySetting>(categoryEntityRequest.EntityTypeId);
+                    var categoryEntitySettings = await _entityTypeManager.GetSettingDataOfEntityAsync<Category, CategorySetting>(categoryEntityRequest.EntityTypeId);
                     if (categoryEntitySettings != null)
                     {
                         if (categoryEntitySettings.AutoGeneratedTemplate)
@@ -200,9 +204,12 @@ namespace RA.WebServiceEndpoints.Controllers
                     categoryEntityRequest.ModifiedOn = null;
                     categoryEntityRequest.ModifiedById = null;
 
-                    await _categoryService.Insert(categoryEntityRequest);
+                    await _categoryService.InsertAsync(categoryEntityRequest);
                     return Ok(GenerateEntityResponseModel(HttpStatusCode.OK, "Successfully created Category", categoryEntityRequest));
+
+                #endregion
             }
+
             #endregion
 
             return Ok();
@@ -222,7 +229,7 @@ namespace RA.WebServiceEndpoints.Controllers
             if (webServiceEndpoint == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint doesn't exists, create this endpoint in Web Service Endpoints screen"));
 
-            var currentUser = await GetCurrentUser();
+            var currentUser = await GetCurrentUserAsync();
             if (currentUser == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "User has not yet logged in"));
 
@@ -241,14 +248,14 @@ namespace RA.WebServiceEndpoints.Controllers
                     if (businessEntityRequest.Id.IsNullOrEmpty())
                         return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Business Entity cannot be found"));
 
-                    var businessEntity = await _businessEntityService.GetById(businessEntityRequest.Id);
+                    var businessEntity = await _businessEntityService.GetByIdAsync(businessEntityRequest.Id);
                     businessEntity.Name = businessEntity.Name != businessEntityRequest.Name ? businessEntityRequest.Name : businessEntity.Name;
                     businessEntity.Description = businessEntity.Description != businessEntityRequest.Description ? businessEntityRequest.Description : businessEntity.Description;
                     businessEntity.StatusId = businessEntity.StatusId != businessEntityRequest.StatusId ? businessEntityRequest.StatusId : businessEntity.StatusId;
                     businessEntity.CategoryId = businessEntity.CategoryId != businessEntityRequest.CategoryId ? businessEntityRequest.CategoryId : businessEntity.CategoryId;
                     businessEntityRequest.ModifiedById = currentUser.Id;
 
-                    await _businessEntityService.Update(businessEntityRequest);
+                    await _businessEntityService.UpdateAsync(businessEntityRequest);
                     return Ok(GenerateEntityResponseModel(HttpStatusCode.OK, "Successfully updated Business Entity", businessEntityRequest));
 
                 case "Category":
@@ -259,13 +266,13 @@ namespace RA.WebServiceEndpoints.Controllers
                     if (categoryEntityRequest.Id.IsNullOrEmpty())
                         return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Category cannot be found"));
 
-                    var category = await _categoryService.GetById(categoryEntityRequest.Id);
+                    var category = await _categoryService.GetByIdAsync(categoryEntityRequest.Id);
                     category.Name = category.Name != categoryEntityRequest.Name ? categoryEntityRequest.Name : category.Name;
                     category.Description = category.Description != categoryEntityRequest.Description ? categoryEntityRequest.Description : category.Description;
                     category.StatusId = category.StatusId != categoryEntityRequest.StatusId ? categoryEntityRequest.StatusId : category.StatusId;
                     category.ModifiedById = currentUser.Id;
 
-                    await _categoryService.Update(category);
+                    await _categoryService.UpdateAsync(category);
                     return Ok(GenerateEntityResponseModel(HttpStatusCode.OK, "Successfully updated Category", categoryEntityRequest));
             }
             #endregion
@@ -287,7 +294,7 @@ namespace RA.WebServiceEndpoints.Controllers
             if (webServiceEndpoint == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint doesn't exists, create this endpoint in Web Service Endpoints screen"));
 
-            var currentUser = await GetCurrentUser();
+            var currentUser = await GetCurrentUserAsync();
             if (currentUser == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "User has not yet logged in"));
 
@@ -303,10 +310,10 @@ namespace RA.WebServiceEndpoints.Controllers
             switch (webServiceEndpoint.EndpointDomain)
             {
                 case "BusinessEntity":
-                    var businessEntity = await _businessEntityService.GetById(entityId);
+                    var businessEntity = await _businessEntityService.GetByIdAsync(entityId);
                     if (businessEntity != null)
                     {
-                        await _businessEntityService.Delete(businessEntity);
+                        await _businessEntityService.DeleteAsync(businessEntity);
                         return Ok(GenerateEntityResponseModel(HttpStatusCode.OK, "Successfully Deleted Business Entity", businessEntity));
                     }
                     else
@@ -315,10 +322,10 @@ namespace RA.WebServiceEndpoints.Controllers
                     }
 
                 case "Category":
-                    var categoryEntity = await _categoryService.GetById(entityId);
+                    var categoryEntity = await _categoryService.GetByIdAsync(entityId);
                     if (categoryEntity != null)
                     {
-                        await _categoryService.Delete(categoryEntity);
+                        await _categoryService.DeleteAsync(categoryEntity);
                         return Ok(GenerateEntityResponseModel(HttpStatusCode.OK, "Successful Deleted Category", categoryEntity));
                     }
                     else
@@ -412,7 +419,7 @@ namespace RA.WebServiceEndpoints.Controllers
             return errorResponseModel;
         }
 
-        private async Task<User> GetCurrentUser()
+        private async Task<User> GetCurrentUserAsync()
         {
             var user = HttpContext.User;
             User currentUser = null;

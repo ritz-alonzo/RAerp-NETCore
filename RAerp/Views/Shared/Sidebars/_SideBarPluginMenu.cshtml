@@ -10,16 +10,17 @@
 
     foreach (var node in pluginNodes.OrderBy(c => c.DisplayOrder))
     {
+        var mainNodeHasRelatedNodes = node.RelatedNodes.Any() ? node.RelatedNodes.Any(c => c.MenuTitle == selectedMenuController) : false;
         if (node.Visible)
         {
             /// Main node
-            <li class="sidebar-item @if (selectedMenuController == node.MenuTitle.Replace(" ", "")) { <text>selected</text> }">
-                <a class="sidebar-link has-arrow waves-effect waves-dark sidebar-link @if (selectedMenuController == node.MenuTitle.Replace(" ", "")) { <text>active</text> }" 
-                    href="javascript:void(0)" aria-expanded="false">
+            <li class="sidebar-item @if (selectedMenuController == node.MenuTitle.Replace(" ", "") || mainNodeHasRelatedNodes) { <text>selected</text> }">
+                <a class="sidebar-link has-arrow waves-effect waves-dark sidebar-link @if (selectedMenuController == node.MenuTitle.Replace(" ", "") || mainNodeHasRelatedNodes) {<text>active</text> }"
+                   href="#" aria-expanded="false">
                     <i class="@node.IconClass"></i>
                     <span class="hide-menu">@node.MenuTitle</span>
                 </a>
-                <ul aria-expanded="false" class="collapse first-level @if (selectedMenuController == node.MenuTitle.Replace(" ", "")) { <text>in</text> }">
+                <ul aria-expanded="false" class="collapse first-level @if (selectedMenuController == node.MenuTitle.Replace(" ", "") || mainNodeHasRelatedNodes) { <text>in</text> }">
                     @if (node.RelatedNodes.Count > 0)
                     {
                         // Child node

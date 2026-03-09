@@ -10,43 +10,43 @@ namespace RA.EntityTypes.Services
     {
 
         #region Entity Type CRUD
-        Task<EntityType> GetById(Guid id);
-        Task<EntityType> GetTypeBySystemName(string systemName);
-        Task<List<EntityType>> GetTypesBySystemName(string systemName);
-        Task<EntityType> GetTypeByEntityClassificationName(string systemName, string entityTypeName);
-        Task<IEnumerable<EntityType>> GetList(
+        Task<EntityType> GetByIdAsync(Guid id);
+        Task<EntityType> GetTypeBySystemNameAsync(string systemName);
+        Task<List<EntityType>> GetTypesBySystemNameAsync(string systemName);
+        Task<EntityType> GetTypeByEntityClassificationNameAsync(string systemName, string entityTypeName);
+        Task<IEnumerable<EntityType>> GetListAsync(
             string searchQuery = null, 
             DateTime? createdOn = null, 
             string entityClassificationName = null, 
             bool showAllChildEntities = false,
             Guid? parentEntityTypeId = null);
-        Task Insert(EntityType entityType);
-        Task Update(EntityType entityType);
-        Task<IEnumerable<EntityType>> GetChildEntities(Guid parentTypeId);
-        Task<EntityType> GetParentEntityTypeByChildEntityTypeId(Guid childEntityTypeId);
+        Task InsertAsync(EntityType entityType);
+        Task UpdateAsync(EntityType entityType);
+        Task<IEnumerable<EntityType>> GetChildEntitiesAsync(Guid parentTypeId);
+        Task<EntityType> GetParentEntityTypeByChildEntityTypeIdAsync(Guid childEntityTypeId);
         #endregion
 
         #region Settings
-        Task<Setting> GetSettingById(Guid id);
-        Task<Setting> GetSettingByEntityTypeId<TEntity, TSettings>(Guid entityTypeId) 
+        Task<Setting> GetSettingByIdAsync(Guid id);
+        Task<Setting> GetSettingByEntityTypeIdAsync<TEntity, TSettings>(Guid entityTypeId) 
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting;
-        Task<Setting> GetSettingByEntitySystemNameAndEntityTypeId<TEntity, TSettings>(Guid entityTypeId, string entityTypeSystemName)
+        Task<Setting> GetSettingByEntitySystemNameAndEntityTypeIdAsync<TEntity, TSettings>(Guid entityTypeId, string entityTypeSystemName)
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting;
-        Task InsertEntitySetting<TEntity, TSettings>(Guid entityTypeId, string entitySystemName = null)
+        Task InsertEntitySettingAsync<TEntity, TSettings>(Guid entityTypeId, string entitySystemName = null)
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting;
-        Task UpdateSettingDataOfEntity<TEntity, TSettings>(TSettings settings, Guid entityTypeId)
+        Task UpdateSettingDataOfEntityAsync<TEntity, TSettings>(TSettings settings, Guid entityTypeId)
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting;
-        Task<TSettings> GetSettingDataOfEntity<TEntity, TSettings>(Guid entityTypeId, string entitySystemName = null)
+        Task<TSettings> GetSettingDataOfEntityAsync<TEntity, TSettings>(Guid entityTypeId, string entitySystemName = null)
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting;
-        Task<string> GetCurrentTemplateOfEntity<TEntity, TSettings>(Guid entityTypeId)
+        Task<string> GetCurrentTemplateOfEntityAsync<TEntity, TSettings>(Guid entityTypeId)
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting;
-        Task IncreaseTemplateCountOfEntity<TEntity, TSettings>(Guid entityTypeId)
+        Task IncreaseTemplateCountOfEntityAsync<TEntity, TSettings>(Guid entityTypeId)
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting;
 
@@ -54,7 +54,7 @@ namespace RA.EntityTypes.Services
 
         #region Select List
 
-        Task<List<SelectListItem>> GetEntityTypesSelectList();
+        Task<List<SelectListItem>> GetEntityTypesSelectListAsync();
 
         #endregion
     }

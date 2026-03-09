@@ -14,26 +14,34 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using RA.EntityTypes.Services;
+using RAerp.Helpers.UserHelper;
 
 namespace RA.WebServiceEndpoints.Controllers
 {
     public class WebServiceEndpointsController : AdminController
     {
+        #region Constants
         private readonly IWebServiceEndpointService _webServiceEndpointService;
         private readonly IWebServiceEndpointModelFactory _webServiceEndpointModelFactory;
         private readonly IMapper _mapper;
         private readonly IEntityTypeManager _entityTypeManager;
+        private readonly IUserIdentity _userIdentity;
+        #endregion
 
+        #region Ctor
         public WebServiceEndpointsController(IWebServiceEndpointService webServiceEndpointService,
             IWebServiceEndpointModelFactory webServiceEndpointModelFactory,
             IMapper mapper,
-            IEntityTypeManager entityTypeManager)
+            IEntityTypeManager entityTypeManager,
+            IUserIdentity userIdentity)
         {
             _webServiceEndpointService = webServiceEndpointService;
             _webServiceEndpointModelFactory = webServiceEndpointModelFactory;
             _mapper = mapper;
             _entityTypeManager = entityTypeManager;
+            _userIdentity = userIdentity;
         }
+        #endregion
 
         #region Configuration
 
@@ -45,7 +53,7 @@ namespace RA.WebServiceEndpoints.Controllers
         {
             // default page size
             int pageSize = 10;
-            var model = await _webServiceEndpointModelFactory.PrepareWebServiceEndpointSearchModel(new WebServiceEndpointSearchModel(), page, pageSize);
+            var model = await _webServiceEndpointModelFactory.PrepareWebServiceEndpointSearchModelAsync(new WebServiceEndpointSearchModel(), page, pageSize);
 
             return View("~/Plugins/RA.WebServiceEndpoints/Views/List.cshtml", model);
         }
@@ -55,7 +63,7 @@ namespace RA.WebServiceEndpoints.Controllers
         [HttpGet]
         public async Task<IActionResult> WebServiceEndpointListSearch(WebServiceEndpointSearchModel searchModel)
         {
-            var model = await _webServiceEndpointModelFactory.PrepareWebServiceEndpointListModel(searchModel);
+            var model = await _webServiceEndpointModelFactory.PrepareWebServiceEndpointListModelAsync(searchModel);
 
             return PartialView("~/Plugins/RA.WebServiceEndpoints/Views/_WebServiceEndpointList.cshtml", model);
         }
@@ -69,7 +77,7 @@ namespace RA.WebServiceEndpoints.Controllers
             if (entity == null)
                 return NotFound();
 
-            var model = await _webServiceEndpointModelFactory.PrepareWebServiceEndpointModel(new WebServiceEndpointModel(), entity);
+            var model = await _webServiceEndpointModelFactory.PrepareWebServiceEndpointModelAsync(new WebServiceEndpointModel(), entity);
 
             return View("~/Plugins/RA.WebServiceEndpoints/Views/Index.cshtml", model);
         }
@@ -86,7 +94,7 @@ namespace RA.WebServiceEndpoints.Controllers
             //if (!entityTypeSetting.Enabled)
             //    return NotFound();
 
-            var model = await _webServiceEndpointModelFactory.PrepareWebServiceEndpointModel(new WebServiceEndpointModel(), null);
+            var model = await _webServiceEndpointModelFactory.PrepareWebServiceEndpointModelAsync(new WebServiceEndpointModel(), null);
 
             return View("~/Plugins/RA.WebServiceEndpoints/Views/Create.cshtml", model);
         }
@@ -98,14 +106,12 @@ namespace RA.WebServiceEndpoints.Controllers
             if (ModelState.IsValid)
             {
                 var entity = _mapper.Map<WebServiceEndpoint>(model);
-                // just for testing
-                entity.CreatedById = Guid.NewGuid();
-                // END
+                entity.CreatedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
 
                 // Save Domain name
                 if (entity.EndpointEntityTypeId.IsNotNullOrEmpty())
                 {
-                    var parentEntityType = await _entityTypeManager.GetParentEntityTypeByChildEntityTypeId(entity.EndpointEntityTypeId.Value);
+                    var parentEntityType = await _entityTypeManager.GetParentEntityTypeByChildEntityTypeIdAsync(entity.EndpointEntityTypeId.Value);
                     entity.EndpointDomain = parentEntityType.EntityName;
                 }
 
@@ -130,7 +136,7 @@ namespace RA.WebServiceEndpoints.Controllers
             if (ModelState.IsValid)
             {
                 var entity = _mapper.Map<WebServiceEndpoint>(model);
-
+                entity.ModifiedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
                 await _webServiceEndpointService.Update(entity);
                 // sanity check
                 model.Id = entity.Id;

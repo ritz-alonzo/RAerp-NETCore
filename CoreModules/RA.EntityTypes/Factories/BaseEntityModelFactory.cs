@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using RA.Core.Domain;
 using RA.Core.Helpers;
 using RA.Core.Models.BaseModels;
@@ -30,19 +31,27 @@ namespace RA.EntityTypes.Factories
     /// </summary>
     public class BaseEntityModelFactory : BaseModelFactory, IBaseEntityModelFactory
     {
+        #region Constants
         private readonly IEntityTypeManager _entityTypeManager;
         private readonly IAccessControl _accessControl;
+        private readonly IMapper _mapper;
+        #endregion
+
+        #region Ctor
         public BaseEntityModelFactory(
             IUserIdentity userIdentity,
             IHttpContextAccessor httpContextAccessor,
             ISettingService settingService,
             IEntityTypeManager entityTypeManager,
-            IAccessControl accessControl)
+            IAccessControl accessControl,
+            IMapper mapper)
             : base(userIdentity, httpContextAccessor, settingService)
         {
             _entityTypeManager = entityTypeManager;
             _accessControl = accessControl;
+            _mapper = mapper;
         }
+        #endregion
 
         #region CRUD
         /// <summary>
@@ -58,8 +67,19 @@ namespace RA.EntityTypes.Factories
         {
             searchModel = PrepareBaseSearchModel(searchModel, pageSize, pageNumber);
             searchModel.EntityTypeSystemName = entityType.EntitySystemName;
+            searchModel.EntityTypeName = entityType.EntityName;
 
             return searchModel;
+        }
+
+        public TList PrepareBaseEntityListModel<TList, TModel, TSearch>(TList list, List<TModel> listModel, TSearch searchModel, int totalItems)
+            where TList : BaseListModel<TModel>
+            where TModel : BaseEntityModel
+            where TSearch : BaseEntitySearchModel
+        {
+            list = PrepareBaseListModel(list, listModel, searchModel, totalItems);
+
+            return list;
         }
 
         /// <summary>
@@ -69,49 +89,39 @@ namespace RA.EntityTypes.Factories
         /// <typeparam name="TModel"></typeparam>
         /// <param name="model"></param>
         /// <returns></returns>
-        public TModel PrepareBaseEntityModel<TModel, TEntity, TSettings>(TModel model, TEntity entity, TSettings settings)
+        public async Task<TModel> PrepareBaseEntityModelAsync<TModel, TEntity, TSettings>(TModel model, TEntity entity, TSettings settings)
             where TModel : BaseEntityModel
             where TSettings : BaseEntityTypeSetting
             where TEntity : BaseEntityType
         {
-            model = PrepareBaseModel(model);
+            model = await PrepareBaseModelAsync(model);
             model.EntityTypeSystemName = entity.EntitySystemName;
-            model.EntityTypeName = GetEntityTypeNameFromEntity(entity.EntitySystemName);
+            model.EntityTypeName = GetEntityTypeNameFromSystemName(entity.EntitySystemName);
 
             // Preparation of UI Access Rights and Settings Model
-            model = PrepareBaseEntityModelUIAccess<TModel, TEntity, TSettings>(model, entity, settings);
-
-            model = PrepareBaseEntityPortableView<TModel, TEntity>(model, entity);
+            model = await PrepareBaseEntityModelUIAccessAsync<TModel, TEntity, TSettings>(model, entity, settings);
+            // Preparation of View Components
+            model = PrepareBaseEntityViewComponent<TModel, TEntity>(model, entity);
 
             return model;
-        }
-
-        public TListModel PrepareBaseEntityListModel<TListModel, TModelList, TSearch>(TListModel list, List<TModelList> listModel, TSearch searchModel, int totalItems)
-            where TListModel : BaseListModel<TModelList>
-            where TModelList : BaseEntityModel
-            where TSearch : BaseEntitySearchModel
-        {
-            list = PrepareBaseListModel(list, listModel, searchModel, totalItems);
-
-            return list;
         }
 
         #endregion
 
         #region Configuration
 
-        public TModel PrepareBaseEntityConfigureModel<TModel, TEntity, TSettings>(TModel configureModel, Guid entityTypeId, string entityTypeSystemName = null)
-            where TModel : BaseEntityConfigureModel
+        public async Task<TConfig> PrepareBaseEntityConfigureModelAsync<TConfig, TEntity, TSettings>(TConfig configureModel, Guid entityTypeId, string entityTypeSystemName = null)
+            where TConfig : BaseEntityConfigureModel
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting
         {
             if (entityTypeId.IsNullOrEmpty())
                 throw new ArgumentNullException(nameof(TEntity));
 
-            var settings = _entityTypeManager.GetSettingDataOfEntity<TEntity, TSettings>(entityTypeId, entityTypeSystemName).Result;
+            var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<TEntity, TSettings>(entityTypeId, entityTypeSystemName);
 
             configureModel.EntityTypeId = entityTypeId;
-            configureModel.Installed = _entityTypeManager.GetById(entityTypeId).Result.Installed;
+            configureModel.Installed = (await _entityTypeManager.GetByIdAsync(entityTypeId)).Installed;
 
             if (settings == null)
             {
@@ -122,17 +132,7 @@ namespace RA.EntityTypes.Factories
             {
                 if (!string.IsNullOrEmpty(entityTypeSystemName) && string.IsNullOrEmpty(settings.SystemName))
                     settings.SystemName = entityTypeSystemName;
-                configureModel.SystemName = settings.SystemName;
-                configureModel.Template = settings.Template;
-                configureModel.AutoGeneratedTemplate = settings.AutoGeneratedTemplate;
-                configureModel.TemplateIncrementCount = settings.TemplateIncrementCount;
-                configureModel.TemplateCount = settings.TemplateCount;
-                configureModel.Installed = settings.Installed;
-                configureModel.Enabled = settings.Enabled;
-                configureModel.CreateEnabled = settings.CreateEnabled;
-                configureModel.DeleteEnabled = settings.DeleteEnabled;
-                configureModel.UpdateEnabled = settings.UpdateEnabled;
-                configureModel.AddressEnabled = settings.AddressEnabled;
+                configureModel = _mapper.Map(settings, configureModel);
             }
             return configureModel;
         }
@@ -141,7 +141,7 @@ namespace RA.EntityTypes.Factories
 
         #region User Interface Access
 
-        public TModel PrepareBaseEntityModelUIAccess<TModel, TEntity, TSettings>(TModel model, TEntity entityType, TSettings settings)
+        public async Task<TModel> PrepareBaseEntityModelUIAccessAsync<TModel, TEntity, TSettings>(TModel model, TEntity entityType, TSettings settings)
             where TModel : BaseEntityModel
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting
@@ -155,12 +155,13 @@ namespace RA.EntityTypes.Factories
             if (settings.Enabled && !entityType.Deleted)
             {
                 // need to add permission here
-                model.UserInterface.ViewEnabled = _accessControl.HasViewAccess<TEntity>().Result;
-                model.UserInterface.CreateEnabled = _accessControl.HasCreateAccess<TEntity>().Result;
-                model.UserInterface.UpdateEnabled = _accessControl.HasUpdateAccess<TEntity>().Result;
-                model.UserInterface.DeleteEnabled = _accessControl.HasDeleteAccess<TEntity>().Result;
+                model.UserInterface.ViewEnabled = await _accessControl.HasViewAccessAsync<TEntity>();
+                model.UserInterface.CreateEnabled = await _accessControl.HasCreateAccessAsync<TEntity>();
+                model.UserInterface.UpdateEnabled = await _accessControl.HasUpdateAccessAsync<TEntity>();
+                model.UserInterface.DeleteEnabled = await _accessControl.HasDeleteAccessAsync<TEntity>();
                 // settings based
                 model.UserInterface.AutoGeneratedTemplate = settings.AutoGeneratedTemplate;
+                model.UserInterface.RedirectUsingCodeEnabled = settings.RedirectByCodeEnabled;
                 model.Enabled = settings.Enabled;
                 model.AddressEnabled = settings.AddressEnabled;
             }
@@ -168,7 +169,7 @@ namespace RA.EntityTypes.Factories
             return model;
         }
 
-        public TList PrepareBaseEntityListModelUIAccess<TList, TModel, TEntity, TSettings>(TList model, Guid entityTypeId)
+        public async Task<TList> PrepareBaseEntityListModelUIAccessAsync<TList, TModel, TEntity, TSettings>(TList model, Guid entityTypeId)
             where TList : BaseListModel<TModel>
             where TModel : BaseEntityModel
             where TEntity : BaseEntityType
@@ -177,19 +178,20 @@ namespace RA.EntityTypes.Factories
             if(entityTypeId.IsNullOrEmpty())
                 throw new ArgumentNullException("EntitytypeId doesn't exists");
 
-            var settings = _entityTypeManager.GetSettingDataOfEntity<TEntity, TSettings>(entityTypeId).Result;
+            var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<TEntity, TSettings>(entityTypeId);
             if (settings == null)
                 throw new ArgumentNullException(typeof(TSettings).Name);
 
             if (settings.Enabled)
             {
                 // need to add permission here
-                model.UserInterface.ViewEnabled = _accessControl.HasViewAccess<TEntity>().Result;
-                model.UserInterface.CreateEnabled = _accessControl.HasCreateAccess<TEntity>().Result;
-                model.UserInterface.UpdateEnabled = _accessControl.HasUpdateAccess<TEntity>().Result;
-                model.UserInterface.DeleteEnabled = _accessControl.HasDeleteAccess<TEntity>().Result;
+                model.UserInterface.ViewEnabled = await _accessControl.HasViewAccessAsync<TEntity>();
+                model.UserInterface.CreateEnabled = await _accessControl.HasCreateAccessAsync<TEntity>();
+                model.UserInterface.UpdateEnabled = await _accessControl.HasUpdateAccessAsync<TEntity>();
+                model.UserInterface.DeleteEnabled = await _accessControl.HasDeleteAccessAsync<TEntity>();
                 // settings based
                 model.UserInterface.AutoGeneratedTemplate = settings.AutoGeneratedTemplate;
+                model.UserInterface.RedirectUsingCodeEnabled = settings.RedirectByCodeEnabled;
             }
 
             return model;
@@ -197,9 +199,9 @@ namespace RA.EntityTypes.Factories
 
         #endregion
 
-        #region Portable View Mapping
+        #region View Component Mapping
 
-        public TModel PrepareBaseEntityPortableView<TModel, TEntity>(TModel model, TEntity entity)
+        public TModel PrepareBaseEntityViewComponent<TModel, TEntity>(TModel model, TEntity entity)
             where TModel : BaseEntityModel
             where TEntity : BaseEntityType
         {
@@ -235,7 +237,7 @@ namespace RA.EntityTypes.Factories
         #endregion
 
         #region Methods
-        private string GetEntityTypeNameFromEntity(string entityTypeSystemName)
+        private string GetEntityTypeNameFromSystemName(string entityTypeSystemName)
         {
             var entityTypeName = "";
 

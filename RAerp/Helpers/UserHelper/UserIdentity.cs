@@ -16,7 +16,7 @@ namespace RAerp.Helpers.UserHelper
             _userService = userService;
         }
 
-        public User GetCurrentUser(HttpContext httpContext)
+        public async Task<User> GetCurrentUserAsync(HttpContext httpContext)
         {
             User user = null;
             var raerpToken = SessionHelper.RetrieveUserSession(httpContext);
@@ -25,21 +25,19 @@ namespace RAerp.Helpers.UserHelper
                 var userId = Guid.Parse(raerpToken);
                 if (userId != Guid.Empty)
                 {
-                    user = _userService.GetById(userId).Result;
+                    user = await _userService.GetById(userId);
                 }
             }
 
             return user;
         }
 
-        public User GetUserDetails(Guid userId)
+        public async Task<User> GetUserDetailsAsync(Guid userId)
         {
             User user = null;
 
             if (userId.IsNotNullOrEmpty())
-            {
-                user = _userService.GetById(userId).Result;
-            }
+                user = await _userService.GetById(userId);
 
             return user;
         }

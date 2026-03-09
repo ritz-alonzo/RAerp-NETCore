@@ -14,6 +14,7 @@ namespace RA.WebFramework.Html.Constants
         public const string AddressTab = "Address";
         public const string InfoHeader = "Info";
         public const string SystemHeader = "System";
+        public const string DetailsHeader = "Details";
         public const string AddressHeader = "Address";
         public const string NewRecord = "NEW";
 
@@ -21,6 +22,7 @@ namespace RA.WebFramework.Html.Constants
         public const string Create = "Create";
         public const string Edit = "Edit";
         public const string Delete = "Delete";
+        public const string AddItem = "Add Item";
         #endregion
     }
 }

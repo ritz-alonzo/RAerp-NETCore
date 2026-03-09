@@ -71,5 +71,7 @@ namespace RA.WebFramework.Models.DataTables
         /// Also as indicator for refresh in grid
         /// </summary>
         public string UrlGridPartialViewAction { get; set; }
+        public bool IsEmbeddedTableToForm { get; set; }
+        public string UrlGridPartialViewId { get; set; }
     }
 }

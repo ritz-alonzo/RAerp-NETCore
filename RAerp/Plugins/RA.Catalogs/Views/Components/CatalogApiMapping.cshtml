@@ -1,0 +1,39 @@
+﻿@model CatalogModel
+
+<div class="table-responsive table-hover mt-2">
+    <table id="catalogEndpointMappingTable" class="table">
+        <thead class="table-dark">
+            <tr>
+                <th>Property Name</th>
+                <th>Data Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@nameof(Model.Id)</td>
+                <td>Guid</td>
+            </tr>
+            <tr>
+                <td>@nameof(Model.Code)</td>
+                <td>String</td>
+            </tr>
+            <tr>
+                <td>@nameof(Model.Name)</td>
+                <td>String</td>
+            </tr>
+            <tr>
+                <td>@nameof(Model.TypeId)</td>
+                <td>Int</td>
+            </tr>
+            <tr>
+                <td>@nameof(Model.UOMId)</td>
+                <td>Guid</td>
+            </tr>
+            <tr>
+                <td>@nameof(Model.Price)</td>
+                <td>Decimal</td>
+            </tr>
+        </tbody>
+        <tfoot></tfoot>
+    </table>
+</div>

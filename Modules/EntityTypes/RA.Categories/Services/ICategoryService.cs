@@ -14,14 +14,14 @@ namespace RA.Categories.Services
     public interface ICategoryService : IEntityTypeService<Category, CategorySetting, RACategoryContext>
     {
         #region Category
-        Task<IEnumerable<Category>> GetCategoryList(List<Guid> categoryTypeIds = null);
-        Task<List<SelectListItem>> GetCategoryTypesSelectList(List<Guid> categoryIds = null);
-        Task<List<SelectListItem>> GetCategoriesSelectList(List<Guid> categoryTypeIds = null);
+        Task<IEnumerable<Category>> GetCategoryListAsync(List<Guid> categoryTypeIds);
+        Task<List<SelectListItem>> GetCategoryTypesSelectListAsync(List<Guid> categoryTypeIds = null);
+        Task<List<SelectListItem>> GetCategoriesSelectListAsync(List<Guid> categoryTypeIds);
         #endregion
 
         #region Category - Entity Mapping
-        Task<List<Guid>> GetEntityIdsByCategoryId(Guid categoryId);
-        Task<Category> GetCategoryByEntityId(Guid entityId);
+        Task<List<Guid>> GetEntityIdsByCategoryIdAsync(Guid categoryId);
+        Task<Category> GetCategoryByEntityIdAsync(Guid entityId);
         #endregion
     }
 }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using System;
+using System.Runtime.CompilerServices;
 
 namespace RA.WebFramework.Extensions
 {
@@ -28,6 +30,18 @@ namespace RA.WebFramework.Extensions
         public static bool IsNotNullOrEmptyJson(this string value)
         {
             return value != "{}";
+        }
+        public static bool HasAny(this List<Guid> value)
+        {
+            return value != null && value.Count > 0;
+        }
+        public static bool HasAny(this List<Guid?> value)
+        {
+            return value != null && value?.Count > 0;
+        }
+        public static bool HasAny(this List<int> value)
+        {
+            return value != null && value.Count > 0;
         }
     }
 }

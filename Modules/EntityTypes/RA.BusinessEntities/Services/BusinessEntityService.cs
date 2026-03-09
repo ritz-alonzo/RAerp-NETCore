@@ -14,11 +14,14 @@ namespace RA.BusinessEntities.Services
 {
     public class BusinessEntityService : EntityTypeService<BusinessEntity, BusinessEntitySetting, RABusinessEntityContext>, IBusinessEntityService
     {
+        #region Constants
         private readonly RABusinessEntityContext _context;
         private readonly DbSet<BusinessEntity> _businessEntity;
         private readonly ICacheManager<BusinessEntity> _cacheManager;
         private readonly IEntityTypeManager _entityTypeManager;
+        #endregion
 
+        #region Ctor
         public BusinessEntityService(RABusinessEntityContext context, 
             ICacheManager<BusinessEntity> cacheManager, 
             IEntityTypeManager entityTypeManager)
@@ -29,11 +32,12 @@ namespace RA.BusinessEntities.Services
             _cacheManager = cacheManager;
             _entityTypeManager = entityTypeManager;
         }
+        #endregion
 
         // override when there's an additional
-        public override async Task Insert(BusinessEntity entity)
+        public override async Task InsertAsync(BusinessEntity entity)
         {
-            await base.Insert(entity);
+            await base.InsertAsync(entity);
         }
 
         public void Test()

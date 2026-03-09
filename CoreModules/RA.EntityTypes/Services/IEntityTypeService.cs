@@ -9,11 +9,11 @@ namespace RA.EntityTypes.Services
         where TSettings : BaseEntityTypeSetting
         where TContext : DbContext
     {
-        Task<TEntity> GetById(Guid id);
-        Task<IEnumerable<TEntity>> GetList(List<Guid> entityTypeIds);
-        Task<IEnumerable<TEntity>> GetList(Guid entityTypeId);
-        Task Insert(TEntity entity);
-        Task Update(TEntity entity);
-        Task Delete(TEntity entity);
+        Task<TEntity> GetByIdAsync(Guid id);
+        Task<IEnumerable<TEntity>> GetListAsync(List<Guid> entityTypeIds);
+        Task<IEnumerable<TEntity>> GetListAsync(Guid entityTypeId);
+        Task InsertAsync(TEntity entity);
+        Task UpdateAsync(TEntity entity);
+        Task DeleteAsync(TEntity entity);
     }
 }

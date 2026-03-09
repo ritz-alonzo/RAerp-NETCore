@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace RA.BusinessEntities.Validators
 {
-    public class BusinessEntityValidator : BaseEntityValidator<BusinessEntityModel>
+    public class BusinessEntityValidator : BaseEntityModelValidator<BusinessEntityModel>
     {
     }
 }

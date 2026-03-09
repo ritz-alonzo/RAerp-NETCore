@@ -2145,7 +2145,8 @@ textarea.form-control-lg {
 }
 
 .form-check-input[type=checkbox] {
-    border-radius: 0.25em
+    border-radius: 0.25em;
+    margin-top: 1px;
 }
 
 .form-check-input[type=radio] {

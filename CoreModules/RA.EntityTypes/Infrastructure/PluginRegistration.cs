@@ -26,7 +26,7 @@ namespace RA.EntityTypes.Infrastructure
             entityTypeNode.SystemName = typeof(EntityType).FullName;
             entityTypeNode.Url = "/EntityTypes/List";
             entityTypeNode.IconClass = "fa fa-th-list";
-            entityTypeNode.Visible = _accessControl.HasSuperAdminAccess();
+            entityTypeNode.Visible = await _accessControl.HasSuperAdminAccessAsync();
             entityTypeNode.DisplayOrder = 2;
             entityTypeNode.IsParentNode = true;
 

@@ -115,7 +115,7 @@ namespace RAerp.Controllers.Admin
 
         public IActionResult UnauthorizedAccess()
         {
-            return RedirectToAction("NoAccess", "AccessRights");
+            return RedirectToAction("AccessDenied", "AccessRights");
         }
     }
 }

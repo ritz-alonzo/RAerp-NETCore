@@ -5,8 +5,8 @@ namespace RA.WebServiceEndpoints.Factories
 {
     public interface IWebServiceEndpointModelFactory
     {
-        Task<WebServiceEndpointListModel> PrepareWebServiceEndpointListModel(WebServiceEndpointSearchModel searchModel);
-        Task<WebServiceEndpointModel> PrepareWebServiceEndpointModel(WebServiceEndpointModel model, WebServiceEndpoint webServiceEndpoint);
-        Task<WebServiceEndpointSearchModel> PrepareWebServiceEndpointSearchModel(WebServiceEndpointSearchModel searchModel, int pageNumber, int pageSize);
+        Task<WebServiceEndpointListModel> PrepareWebServiceEndpointListModelAsync(WebServiceEndpointSearchModel searchModel);
+        Task<WebServiceEndpointModel> PrepareWebServiceEndpointModelAsync(WebServiceEndpointModel model, WebServiceEndpoint webServiceEndpoint);
+        Task<WebServiceEndpointSearchModel> PrepareWebServiceEndpointSearchModelAsync(WebServiceEndpointSearchModel searchModel, int pageNumber, int pageSize);
     }
 }

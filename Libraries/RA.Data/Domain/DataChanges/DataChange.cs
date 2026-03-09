@@ -1,6 +1,8 @@
-﻿using RA.Core.Domain;
+﻿using RA.Core.Data;
+using RA.Core.Domain;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,7 +29,15 @@ namespace RA.Data.Domain.DataChanges
         public string Record { get; set; }
         public string SystemName { get; set; }
         public bool IsApplied { get; set; }
+        // status here
+        public int StatusId { get; set; }
+        // added NotMapped to exclude in reading in database
+        [NotMapped]
+        public DataChangeStatus Status
+        {
+            get { return (DataChangeStatus)StatusId; }
+            set { StatusId = (int)value; }
+        }
         public DateTime CreatedOn { get; set; }
-        public DateTime ModifiedOn { get; set; }
     }
 }

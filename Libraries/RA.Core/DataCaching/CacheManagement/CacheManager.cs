@@ -62,11 +62,11 @@ namespace RA.Core.DataCaching.CacheManagement
                 _memoryCache.Remove(key);
         }
 
-        public IEnumerable<TEntity> GenerateCache(IEnumerable<TEntity> entityList, Guid typeId)
+        public async Task<IEnumerable<TEntity>> GenerateCacheAsync(IEnumerable<TEntity> entityList, Guid typeId)
         {
             try
             {
-                semaphore.Wait();
+                await semaphore.WaitAsync();
 
                 if (EntityCacheNotExists(typeId))
                 {
@@ -136,11 +136,11 @@ namespace RA.Core.DataCaching.CacheManagement
                 _memoryCache.Remove(key);
         }
 
-        public IEnumerable<TEntity> GenerateCache(IEnumerable<TEntity> entityList, List<Guid> typeIds)
+        public async Task<IEnumerable<TEntity>> GenerateCacheAsync(IEnumerable<TEntity> entityList, List<Guid> typeIds)
         {
             try
             {
-                semaphore.Wait();
+                await semaphore.WaitAsync();
 
                 if (EntityCacheNotExists(typeIds))
                 {
@@ -204,11 +204,11 @@ namespace RA.Core.DataCaching.CacheManagement
                 _memoryCache.Remove(key);
         }
 
-        public IEnumerable<TEntity> GenerateCache(IEnumerable<TEntity> entityList, string systemName)
+        public async Task<IEnumerable<TEntity>> GenerateCacheAsync(IEnumerable<TEntity> entityList, string systemName)
         {
             try
             {
-                semaphore.Wait();
+                await semaphore.WaitAsync();
 
                 if (EntityCacheNotExists(systemName))
                 {

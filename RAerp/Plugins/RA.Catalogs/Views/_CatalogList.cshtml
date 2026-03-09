@@ -1,0 +1,118 @@
+﻿@inject IModelAttributeHelper modelAttributeHelper;
+@model CatalogListModel
+
+@{
+    Layout = null;
+}
+
+<div class="card">
+    <div class="card-body">
+        @{
+            // working data table creation
+            // just needed to know the arrangement of records for tbody
+            var gridTable = new DataTablesModel();
+            gridTable.GridName = "catalogs_table";
+            gridTable.ClassName = "table-dark";
+            gridTable.UrlController = "Catalogs";
+            gridTable.UrlEdit = "Index";
+            gridTable.UrlDelete = "Delete";
+            gridTable.UrlGridPartialViewAction = "CatalogListSearch";
+            gridTable.EditEnabled = true;
+            gridTable.DeleteEnabled = true;
+            gridTable.ConfigurationEnabled = false;
+
+            gridTable.Records = Model.Items;
+
+            gridTable.ColumnCollection = new List<ColumnDefinition>
+            {
+                new ColumnDefinition(nameof(CatalogModel.Id))
+                {
+                    IsPrimaryKey = true,
+                    Visible = false,
+                },
+                new ColumnDefinition(nameof(CatalogModel.Code))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<CatalogModel>(nameof(CatalogModel.Code)),
+                    Visible = true,
+                    // RedirectUsingCodeEnabled = @Model.UI.RedirectByCodeEnabled
+                    // for now value is true
+                    RedirectUsingCodeEnabled = true
+                },
+                new ColumnDefinition(nameof(CatalogModel.Name))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<CatalogModel>(nameof(CatalogModel.Name)),
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(CatalogModel.Description))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<CatalogModel>(nameof(CatalogModel.Description)),
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(CatalogModel.Type))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<CatalogModel>(nameof(CatalogModel.TypeId)),
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(CatalogModel.UOMId))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<CatalogModel>(nameof(CatalogModel.UOMId)),
+                    Visible = true,
+                    ColumnSelectList = Model.Items.Any() ? Model.Items.Select(c => c.AvailableCategories).FirstOrDefault() : new List<SelectListItem>(),
+                    ControlType = ControlType.Dropdown
+                },
+                new ColumnDefinition(nameof(CatalogModel.Price))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<CatalogModel>(nameof(CatalogModel.Price)),
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(CatalogModel.CreatedOn))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<CatalogModel>(nameof(CatalogModel.CreatedOn)),
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(CatalogModel.ModifiedOn))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<CatalogModel>(nameof(CatalogModel.ModifiedOn)),
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(CatalogModel.Status))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<CatalogModel>(nameof(CatalogModel.StatusId)),
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(CatalogModel.CreatedByUser))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<CatalogModel>(nameof(CatalogModel.CreatedByUser)),
+                    Visible = true,
+                    PropertyValueHolder = nameof(CatalogModel.CreatedByUser.FullName),
+                },
+                new ColumnDefinition(nameof(CatalogModel.CreatedById))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<CatalogModel>(nameof(CatalogModel.CreatedByUser)),
+                    Visible = false,
+                },
+            };
+
+            @await Html.PartialAsync("~/Views/Shared/Tables/_Table.cshtml", gridTable)
+        }
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/Tables/_Pagination.cshtml", Model)
+
+<script type="text/javascript">
+    var timeOut = null;
+    $('#catalogs_search').on("input", function (e) {
+        if (e.key === 'Enter' || e.keyCode === 13) return;
+        var formSearchId = 'catalogs_search';
+        var url = '@Url.Action("CatalogListSearch", "Catalogs")'
+        var partialViewId = 'catalogs';
+        clearTimeout(timeOut);
+        timeOut = setTimeout(function (e) { SearchFunction(formSearchId, url, partialViewId); }, 500);
+    });
+    var tableId = "catalogs_table";
+    formatStatus(tableId);
+</script>
+
+
+

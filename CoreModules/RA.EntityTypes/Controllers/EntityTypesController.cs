@@ -32,8 +32,8 @@ namespace RA.EntityTypes.Controllers
         public async Task<IActionResult> List(int page = 1)
         {
             // default page size
-            int pageSize = 10;
-            var model = await _entityTypeModelFactory.PrepareEntityTypeSearchModel(new EntityTypeSearchModel(), page, pageSize);
+            int pageSize = 1;
+            var model = await _entityTypeModelFactory.PrepareEntityTypeSearchModelAsync(new EntityTypeSearchModel(), page, pageSize);
 
             return View("~/Plugins/RA.EntityTypes/Views/List.cshtml", model);
         }
@@ -43,7 +43,7 @@ namespace RA.EntityTypes.Controllers
         [HttpGet]
         public async Task<IActionResult> EntityTypeListSearch(EntityTypeSearchModel searchModel)
         {
-            var model = await _entityTypeModelFactory.PrepareEntityTypeListModel(searchModel);
+            var model = await _entityTypeModelFactory.PrepareEntityTypeListModelAsync(searchModel);
 
             return PartialView("~/Plugins/RA.EntityTypes/Views/_EntityTypeList.cshtml", model);
         }
@@ -61,7 +61,7 @@ namespace RA.EntityTypes.Controllers
             entityTypeSearchModel.SearchParentEntityTypeId = id;
             entityTypeSearchModel.ChildEntitySearchEnabled = true;
 
-            var model = await _entityTypeModelFactory.PrepareEntityTypeSearchModel(entityTypeSearchModel, page, pageSize);
+            var model = await _entityTypeModelFactory.PrepareEntityTypeSearchModelAsync(entityTypeSearchModel, page, pageSize);
 
             return View("~/Plugins/RA.EntityTypes/Views/ChildEntityTypeList.cshtml", model);
         }
@@ -71,7 +71,7 @@ namespace RA.EntityTypes.Controllers
         [HttpGet]
         public async Task<IActionResult> ChildEntityTypeListSearch(EntityTypeSearchModel searchModel)
         {
-            var model = await _entityTypeModelFactory.PrepareChildEntityTypeListModel(searchModel);
+            var model = await _entityTypeModelFactory.PrepareChildEntityTypeListModelAsync(searchModel);
 
             return PartialView("~/Plugins/RA.EntityTypes/Views/_ChildEntityTypeListSearch.cshtml", model);
         }
@@ -83,7 +83,7 @@ namespace RA.EntityTypes.Controllers
             if (parentEntityTypeId.IsNullOrEmpty())
                 throw new Exception(EntityTypeMessages.ParentEntityTypeIdNotExists);
 
-            var model = await _entityTypeModelFactory.PrepareEntityTypeModel(new EntityTypeModel(), parentEntityTypeId, true);
+            var model = await _entityTypeModelFactory.PrepareEntityTypeModelAsync(new EntityTypeModel(), parentEntityTypeId, true);
 
             return View("~/Plugins/RA.EntityTypes/Views/CreateChildEntity.cshtml", model);
         }
@@ -95,7 +95,7 @@ namespace RA.EntityTypes.Controllers
             if (model.ParentEntityTypeId.IsNullOrEmpty())
                 return JsonError(EntityTypeMessages.ParentEntityTypeIdNotExists);
 
-            var parentEntityType = await _entityTypeManager.GetById(model.ParentEntityTypeId.Value);
+            var parentEntityType = await _entityTypeManager.GetByIdAsync(model.ParentEntityTypeId.Value);
             if (parentEntityType == null)
                 return JsonError(EntityTypeMessages.ParentTypeNotExists);
 
@@ -108,7 +108,7 @@ namespace RA.EntityTypes.Controllers
                     Installed = true,
                     ParentEntityTypeId = model.ParentEntityTypeId
                 };
-                await _entityTypeManager.Insert(childEntityType);
+                await _entityTypeManager.InsertAsync(childEntityType);
             }
             else
             {

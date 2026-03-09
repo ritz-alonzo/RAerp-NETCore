@@ -12,19 +12,23 @@
     <!-- Custom CSS -->
     <link href="~/css/style.min.css" rel="stylesheet" />
     <!-- Font Awesome CSS -->
-    @* <link href="~/css/font-awesome/css/fontawesome.min.css" rel="stylesheet" />
-    <link href="~/css/font-awesome/css/fontawesome-all.css" rel="stylesheet" /> *@
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="~/css/font-awesome/css/fontawesome.min.css" rel="stylesheet" />
+    <link href="~/css/font-awesome/css/fontawesome-all.css" rel="stylesheet" />
     <link href="~/assets/libs/toastr/build/toastr.min.css" rel="stylesheet" />
-    <link rel="icon" href="~/assets/images/logo-icon.png" type="image/x-icon">
     <link href="~/css/login.style.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.13/css/bootstrap-multiselect.css">
+    <link rel="icon" href="~/assets/images/logo-icon.png" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.14/css/bootstrap-multiselect.css">
 </head>
 <body class="layout-body">
-    <div class="container">
-        <main role="main">
-            @RenderBody()
-        </main>
+    <div class="container-fluid">
+        <!-- Loader -->
+        <div class="row" id="loader"></div>
+        <!-- Main RenderBody -->
+        <div class="row">
+            <main role="main" class="pb-3">
+                @RenderBody()
+            </main>
+        </div>
     </div>
 
     @* <footer class="border-top footer text-muted">
@@ -61,22 +65,31 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/assets/libs/toastr/toastr.js"></script>
     <script src="~/js/admin.js"></script>
+    <script src="~/js/address.js"></script>
     <script src="~/assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.13/js/bootstrap-multiselect.js"></script>
-    
-    <script>
-        var jsFunction = '';
-        var message = '';
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
+    <script type="text/javascript">
         @if (TempData.ContainsKey("notificationScript") && TempData.ContainsKey("notificationMessage"))
         {
-            <text>
-                jsFunction = '@TempData["notificationScript"]'
-                message = '@TempData["notificationMessage"]'
-            </text>
+            var jsFunction = TempData["notificationScript"]?.ToString();
+            var message = TempData["notificationMessage"]?.ToString();
+            if (!string.IsNullOrEmpty(jsFunction))
+            {
+                <text>
+                    var notifFunction = @Html.Raw(Json.Serialize(jsFunction));
+                    var notifMessage = @Html.Raw(Json.Serialize(message));
+                    initializeControllerNotification(notifFunction, notifMessage);
+                </text>
+            }
         }
-        if (jsFunction != null || jsFunction != "" || jsFunction != '') {
-            initializeNotification(jsFunction, message);
-        }
+    </script>
+    <script type="text/javascript">
+        $('#formItemModal').on('hidden.bs.modal', (e) => {
+            console.log('hiding modal');
+            $('#formItemData').html("");
+            $('#formItemModalLabel').html("");
+        });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

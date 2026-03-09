@@ -4,41 +4,68 @@ using RA.Data.Domain.DataChanges;
 
 namespace RAerp.Services.DataChangeServices
 {
-    public class DataChangeService
+    public class DataChangeService : IDataChangeService
     {
+        #region Constants
         private readonly RAerpContext _erpContext;
         private readonly DbSet<DataChange> _dataChange;
+        #endregion
 
+        #region Ctor
         public DataChangeService(RAerpContext erpContext)
         {
             _erpContext = erpContext;
             _dataChange = _erpContext.Set<DataChange>();
         }
+        #endregion
 
-        public async Task<DataChange> GetById(Guid id)
+        #region CRUD
+        public async Task<DataChange> GetByIdAsync(Guid id)
         {
             return await _dataChange.FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public async Task<List<DataChange>> GetList()
+        public async Task<DataChange> GetByDataIdAndItemDataIdAsync(Guid dataId, Guid itemDataId)
+        {
+            return await _dataChange.FirstOrDefaultAsync(c => c.DataId == dataId && c.ItemDataId == itemDataId);
+        }
+
+        public async Task<IEnumerable<DataChange>> GetListAsync()
         {
             return await _dataChange.ToListAsync();
         }
 
-        public async Task Insert(DataChange data)
+        public async Task<IEnumerable<DataChange>> GetListByDataIdAsync(Guid dataId)
+        {
+            return await _dataChange.Where(c => c.DataId == dataId).ToListAsync();
+        }
+
+        public async Task InsertAsync(DataChange data)
         {
             data.CreatedOn = DateTime.Now;
             await _dataChange.AddAsync(data);
             await _erpContext.SaveChangesAsync();
         }
 
-        public async Task ApplyChanges(DataChange data)
+        public async Task UpdateAsync(DataChange data)
         {
-            data.IsApplied = true;
-            data.ModifiedOn = DateTime.Now;
             _dataChange.Update(data);
             await _erpContext.SaveChangesAsync();
         }
 
+        public async Task DeleteAsync(DataChange data, bool saveChangesToDb = false)
+        {
+            _dataChange.Remove(data);
+            if (saveChangesToDb)
+                await _erpContext.SaveChangesAsync();
+        }
+
+        public async Task ApplyChangesAsync(DataChange data)
+        {
+            data.IsApplied = true;
+            _dataChange.Update(data);
+            await _erpContext.SaveChangesAsync();
+        }
+        #endregion
     }
 }

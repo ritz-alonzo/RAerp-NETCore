@@ -117,18 +117,21 @@ namespace RAerp.Factories.AccessRightsFactory
             {
                 foreach (var pluginAssembly in modulePluginAssemblies)
                 {
-                    var ARType = pluginAssembly.GetTypes().Where(c => c.Name.Contains("AccessRightsRecord") && c.IsClass).FirstOrDefault();
-                    if (ARType != null)
+                    var ARTypeList = pluginAssembly.GetTypes().Where(c => c.Name.Contains("AccessRightsRecord") && c.IsClass).ToList();
+                    foreach (var ARType in ARTypeList)
                     {
-                        var ARRInstance = Activator.CreateInstance(ARType);
-                        var ARRfields = ARType.GetFields().Where(c => c.FieldType == typeof(AccessRecord)).ToList();
-                        foreach (var ARRfield in ARRfields)
+                        if (ARType != null)
                         {
-                            var accessRightsRecord = ARRfield.GetValue(ARRInstance) as AccessRecord;
-                            if (accessRightsRecord == null)
-                                continue;
+                            var ARRInstance = Activator.CreateInstance(ARType);
+                            var ARRfields = ARType.GetFields().Where(c => c.FieldType == typeof(AccessRecord)).ToList();
+                            foreach (var ARRfield in ARRfields)
+                            {
+                                var accessRightsRecord = ARRfield.GetValue(ARRInstance) as AccessRecord;
+                                if (accessRightsRecord == null)
+                                    continue;
 
-                            accessRecordList.Add(accessRightsRecord);
+                                accessRecordList.Add(accessRightsRecord);
+                            }
                         }
                     }
                 }

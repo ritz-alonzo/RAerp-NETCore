@@ -17,18 +17,22 @@ namespace MMS.Factories.Factories.EntityTypeFactory
     /// </summary>
     public class EntityTypeModelFactory : IEntityTypeModelFactory
     {
+        #region Constants
         private readonly IEntityTypeManager _entityTypeManager;
-        private readonly IBaseModelFactory _baseSearchModelFactory;
+        private readonly IBaseModelFactory _baseModelFactory;
         private readonly IMapper _mapper;
+        #endregion
 
-        public EntityTypeModelFactory(IEntityTypeManager entityTypeManager, IBaseModelFactory baseSearchModelFactory, IMapper mapper)
+        #region Ctor
+        public EntityTypeModelFactory(IEntityTypeManager entityTypeManager, IBaseModelFactory baseModelFactory, IMapper mapper)
         {
             _entityTypeManager = entityTypeManager;
-            _baseSearchModelFactory = baseSearchModelFactory;
+            _baseModelFactory = baseModelFactory;
             _mapper = mapper;
         }
+        #endregion
 
-        public virtual async Task<EntityTypeModel> PrepareEntityTypeModel(EntityTypeModel model, Guid entityTypeId, bool childEntityCreation = false)
+        public virtual async Task<EntityTypeModel> PrepareEntityTypeModelAsync(EntityTypeModel model, Guid entityTypeId, bool childEntityCreation = false)
         {
             if (model == null)
                 throw new ArgumentNullException(nameof(model));
@@ -39,7 +43,7 @@ namespace MMS.Factories.Factories.EntityTypeFactory
             // not child entity type creation
             if (!childEntityCreation)
             {
-                var entityType = await _entityTypeManager.GetById(entityTypeId);
+                var entityType = await _entityTypeManager.GetByIdAsync(entityTypeId);
                 if (entityType == null)
                     throw new Exception(EntityTypeMessages.EntityTypeNotExists);
 
@@ -54,21 +58,21 @@ namespace MMS.Factories.Factories.EntityTypeFactory
             return model;
         }
 
-        public virtual async Task<EntityTypeSearchModel> PrepareEntityTypeSearchModel(EntityTypeSearchModel searchModel, int pageNumber, int pageSize)
+        public virtual async Task<EntityTypeSearchModel> PrepareEntityTypeSearchModelAsync(EntityTypeSearchModel searchModel, int pageNumber, int pageSize)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
-            _baseSearchModelFactory.PrepareBaseSearchModel(searchModel, pageSize, pageNumber);
+            _baseModelFactory.PrepareBaseSearchModel(searchModel, pageSize, pageNumber);
             
             if (searchModel.SearchParentEntityTypeId.IsNotNullOrEmpty() && searchModel.ChildEntitySearchEnabled == true)
             {
-                searchModel.EntityTypes = await PrepareChildEntityTypeListModel(searchModel);
-                searchModel.EntityTypeName = _entityTypeManager.GetById(searchModel.SearchParentEntityTypeId.Value).Result.EntityName;
+                searchModel.EntityTypes = await PrepareChildEntityTypeListModelAsync(searchModel);
+                searchModel.EntityTypeName = _entityTypeManager.GetByIdAsync(searchModel.SearchParentEntityTypeId.Value).Result.EntityName;
             }
             else
             {
-                searchModel.EntityTypes = await PrepareEntityTypeListModel(searchModel);
+                searchModel.EntityTypes = await PrepareEntityTypeListModelAsync(searchModel);
                 searchModel.EntityTypeName = "Entity Types";
             }
 
@@ -82,11 +86,11 @@ namespace MMS.Factories.Factories.EntityTypeFactory
             return searchModel;
         }
 
-        public virtual async Task<EntityTypeListModel> PrepareEntityTypeListModel(EntityTypeSearchModel searchModel)
+        public virtual async Task<EntityTypeListModel> PrepareEntityTypeListModelAsync(EntityTypeSearchModel searchModel)
         {
             var model = new EntityTypeListModel();
 
-            var entityTypeList = await _entityTypeManager.GetList(
+            var entityTypeList = await _entityTypeManager.GetListAsync(
                 searchQuery: searchModel.SearchQuery,
                 createdOn: searchModel.SearchInstalledOn
                 );
@@ -105,16 +109,16 @@ namespace MMS.Factories.Factories.EntityTypeFactory
 
             }).ToList();
 
-            _baseSearchModelFactory.PrepareBaseListModel(model, entityTypes, searchModel, entityTypeList.Count());
+            _baseModelFactory.PrepareBaseListModel(model, entityTypes, searchModel, entityTypeList.Count());
 
             return model;
         }
 
-        public virtual async Task<EntityTypeListModel> PrepareChildEntityTypeListModel(EntityTypeSearchModel searchModel)
+        public virtual async Task<EntityTypeListModel> PrepareChildEntityTypeListModelAsync(EntityTypeSearchModel searchModel)
         {
             var model = new EntityTypeListModel();
 
-            var entityTypeList = await _entityTypeManager.GetList(
+            var entityTypeList = await _entityTypeManager.GetListAsync(
                 searchQuery: searchModel.SearchQuery,
                 createdOn: searchModel.SearchInstalledOn, 
                 parentEntityTypeId: searchModel.SearchParentEntityTypeId,
@@ -135,7 +139,7 @@ namespace MMS.Factories.Factories.EntityTypeFactory
 
             }).ToList();
 
-            _baseSearchModelFactory.PrepareBaseListModel(model, entityTypes, searchModel, entityTypeList.Count());
+            _baseModelFactory.PrepareBaseListModel(model, entityTypes, searchModel, entityTypeList.Count());
 
             return model;
         }
@@ -196,12 +200,12 @@ namespace MMS.Factories.Factories.EntityTypeFactory
 
         private bool UseModalConfiguration(Guid entityTypeId)
         {
-            var entityHasChild = _entityTypeManager.GetChildEntities(entityTypeId).Result;
+            var entityHasChild = _entityTypeManager.GetChildEntitiesAsync(entityTypeId).Result;
 
             if (entityHasChild.Any())
                 return false;
 
-            var entityType = _entityTypeManager.GetById(entityTypeId).Result;
+            var entityType = _entityTypeManager.GetByIdAsync(entityTypeId).Result;
 
             if (entityType != null)
             {

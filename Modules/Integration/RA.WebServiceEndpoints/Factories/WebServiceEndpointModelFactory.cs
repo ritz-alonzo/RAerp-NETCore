@@ -11,35 +11,46 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using RA.Core.Models.PortableViewModels;
+using RAerp.Helpers.PluginHelper;
+using RAerp.PluginServiceProvider;
+using RAerp.Helpers.UserHelper;
 
 namespace RA.WebServiceEndpoints.Factories
 {
     public class WebServiceEndpointModelFactory : IWebServiceEndpointModelFactory
     {
+        #region Constants
         private readonly IWebServiceEndpointService _webServiceEndpointService;
         private readonly IBaseModelFactory _baseModelFactory;
         private readonly IMapper _mapper;
         private readonly IEntityTypeManager _entityTypeManager;
+        private readonly IUserIdentity _userIdentity;
+        #endregion
 
+        #region Ctor
         public WebServiceEndpointModelFactory(IWebServiceEndpointService webServiceEndpointService,
             IBaseModelFactory baseModelFactory,
             IMapper mapper,
-            IEntityTypeManager entityTypeManager)
+            IEntityTypeManager entityTypeManager,
+            IUserIdentity userIdentity)
         {
             _webServiceEndpointService = webServiceEndpointService;
             _baseModelFactory = baseModelFactory;
             _mapper = mapper;
             _entityTypeManager = entityTypeManager;
+            _userIdentity = userIdentity;
         }
+        #endregion
 
-        public virtual async Task<WebServiceEndpointSearchModel> PrepareWebServiceEndpointSearchModel(WebServiceEndpointSearchModel searchModel, int pageNumber, int pageSize)
+        public virtual async Task<WebServiceEndpointSearchModel> PrepareWebServiceEndpointSearchModelAsync(WebServiceEndpointSearchModel searchModel, int pageNumber, int pageSize)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
             _baseModelFactory.PrepareBaseSearchModel(searchModel, pageSize, pageNumber);
 
-            searchModel.WebServiceEndpoints = await PrepareWebServiceEndpointListModel(searchModel);
+            searchModel.WebServiceEndpoints = await PrepareWebServiceEndpointListModelAsync(searchModel);
             searchModel.WebServiceEndpointName = "Web Service Endpoints";
 
             // system name mapping for active menu
@@ -52,7 +63,7 @@ namespace RA.WebServiceEndpoints.Factories
             return searchModel;
         }
 
-        public virtual async Task<WebServiceEndpointListModel> PrepareWebServiceEndpointListModel(WebServiceEndpointSearchModel searchModel)
+        public virtual async Task<WebServiceEndpointListModel> PrepareWebServiceEndpointListModelAsync(WebServiceEndpointSearchModel searchModel)
         {
             var model = new WebServiceEndpointListModel();
 
@@ -68,11 +79,11 @@ namespace RA.WebServiceEndpoints.Factories
                 var webServiceEndpointModel = new WebServiceEndpointModel();
                 webServiceEndpointModel = _mapper.Map(webServiceEndpoint, webServiceEndpointModel);
                 // will need to add check user, to set user data
-                //var createdByUser = _userIdentity.GetUserDetails(businesEntity.CreatedById);
-                //if (createdByUser != null)
-                //    businessEntityModel.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(createdByUser);
+                var createdByUser = _userIdentity.GetUserDetailsAsync(webServiceEndpoint.CreatedById).Result;
+                if (createdByUser != null)
+                    webServiceEndpointModel.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(createdByUser);
                 // END
-                webServiceEndpointModel.EndpointEntityTypeName = _entityTypeManager.GetById(webServiceEndpoint.EndpointEntityTypeId.Value).Result.EntityName;
+                webServiceEndpointModel.EndpointEntityTypeName = _entityTypeManager.GetByIdAsync(webServiceEndpoint.EndpointEntityTypeId.Value).Result.EntityName;
 
                 return webServiceEndpointModel;
 
@@ -83,7 +94,7 @@ namespace RA.WebServiceEndpoints.Factories
             return model;
         }
 
-        public virtual async Task<WebServiceEndpointModel> PrepareWebServiceEndpointModel(WebServiceEndpointModel model, WebServiceEndpoint webServiceEndpoint)
+        public virtual async Task<WebServiceEndpointModel> PrepareWebServiceEndpointModelAsync(WebServiceEndpointModel model, WebServiceEndpoint webServiceEndpoint)
         {
             if (model == null)
                 throw new ArgumentNullException(nameof(model));
@@ -92,25 +103,53 @@ namespace RA.WebServiceEndpoints.Factories
             {
                 webServiceEndpoint = new WebServiceEndpoint();
                 model.CreatedOn = DateTime.Now;
+                model.IsMappingVisible = false;
             }
             else
             {
                 model = _mapper.Map(webServiceEndpoint, model);
                 if (webServiceEndpoint.CreatedById.IsNotNullOrEmpty())
                     model.CreatedByUser.Id = webServiceEndpoint.CreatedById;
+
+                model.IsMappingVisible = true;
+                // plugin view component of the current endpoint domain 
+                var pluginAssemblies = PluginAssemblyHelper.GetAllModulesPluginAssemblies();
+                if (pluginAssemblies.Any())
+                {
+                    foreach (var assembly in pluginAssemblies)
+                    {
+                        var pluginPortableView = assembly.GetTypes()
+                            .Where(t => t.GetInterfaces().Contains(typeof(IPluginViewComponent)))
+                            .FirstOrDefault();
+
+                        if (pluginPortableView != null)
+                        {
+                            var pluginInstance = Activator.CreateInstance(pluginPortableView) as IPluginViewComponent;
+
+                            if (pluginInstance != null)
+                            {
+                                // Ex. Inventory (referencing BusinessEntities)
+                                var viewComponentList = pluginInstance.ManagePluginViewComponent();
+                                if (viewComponentList.Any())
+                                {
+                                    var pluginComponentList = viewComponentList.Where(c => c.TargetEntity == nameof(WebServiceEndpoint) && c.SourceEntity == model.EndpointDomain).ToList();
+                                    model.PluginComponents = pluginComponentList.Any() ? pluginComponentList : new List<PluginViewComponentModel>();
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             model.WebServiceEndpointSystemName = typeof(WebServiceEndpoint).FullName;
 
-            _baseModelFactory.PrepareBaseModel<WebServiceEndpointModel>(model);
+            await _baseModelFactory.PrepareBaseModelAsync<WebServiceEndpointModel>(model);
 
             // need to prepare list of Entity Types for Selection
             if (webServiceEndpoint.EndpointEntityTypeId.IsNotNullOrEmpty())
-            {
                 model.EndpointEntityTypeId = webServiceEndpoint.EndpointEntityTypeId;
-            }
 
-            model.AvailableEntityTypes = await _entityTypeManager.GetEntityTypesSelectList();
+            model.AvailableEntityTypes = await _entityTypeManager.GetEntityTypesSelectListAsync();
 
             return model;
         }

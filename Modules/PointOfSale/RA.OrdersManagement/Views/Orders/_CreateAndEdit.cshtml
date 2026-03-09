@@ -1,0 +1,49 @@
+﻿@model OrderModel
+
+<div class="col-md-12">
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs" id="formTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="general-form-tab" data-bs-toggle="tab" data-bs-target="#generalForm" type="button" role="tab" aria-controls="generalForm" aria-selected="true">
+                @HtmlContentConstants.GeneralTab
+            </button>
+        </li>
+    </ul>
+    <div class="tab-content" id="formTabContent">
+        <div class="tab-pane fade show active" id="generalForm" role="tabpanel" aria-labelledby="general-form-tab">
+            <div class="card">
+                <div class="card-body">
+                    @await Html.PartialAsync("~/Plugins/RA.OrdersManagement/Views/Orders/_CreateAndEdit.General.cshtml", Model)
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    @await Html.PartialAsync("~/Plugins/RA.OrdersManagement/Views/Orders/_CreateAndEdit.System.cshtml", Model)
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Grid -->
+    <ul class="nav nav-tabs mb-2" id="formDetailTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="form-item-detail-tab" data-bs-toggle="tab" data-bs-target="#formItemDetailTab" type="button" role="tab" aria-controls="formItemDetailTab" aria-selected="true">
+                @HtmlContentConstants.DetailsHeader
+            </button>
+        </li>
+    </ul>
+    <div class="tab-content" id="formItemDetailTabContent">
+        <div class="tab-pane fade show active" id="formItemDetailTab" role="tabpanel" aria-labelledby="form-item-detail-tab">
+            <div class="card">
+                <div class="card-body">
+                    <div id="orderItems">
+                        @await Html.PartialAsync("~/Plugins/RA.OrdersManagement/Views/Orders/_CreateAndEdit.Items.cshtml", Model.Items)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+

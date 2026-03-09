@@ -1,5 +1,5 @@
 ﻿using RA.Core.Domain;
-using RA.Data.Data.FormTypes;
+using RA.Core.PluginData.FormTypes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -27,8 +27,10 @@ namespace RA.FormTypes.Domain
         public string Description { get; set; }
         public Guid CreatedById { get; set; }
         public Guid? ModifiedById { get; set; }
+        public Guid? ApprovedById { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime? ModifiedOn { get; set; }
+        public DateTime? ApprovedOn { get; set; }
         public DateTime? DeletedOn { get; set; }
         public bool Deleted { get; set; }
     }

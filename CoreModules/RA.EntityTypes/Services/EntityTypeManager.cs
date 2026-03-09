@@ -27,27 +27,27 @@ namespace RA.EntityTypes.Services
 
         #region Entity Type CRUD
 
-        public virtual async Task<EntityType> GetById(Guid id)
+        public virtual async Task<EntityType> GetByIdAsync(Guid id)
         {
             return await _erpContext.EntityType.FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public virtual async Task<EntityType> GetTypeBySystemName(string systemName)
+        public virtual async Task<EntityType> GetTypeBySystemNameAsync(string systemName)
         {
             return await _erpContext.EntityType.FirstOrDefaultAsync(c => c.EntitySystemName.ToLower() == systemName.ToLower());
         }
 
-        public virtual async Task<List<EntityType>> GetTypesBySystemName(string systemName)
+        public virtual async Task<List<EntityType>> GetTypesBySystemNameAsync(string systemName)
         {
             return await _erpContext.EntityType.Where(c => c.EntitySystemName.Contains(systemName) && c.ParentEntityTypeId.HasValue).ToListAsync();
         }
 
-        public virtual async Task<EntityType> GetTypeByEntityClassificationName(string systemName, string entityTypeName)
+        public virtual async Task<EntityType> GetTypeByEntityClassificationNameAsync(string systemName, string entityTypeName)
         {
             return await _erpContext.EntityType.FirstOrDefaultAsync(c => c.EntitySystemName.ToLower() == systemName.ToLower() && c.EntityClassificationName.ToLower() == entityTypeName.ToLower());
         }
 
-        public virtual async Task<IEnumerable<EntityType>> GetList(
+        public virtual async Task<IEnumerable<EntityType>> GetListAsync(
             string searchQuery = null, 
             DateTime? createdOn = null, 
             string entityClassificationName = null, 
@@ -80,20 +80,20 @@ namespace RA.EntityTypes.Services
             return await query.ToListAsync();
         }
 
-        public virtual async Task Insert(EntityType entityType)
+        public virtual async Task InsertAsync(EntityType entityType)
         {
             entityType.InstalledOn = DateTime.Now;
             await _erpContext.AddAsync(entityType);
             await _erpContext.SaveChangesAsync();
         }
 
-        public virtual async Task Update(EntityType entityType)
+        public virtual async Task UpdateAsync(EntityType entityType)
         {
             _erpContext.Update(entityType);
             await _erpContext.SaveChangesAsync();
         }
 
-        public virtual async Task<IEnumerable<EntityType>> GetChildEntities(Guid parentTypeId)
+        public virtual async Task<IEnumerable<EntityType>> GetChildEntitiesAsync(Guid parentTypeId)
         {
             var query = _erpContext.EntityType.AsQueryable();
 
@@ -105,12 +105,12 @@ namespace RA.EntityTypes.Services
             return await query.ToListAsync();
         }
 
-        public virtual async Task<EntityType> GetParentEntityTypeByChildEntityTypeId(Guid childEntityTypeId)
+        public virtual async Task<EntityType> GetParentEntityTypeByChildEntityTypeIdAsync(Guid childEntityTypeId)
         {
             if (childEntityTypeId.IsNullOrEmpty()) 
                 throw new Exception("Child Entity Type Id cannot be null");
 
-            var childEntityType = await GetById(childEntityTypeId);
+            var childEntityType = await GetByIdAsync(childEntityTypeId);
 
             if (childEntityType == null) 
                 throw new Exception("Child Entity Type doesn't exists");
@@ -118,7 +118,7 @@ namespace RA.EntityTypes.Services
             if (!childEntityType.ParentEntityTypeId.HasValue)
                 throw new Exception("Parent Entity Type Id cannot be null");
 
-            var parentEntityType = await GetById(childEntityType.ParentEntityTypeId.Value);
+            var parentEntityType = await GetByIdAsync(childEntityType.ParentEntityTypeId.Value);
 
             if (parentEntityType == null)
                 throw new Exception("Parent Entity Type doesn't exists");
@@ -130,12 +130,12 @@ namespace RA.EntityTypes.Services
 
         #region Settings
 
-        public async Task<Setting> GetSettingById(Guid id)
+        public async Task<Setting> GetSettingByIdAsync(Guid id)
         {
             return await _erpContext.Setting.FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public virtual async Task<Setting> GetSettingByEntityTypeId<TEntity, TSettings>(Guid entityTypeId)
+        public virtual async Task<Setting> GetSettingByEntityTypeIdAsync<TEntity, TSettings>(Guid entityTypeId)
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting
         {
@@ -143,7 +143,7 @@ namespace RA.EntityTypes.Services
         }
 
 
-        public virtual async Task<Setting> GetSettingByEntitySystemNameAndEntityTypeId<TEntity, TSettings>(Guid entityTypeId, string entityTypeSystemName)
+        public virtual async Task<Setting> GetSettingByEntitySystemNameAndEntityTypeIdAsync<TEntity, TSettings>(Guid entityTypeId, string entityTypeSystemName)
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting
         {
@@ -156,7 +156,7 @@ namespace RA.EntityTypes.Services
         /// Data of Setting will be converted here
         /// </summary>
         /// <param name="settings"></param>
-        public virtual async Task InsertEntitySetting<TEntity, TSettings>(Guid entityTypeId, string entitySystemName = null)
+        public virtual async Task InsertEntitySettingAsync<TEntity, TSettings>(Guid entityTypeId, string entitySystemName = null)
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting
         {
@@ -179,13 +179,13 @@ namespace RA.EntityTypes.Services
         /// Data of Setting will be converted here
         /// </summary>
         /// <param name="settings"></param>
-        public virtual async Task UpdateSettingDataOfEntity<TEntity, TSettings>(TSettings settings, Guid entityTypeId)
+        public virtual async Task UpdateSettingDataOfEntityAsync<TEntity, TSettings>(TSettings settings, Guid entityTypeId)
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting
         {
             var settingData = JsonConvert.SerializeObject(settings);
 
-            var setting = await GetSettingByEntityTypeId<TEntity, TSettings>(entityTypeId);
+            var setting = await GetSettingByEntityTypeIdAsync<TEntity, TSettings>(entityTypeId);
             if (setting != null)
             {
                 setting.Data = settingData;
@@ -207,7 +207,7 @@ namespace RA.EntityTypes.Services
         /// <param name="entity"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public virtual async Task<TSettings> GetSettingDataOfEntity<TEntity, TSettings>(Guid entityTypeId, string entitySystemName = null)
+        public virtual async Task<TSettings> GetSettingDataOfEntityAsync<TEntity, TSettings>(Guid entityTypeId, string entitySystemName = null)
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting
         {
@@ -222,12 +222,12 @@ namespace RA.EntityTypes.Services
             {
                 if (string.IsNullOrEmpty(entitySystemName))
                 {
-                    await InsertEntitySetting<TEntity, TSettings>(entityTypeId);
+                    await InsertEntitySettingAsync<TEntity, TSettings>(entityTypeId);
                     setting = await _erpContext.Setting.FirstOrDefaultAsync(c => c.Name.Equals(typeof(TEntity).Name) && c.EntityTypeId == entityTypeId);
                 }
                 else
                 {
-                    await InsertEntitySetting<TEntity, TSettings>(entityTypeId, entitySystemName);
+                    await InsertEntitySettingAsync<TEntity, TSettings>(entityTypeId, entitySystemName);
                     setting = await _erpContext.Setting.FirstOrDefaultAsync(c => c.SystemName.Equals(entitySystemName) && c.EntityTypeId == entityTypeId);
                 }
             }
@@ -241,11 +241,11 @@ namespace RA.EntityTypes.Services
         }
 
         // will be used in insert, update of Entity
-        public virtual async Task<string> GetCurrentTemplateOfEntity<TEntity, TSettings>(Guid entityTypeId)
+        public virtual async Task<string> GetCurrentTemplateOfEntityAsync<TEntity, TSettings>(Guid entityTypeId)
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting
         {
-            var setting = await GetSettingDataOfEntity<TEntity, TSettings>(entityTypeId);
+            var setting = await GetSettingDataOfEntityAsync<TEntity, TSettings>(entityTypeId);
 
             if (setting == null)
                 throw new Exception(nameof(setting));
@@ -257,27 +257,27 @@ namespace RA.EntityTypes.Services
         }
 
         // will be used in insert, update of Entity
-        public virtual async Task IncreaseTemplateCountOfEntity<TEntity, TSettings>(Guid entityTypeId)
+        public virtual async Task IncreaseTemplateCountOfEntityAsync<TEntity, TSettings>(Guid entityTypeId)
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting
         {
-            var setting = await GetSettingDataOfEntity<TEntity, TSettings>(entityTypeId);
+            var setting = await GetSettingDataOfEntityAsync<TEntity, TSettings>(entityTypeId);
 
             if (setting == null)
                 throw new Exception(nameof(setting));
 
             setting.TemplateCount += setting.TemplateIncrementCount;
 
-            await UpdateSettingDataOfEntity<TEntity, TSettings>(setting, entityTypeId);
+            await UpdateSettingDataOfEntityAsync<TEntity, TSettings>(setting, entityTypeId);
         }
 
         #endregion
 
         #region Select list
 
-        public virtual async Task<List<SelectListItem>> GetEntityTypesSelectList()
+        public virtual async Task<List<SelectListItem>> GetEntityTypesSelectListAsync()
         {
-            var entityTypeList = await GetList(showAllChildEntities: true);
+            var entityTypeList = await GetListAsync(showAllChildEntities: true);
 
             var entityTypeSelectList = new List<SelectListItem>
             {
@@ -291,7 +291,7 @@ namespace RA.EntityTypes.Services
 
             foreach (var entityType in entityTypeList)
             {
-                var parentEntity = await GetById(entityType.ParentEntityTypeId.Value);
+                var parentEntity = await GetByIdAsync(entityType.ParentEntityTypeId.Value);
                 var entitySelectListText = entityType.EntityName;
                 if (parentEntity != null)
                     entitySelectListText = entitySelectListText + " - " + parentEntity.EntityName;

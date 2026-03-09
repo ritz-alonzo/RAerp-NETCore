@@ -18,7 +18,7 @@ namespace RAerp.Domain.Migrations.Users
                 .WithColumn(nameof(AccessRights.UserRoleId)).AsGuid().Nullable()
                 // max length for string
                 .WithColumn(nameof(AccessRights.Rolename)).AsString(Int32.MaxValue).Nullable()
-                .WithColumn(nameof(AccessRights.AccessRecordData)).AsString().Nullable()
+                .WithColumn(nameof(AccessRights.AccessRecordData)).AsString(Int32.MaxValue).Nullable()
                 .WithColumn(nameof(AccessRights.CreatedById)).AsGuid().Nullable()
                 .WithColumn(nameof(AccessRights.CreatedOn)).AsDateTime()
                 .WithColumn(nameof(AccessRights.ModifiedById)).AsGuid().Nullable()

@@ -108,7 +108,7 @@ namespace RAerp.Factories.UserFactory
             // will fix this so that when there's still no user role available will
             // automatically create Admin role.
             // already done in controller will move it to service.
-            model.AvailableUserRoles = await PrepareUserRoleSelectList();
+            model.AvailableUserRoles = await PrepareUserRoleSelectListAsync();
 
             if (entity.Id.IsNotNullOrEmpty())
             {
@@ -126,7 +126,7 @@ namespace RAerp.Factories.UserFactory
                 model.Password = AdminMessages.HiddenPasswordDisplay;
             }
 
-            _baseAdminModelFactory.PrepareBaseAdminModel(model, entity);
+            await _baseAdminModelFactory.PrepareBaseAdminModelAsync(model, entity);
 
             return model;
         }
@@ -135,7 +135,7 @@ namespace RAerp.Factories.UserFactory
 
         #region User Roles
 
-        public virtual async Task<UserRoleSearchModel> PrepareUserRoleSearchModel(UserRoleSearchModel searchModel, int pageNumber, int pageSize)
+        public virtual async Task<UserRoleSearchModel> PrepareUserRoleSearchModelAsync(UserRoleSearchModel searchModel, int pageNumber, int pageSize)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
@@ -143,14 +143,14 @@ namespace RAerp.Factories.UserFactory
             _baseAdminModelFactory.PrepareBaseAdminSearchModel(searchModel, pageSize, pageNumber);
 
             searchModel.SystemName = typeof(UserRole).FullName;
-            searchModel.UserRoles = await PrepareUserRoleListModel(searchModel);
+            searchModel.UserRoles = await PrepareUserRoleListModelAsync(searchModel);
             searchModel.TotalItems = (int)searchModel.UserRoles.TotalItems;
             searchModel.PageSize = searchModel.UserRoles.PageSize;
 
             return searchModel;
         }
 
-        public virtual async Task<UserRoleListModel> PrepareUserRoleListModel(UserRoleSearchModel searchModel)
+        public virtual async Task<UserRoleListModel> PrepareUserRoleListModelAsync(UserRoleSearchModel searchModel)
         {
             var model = new UserRoleListModel();
 
@@ -178,7 +178,7 @@ namespace RAerp.Factories.UserFactory
             return model;
         }
 
-        public virtual async Task<UserRoleModel> PrepareUserRoleModel(UserRoleModel model, UserRole entity)
+        public virtual async Task<UserRoleModel> PrepareUserRoleModelAsync(UserRoleModel model, UserRole entity)
         {
             if (model == null)
                 throw new ArgumentNullException(nameof(model));
@@ -197,12 +197,12 @@ namespace RAerp.Factories.UserFactory
                 model.ModifiedOn = entity.ModifiedOn;
             }
 
-            _baseAdminModelFactory.PrepareBaseAdminModel(model, entity);
+            await _baseAdminModelFactory.PrepareBaseAdminModelAsync(model, entity);
 
             return model;
         }
 
-        public virtual async Task<List<SelectListItem>> PrepareUserRoleSelectList(bool showDefault = true)
+        public virtual async Task<List<SelectListItem>> PrepareUserRoleSelectListAsync(bool showDefault = true)
         {
             var userRoleSelectList = new List<SelectListItem>();
 

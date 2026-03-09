@@ -7,5 +7,7 @@ namespace RAerp.Helpers.HtmlHelper
         string GetModelAttributeDisplayNameValue<TModel>(string propertyName) where TModel : BaseModel;
         string GetAdminModelAttributeDisplayNameValue<TModel>(string propertyName)
             where TModel : BaseAdminModel;
+        string GetModelDataType<TModel>(string propertyName)
+            where TModel : class;
     }
 }

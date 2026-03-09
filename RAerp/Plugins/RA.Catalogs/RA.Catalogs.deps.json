@@ -16,6 +16,7 @@
           "Microsoft.EntityFrameworkCore": "9.0.4",
           "Microsoft.EntityFrameworkCore.SqlServer": "9.0.4",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.4",
+          "RA.Categories": "1.0.0",
           "RA.EntityTypes": "1.0.0",
           "RAerp": "1.0.0"
         },

@@ -23,6 +23,6 @@ namespace RA.Core.Models.PluginModels.EntityTypes
         public bool Installed { get; set; }
         public bool Enabled { get; set; }
         public bool AddressEnabled { get; set; }
-
+        public bool InventoryEnabled { get; set; }
     }
 }

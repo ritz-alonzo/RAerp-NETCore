@@ -27,19 +27,19 @@
                         </div>
                     }
                     <div class="login-form-group">
-                        <input asp-for="Username" class="login-form-control" autocomplete="off" />
                         <label asp-for="Username" class="login-form-label-username"></label>
+                        <input asp-for="Username" class="login-form-control" autocomplete="off" />
                         <span asp-validation-for="Username" class="text-danger"></span>
                     </div>
                     <div class="login-form-group">
-                        <input asp-for="Password" type="password" class="login-form-control" autocomplete="off" />
                         <label asp-for="Password" class="login-form-label-password"></label>
+                        <input asp-for="Password" type="password" class="login-form-control" autocomplete="off" />
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
                     <div class="login-form-group">
                         <input type="submit" value="Sign in" class="btn btn-primary login-form-button" />
                     </div>
-                    <div class="login-form-social-header">
+                    @* <div class="login-form-social-header">
                         <div class="line"></div>
                         <div class="login-form-social-label">Login using Social Accounts</div>
                         <div class="line"></div>
@@ -48,7 +48,7 @@
                         <a href="#" title="Google Login"><i class="fa fa-google"></i></a>
                         <a href="#" title="Facebook Login"><i class="fa fa-facebook"></i></a>
                         <a href="#" title="Github Login"><i class="fa fa-github"></i></a>
-                    </div>
+                    </div> *@
                 </form>
             </div>
         </div>

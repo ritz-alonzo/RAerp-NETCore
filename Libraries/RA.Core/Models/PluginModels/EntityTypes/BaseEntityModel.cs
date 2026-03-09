@@ -27,6 +27,7 @@ namespace RA.Core.Models.PluginModels.EntityTypes
         public DateTime? ModifiedOn { get; set; }
         public DateTime? DeletedOn { get; set; }
         public bool Deleted { get; set; }
+        public bool Selected { get; set; }
 
         #region Settings
         

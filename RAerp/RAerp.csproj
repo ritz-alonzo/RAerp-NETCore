@@ -36,19 +36,27 @@
     <!--Plugins dlls-->
 	
 	<!--RA.EntityTypes-->
-	<ItemGroup>
+	<!--<ItemGroup>
 		<Content Include="Plugins\RA.EntityTypes\RA.EntityTypes.dll" CopyToPublishDirectory="PreserveNewest" />
 		<Content Include="Plugins\RA.EntityTypes\RA.EntityTypes.pdb" CopyToPublishDirectory="PreserveNewest" />
 	</ItemGroup>
-	<!--RA.Catalogs-->
+	--><!--RA.Catalogs--><!--
 	<ItemGroup>
 		<Content Include="Plugins\RA.Catalogs\RA.Catalogs.dll" CopyToPublishDirectory="PreserveNewest" />
 		<Content Include="Plugins\RA.Catalogs\RA.Catalogs.pdb" CopyToPublishDirectory="PreserveNewest" />
 	</ItemGroup>
-	<!--RA.BusinessEntities-->
+	--><!--RA.BusinessEntities--><!--
 	<ItemGroup>
 		<Content Include="Plugins\RA.BusinessEntities\RA.BusinessEntities.dll" CopyToPublishDirectory="PreserveNewest" />
 		<Content Include="Plugins\RA.BusinessEntities\RA.BusinessEntities.pdb" CopyToPublishDirectory="PreserveNewest" />
+	</ItemGroup>-->
+	<ItemGroup>
+		<Content Include="Plugins\**\*.dll">
+			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
+		</Content>
+		<Content Include="Plugins\**\*.pdb">
+			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
+		</Content>
 	</ItemGroup>
 
   <ItemGroup>
@@ -844,7 +852,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Domain\Migrations\DataChanges\" />
     <Folder Include="Factories\UserInterfaceFactory\" />
   </ItemGroup>
 

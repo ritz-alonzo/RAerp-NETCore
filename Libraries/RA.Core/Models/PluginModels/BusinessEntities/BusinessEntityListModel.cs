@@ -9,6 +9,5 @@ namespace RA.Core.Models.PluginModels.BusinessEntities
 {
     public class BusinessEntityListModel : BaseListModel<BusinessEntityModel>
     {
-        public bool RedirectByCodeEnabled { get; set; }
     }
 }

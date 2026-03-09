@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using RA.BusinessEntities.Data;
 using RA.BusinessEntities.Domain;
 using RA.BusinessEntities.Services;
@@ -16,18 +15,12 @@ using RA.WebFramework.Extensions;
 using RAerp.Helpers.AddressHelper;
 using RAerp.Helpers.UserHelper;
 using RAerp.Services.AddressServices;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RA.BusinessEntities.Factories
 {
     public class BusinessEntityModelFactory : IBusinessEntityModelFactory
     {
+        #region Constants
         private readonly IBaseEntityModelFactory _baseEntityModelFactory;
         private readonly IMapper _mapper;
         private readonly IBusinessEntityService _businessEntityService;
@@ -36,7 +29,9 @@ namespace RA.BusinessEntities.Factories
         private readonly ICategoryService _categoryService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IAddressService _addressService;
+        #endregion
 
+        #region Ctor
         public BusinessEntityModelFactory(IBaseEntityModelFactory entityModelFactory,
             IMapper mapper,
             IBusinessEntityService businessEntityService,
@@ -55,8 +50,9 @@ namespace RA.BusinessEntities.Factories
             _httpContextAccessor = httpContextAccessor;
             _addressService = addressService;
         }
+        #endregion
 
-        public virtual async Task<BusinessEntitySearchModel> PrepareBusinessEntitySearchModel(BusinessEntitySearchModel searchModel, int pageSize, int pageNumber)
+        public virtual async Task<BusinessEntitySearchModel> PrepareBusinessEntitySearchModelAsync(BusinessEntitySearchModel searchModel, int pageSize, int pageNumber)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
@@ -64,16 +60,14 @@ namespace RA.BusinessEntities.Factories
             if (searchModel.SearchEntityTypeId.IsNullOrEmpty())
                 throw new ArgumentNullException(nameof(searchModel.SearchEntityTypeId));
 
-            var businessEntityType = await _entityTypeManager.GetById(searchModel.SearchEntityTypeId);
+            var businessEntityType = await _entityTypeManager.GetByIdAsync(searchModel.SearchEntityTypeId);
 
             if (businessEntityType == null)
                 throw new ArgumentNullException(nameof(businessEntityType));
 
-            searchModel.EntityTypeName = businessEntityType.EntityName;
-
             _baseEntityModelFactory.PrepareBaseEntitySearchModel(searchModel, businessEntityType, pageSize, pageNumber);
 
-            searchModel.BusinessEntities = await PrepareBusinessEntityListModel(searchModel);
+            searchModel.BusinessEntities = await PrepareBusinessEntityListModelAsync(searchModel);
 
             searchModel.TotalItems = (int)searchModel.BusinessEntities.TotalItems;
             searchModel.PageSize = searchModel.BusinessEntities.PageSize;
@@ -82,17 +76,20 @@ namespace RA.BusinessEntities.Factories
             return searchModel;
         }
 
-        public virtual async Task<BusinessEntityListModel> PrepareBusinessEntityListModel(BusinessEntitySearchModel searchModel)
+        public virtual async Task<BusinessEntityListModel> PrepareBusinessEntityListModelAsync(BusinessEntitySearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
             var model = new BusinessEntityListModel();
 
-            var businessEntityList = await _businessEntityService.GetList(searchModel.SearchEntityTypeId);
+            var businessEntityList = await _businessEntityService.GetListAsync(searchModel.SearchEntityTypeId);
+            // settings
+            var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(searchModel.SearchEntityTypeId);
+
+            List<SelectListItem> availableCategories = await _categoryService.GetCategoriesSelectListAsync(settings?.MappedCategoryIds);
 
             var businessEntityModelList = new List<BusinessEntityModel>();
-
             businessEntityModelList = businessEntityList.Select(businesEntity =>
             {
                 var businessEntityModel = new BusinessEntityModel();
@@ -101,6 +98,7 @@ namespace RA.BusinessEntities.Factories
                 //var createdByUser = _userIdentity.GetUserDetails(businesEntity.CreatedById);
                 //if (createdByUser != null)
                 //    businessEntityModel.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(createdByUser);
+                businessEntityModel.AvailableCategories = availableCategories;
 
                 return businessEntityModel;
 
@@ -114,7 +112,7 @@ namespace RA.BusinessEntities.Factories
             return model;
         }
 
-        public virtual async Task<BusinessEntityModel> PrepareBusinessEntityModel(BusinessEntityModel businessEntityModel, BusinessEntity businessEntity, Guid entityTypeId)
+        public virtual async Task<BusinessEntityModel> PrepareBusinessEntityModelAsync(BusinessEntityModel businessEntityModel, BusinessEntity businessEntity, Guid entityTypeId)
         {
             if (businessEntityModel == null)
                 throw new ArgumentNullException(nameof(businessEntityModel));
@@ -124,7 +122,7 @@ namespace RA.BusinessEntities.Factories
 
             businessEntityModel.EntityTypeId = entityTypeId;
 
-            var businessEntityType = await _entityTypeManager.GetById(entityTypeId);
+            var businessEntityType = await _entityTypeManager.GetByIdAsync(entityTypeId);
             if (businessEntityType == null)
                 throw new ArgumentNullException(EntityTypeMessages.EntityTypeIdNotExists);
 
@@ -136,7 +134,6 @@ namespace RA.BusinessEntities.Factories
                 businessEntityModel.Status = BusinessEntityStatus.Active;
                 businessEntityModel.CreatedOn = DateTime.Now;
                 businessEntityModel.Code = "NEW";
-                businessEntityModel.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(_userIdentity.GetCurrentUser(_httpContextAccessor.HttpContext));
             }
             else
             {
@@ -151,13 +148,13 @@ namespace RA.BusinessEntities.Factories
                 businessEntityModel.CategoryId = businessEntity.CategoryId;
             }
             // settings
-            var settings = await _entityTypeManager.GetSettingDataOfEntity<BusinessEntity, BusinessEntitySetting>(entityTypeId);
+            var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(entityTypeId);
             if (settings != null)
             {
                 if (settings.MappedCategoryIds.Any())
                 {
                     // Model binding of Category, will create service for this (from Categories)
-                    businessEntityModel.AvailableCategories = await _categoryService.GetCategoriesSelectList(settings.MappedCategoryIds);
+                    businessEntityModel.AvailableCategories = await _categoryService.GetCategoriesSelectListAsync(settings.MappedCategoryIds);
                 }
 
                 if (settings.AddressEnabled)
@@ -180,28 +177,32 @@ namespace RA.BusinessEntities.Factories
             }
 
             // base model mapping
-            businessEntityModel = _baseEntityModelFactory.PrepareBaseEntityModel<BusinessEntityModel, BusinessEntity, BusinessEntitySetting>(businessEntityModel, businessEntity, settings);
+            businessEntityModel = await _baseEntityModelFactory.PrepareBaseEntityModelAsync<BusinessEntityModel, BusinessEntity, BusinessEntitySetting>(businessEntityModel, businessEntity, settings);
 
             return businessEntityModel;
         }
 
-        public virtual async Task<BusinessEntityConfigureModel> PrepareBusinessEntityConfigureModel(Guid entityTypeId, string systemName)
+        #region Configuration
+
+        public virtual async Task<BusinessEntityConfigureModel> PrepareBusinessEntityConfigureModelAsync(Guid entityTypeId, string systemName)
         {
             var businessEntityConfigureModel = new BusinessEntityConfigureModel();
             // settings
-            var settings = await _entityTypeManager.GetSettingDataOfEntity<BusinessEntity, BusinessEntitySetting>(entityTypeId);
+            var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(entityTypeId);
             if (settings != null)
             {
-                if (settings.MappedCategoryIds.Any())
+                if (settings.MappedCategoryIds.HasAny())
                 {
                     businessEntityConfigureModel.MappedCategoryTypeIds = settings.MappedCategoryIds;
                 }
             }
             
-            businessEntityConfigureModel = _baseEntityModelFactory.PrepareBaseEntityConfigureModel<BusinessEntityConfigureModel, BusinessEntity, BusinessEntitySetting>(businessEntityConfigureModel, entityTypeId, systemName);
-            businessEntityConfigureModel.AvailableCategoryTypes = await _categoryService.GetCategoryTypesSelectList();
+            businessEntityConfigureModel = await _baseEntityModelFactory.PrepareBaseEntityConfigureModelAsync<BusinessEntityConfigureModel, BusinessEntity, BusinessEntitySetting>(businessEntityConfigureModel, entityTypeId, systemName);
+            businessEntityConfigureModel.AvailableCategoryTypes = await _categoryService.GetCategoryTypesSelectListAsync();
 
             return businessEntityConfigureModel;
         }
+
+        #endregion
     }
 }

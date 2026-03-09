@@ -1,4 +1,4 @@
-﻿/* Custom style for MMS */
+﻿/* Custom style for RAerp */
 
 .card-title h4 {
     margin-top: 15px;
@@ -110,37 +110,55 @@ label[data-required=true]:after {
 }
 
     .custom-input-set label.form-label {
-        color: #05557a;
-        font-weight: 700;
+        color: #5c6061;
+        font-size: 14px;
         position: relative;
         padding: 0 3px;
         background: #fff;
         width: fit-content;
         border-radius: 20px;
-        transition: ease-in-out 0.1s;
+        margin-bottom: 0px;
     }
 
     .custom-input-set input[type=text].form-control,
     .custom-input-set input[type=number].form-control,
     .custom-input-set input[type=date].form-control,
+    .custom-input-set input[type=datetime].form-control,
+    .custom-input-set input[type=datetime-local].form-control,
     .custom-input-set input[type=email].form-control,
     .custom-input-set input[type=password].form-control,
     .custom-input-set select.select2,
     .custom-input-set textarea {
-        padding: 11px 10px;
-        border: 2px #1eb4fa solid;
-        border-radius: 5px;
-        height: auto;
+        padding: 11px 3px;
+        border-bottom: 2px #a0a7ab solid;
+        border-top-style: hidden;
+        border-left-style: hidden;
+        border-right-style: hidden;
+        height: 40px;
+        font-size: 14px;
     }
         .custom-input-set input[type=text].form-control:focus,
         .custom-input-set input[type=number].form-control:focus,
         .custom-input-set input[type=date].form-control:focus,
+        .custom-input-set input[type=datetime].form-control:focus,
+        .custom-input-set input[type=datetime-local].form-control:focus,
         .custom-input-set input[type=email].form-control:focus,
         .custom-input-set input[type=password].form-control:focus,
         .custom-input-set select.select2:focus,
         .custom-input-set textarea:focus {
-            outline: 2px #1eb4fa solid;
-            box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px;
+            border-bottom: 3px #5c6061 solid;
+            box-shadow: none;
+            /* box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px; */
+        }
+
+        .custom-input-set input[readonly] {
+            background: white;
+            color: #899193;
+            border-bottom-style: dotted !important;
+        }
+
+        .custom-input-set label.form-label:has(~ input[readonly]) {
+            color: #899193;
         }
 
         /*.coolinput input[type=text].input:hover {
@@ -152,32 +170,49 @@ label[data-required=true]:after {
 
 /* Form tabs nav */
 
-#formTab .nav-link.active {
+#formTab {
+    margin-bottom: 8px;
+}
+
+#formTab .nav-link.active, #formDetailTab .nav-link.active {
     color: dodgerblue;
     background-color: transparent;
     border-color: transparent transparent #f3f3f3;
     border-bottom: 4px solid !important;
-    font-size: 20px;
+    font-size: 15px;
     font-weight: bold;
+    outline: none;
+    box-shadow: 1px 2px 4px #888888;
 }
 
-#formTab .nav-link {
+#formTab .nav-link, #formDetailTab .nav-link {
     display: block;
     border: 1px solid transparent;
     background-color: transparent;
     border-top-left-radius: .25rem;
     border-top-right-radius: .25rem;
     color: dimgrey;
-    font-size: 20px;
-    padding: 10px 20px;
-    width: 200px;
+    font-size: 15px;
+    padding: 10px 10px;
+    width: max-content;
 }
 
 
-#formTab li button:hover {
-    color: blue;
+#formTab li button:hover, #formDetailTab li button:hover {
+    color: dodgerblue;
+    outline: none;
 }
 
+
+#formItemDetailTabContent .tab-pane .card-body {
+    padding: 0 !important;
+}
+
+.form-item-detail-tab-action {
+    display: flex;
+    justify-content: start;
+    padding-bottom: 5px;
+}
 /* Form tabs nav END */
 
 
@@ -187,6 +222,11 @@ label[data-required=true]:after {
 }
 
 /* Form Content Custom CSS */
+
+#formTabContent .tab-pane .card {
+    border-radius: 10px !important;
+    margin-bottom: 10px !important;
+}
 
 .form-content-header-title {
     font-weight: bold;
@@ -208,23 +248,38 @@ label[data-required=true]:after {
 .form-content-header-group {
     display: flex;
     width: fit-content;
-    color: rgb(142, 143, 138);
+    /*color: rgb(96, 95, 95);*/
+    color: white;
     font-size: 17px;
+    border-top: 2px solid rgb(142, 143, 138);
     border-bottom: 2px solid rgb(142, 143, 138);
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
-    margin-top: 13px !important;
+    /* border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px; */
+    border-radius: 10px;
+    /*margin-top: 7px !important;*/
     margin-bottom: 20px;
-    padding-bottom: 10px;
+    padding-bottom: 5px;
+    padding-top: 5px;
+    /*background-color: #cacccc;*/
+    background-color: #343a40;
 }
 
     .form-content-header-group:before {
-        content: ">";
+        /* content: ">"; */
         margin-right: 5px;
         font-weight: bolder;
         font-size: large;
     }
 
+    .form-content-header-group i {
+        padding-top: 6px;
+        font-size: small;
+        margin-right: 5px;
+    }
+
+form .col-12 .float-left {
+    margin-top: 0.5rem !important;
+}
 /* Content Custom CSS END */
 
 
@@ -258,24 +313,29 @@ label[data-required=true]:after {
 
 
 /* Access Rights Table */
-#accessRightsTable {
-    /*table-layout: fixed;*/
+
+#accessRightsTable thead th {
+    position: sticky;
+    z-index: 1;
 }
 
-    #accessRightsTable thead th {
+    #accessRightsTable thead th:first-child {
         position: sticky;
-        z-index: 1;
+        left: 0;
+        z-index: 2;
     }
 
-        #accessRightsTable thead th:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 2;
-        }
+    #accessRightsTable tbody td:first-child {
+        position: sticky;
+        left: 0;
+        background: white;
+        z-index: 2;
+    }
 
-        #accessRightsTable tbody td:first-child {
-            position: sticky;
-            left: 0;
-            background: white;
-            z-index: 2;
-        }
+
+/* Left Sidebar Scrollbar */
+.left-sidebar {
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+}

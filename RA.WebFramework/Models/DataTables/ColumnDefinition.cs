@@ -1,4 +1,5 @@
-﻿using RA.WebFramework.Data.DataTables;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using RA.WebFramework.Data.DataTables;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace RA.WebFramework.Models.DataTables
         public ColumnDefinition(string recordData)
         {
             RecordData = recordData;
+            ColumnSelectList = new List<SelectListItem>();
         }
         /// <summary>
         /// Represents the primary key or Id of a row
@@ -94,6 +96,14 @@ namespace RA.WebFramework.Models.DataTables
         /// Indicates whether to use Code row data as means of Redirection
         /// </summary>
         public bool RedirectUsingCodeEnabled { get; set; }
+        /// <summary>
+        /// Decimal places for decimal or float columns
+        /// </summary>
+        public int DecimalPlaces { get; set; }
+        /// <summary>
+        /// Column binding of List of SelecListItem for dropdown
+        /// </summary>
+        public List<SelectListItem> ColumnSelectList { get; set; }
 
     }
 }

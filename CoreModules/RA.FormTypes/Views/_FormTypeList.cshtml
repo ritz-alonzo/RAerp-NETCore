@@ -1,0 +1,164 @@
+﻿@model FormTypeListModel
+
+@{
+    Layout = null;
+}
+
+<div class="card">
+    <div class="card-body">
+        @{
+            // working data table creation
+            // just needed to know the arrangement of records for tbody
+            var gridTable = new DataTablesModel();
+            gridTable.GridName = "formTypes_table";
+            gridTable.ClassName = "table-dark";
+            gridTable.UrlController = "FormTypes";
+            gridTable.UrlEdit = "Update";
+            gridTable.UrlDelete = "Delete";
+            gridTable.UrlGridPartialViewAction = "FormTypeListSearch";
+            gridTable.EditEnabled = true;
+            gridTable.DeleteEnabled = true;
+            gridTable.ConfigurationEnabled = true;
+
+            gridTable.Records = Model.Items;
+
+            gridTable.ColumnCollection = new List<ColumnDefinition>
+            {
+                new ColumnDefinition(nameof(FormTypeModel.FormTypeName))
+                {
+                    Title = "Form Name",
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(FormTypeModel.FormTypeSystemName))
+                {
+                    Title = "Form SystemName",
+                    Visible = true,
+                    IsSystemName = true
+                },
+                new ColumnDefinition(nameof(FormTypeModel.Installed))
+                {
+                    Title = "Installed",
+                    ControlType = ControlType.Checkbox,
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(FormTypeModel.PluginConfigurationUrl))
+                {
+                    Title = "PluginConfigurationUrl",
+                    Visible = false,
+                    ShowConfiguration = true
+                },
+            };
+
+            @await Html.PartialAsync("~/Views/Shared/Tables/_Table.cshtml", gridTable)
+        }
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/Tables/_Pagination.cshtml", Model)
+
+@* Modal of plugin config *@
+<div class="modal fade" id="pluginConfigurationModal" tabindex="-1" aria-labelledby="pluginConfigurationModalLabel" 
+        aria-hidden="true" style="padding-top: 100px;">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pluginConfigurationModalLabel"></h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">x</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form-ajax id="pluginConfigData" data-config-post-action="">
+
+                </form-ajax>
+            </div>
+            <div class="modal-footer">
+                <button id="pluginConfigSaveBtn" class="btn btn-success btn-sm" type="button">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+@* will move this scripts to another layout to load necessary scripts to load properly *@
+
+<script type="text/javascript">
+    var timeOut = null;
+    // need to create javascript for this
+    // working pressing enter key search use on.keydown
+    $('#formTypes_search').on("keyup", function (e) {
+        // will prevent looping
+        e.stopImmediatePropagation();
+        // when focus was removed
+        var formSearchId = 'formTypes_search';
+        var url = '@Url.Action("FormTypeListSearch", "FormTypes")'
+        var partialViewId = 'formTypes';
+        clearTimeout(timeOut);
+        timeOut = setTimeout(function (e) { SearchFunction(formSearchId, url, partialViewId); }, 500);
+        // when enter is pressed
+        //if (e.keyCode == 13) {
+        //    var formSearchId = 'formTypes_search';
+        //    var url = '@Url.Action("FormTypeListSearch", "FormTypes")'
+        //    var partialViewId = 'formTypes';
+        //    SearchFunction(formSearchId, url, partialViewId);
+        //}
+        // else do nothing
+    });
+
+    // cannot use id because it will be the same for all buttons
+    $('.plugin-config-modal-trigger').on('click', (e) => {
+        console.log('hello world modal');
+        var selectedButton = $(e.currentTarget);
+        var pluginConfigUrl = selectedButton.attr('data-plugin-config-url');
+        if (pluginConfigUrl == null || pluginConfigUrl == '') {
+            alert('Failed to load configuration form');
+            return;
+        }
+        var pluginConfigTitle = selectedButton.attr('data-plugin-config-title');
+        $('#pluginConfigurationModalLabel').html(pluginConfigTitle);
+
+        var pluginSystemName = selectedButton.attr('data-plugin-config-systemName');
+        console.log('Form type plugin system name ' + pluginSystemName);
+        if (pluginSystemName == null || pluginSystemName == '') {
+            alert('Failed to load configuration form');
+            return;
+        }
+
+        $.ajax({
+            url: pluginConfigUrl,
+            method: 'GET',
+            data: {
+                systemName: pluginSystemName
+            },
+        })
+        .done((data) => {
+            $('#pluginConfigData').html(data);
+            $('#pluginConfigData').attr('data-config-post-action', pluginConfigUrl);
+            // to show/hide button
+            //$('#pluginConfigSaveBtn').css('display', '');
+        })
+        .fail((data) => {
+            console.log('Failed to load configuration form');
+        });
+        //$('#pluginConfigurationModal').modal("show");
+    })
+
+    $('.modal').on('hidden.bs.modal', (e) => {
+        $('#pluginConfigData').html("");
+        $('#pluginConfigurationModalLabel').html("");
+    });
+
+    // post save action of modal
+    $('#pluginConfigSaveBtn').on('click', (e) => {
+        var configPostAction = $('#pluginConfigData').attr('data-config-post-action');
+        if (configPostAction == null || configPostAction == '') {
+            alert('Save Action not found.');
+            return;
+        }
+        var configPluginDataId = 'pluginConfigData';
+
+        ConfigurationPost(configPluginDataId, configPostAction);
+    });
+
+</script>
+
+
+

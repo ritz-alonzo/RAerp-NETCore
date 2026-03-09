@@ -17,7 +17,7 @@
                 @{
                     foreach (var columnHeader in Model.ColumnCollection)
                     {
-                        if (columnHeader.IsPrimaryKey || columnHeader.ShowConfiguration)
+                        if (columnHeader.IsPrimaryKey || columnHeader.ShowConfiguration || !columnHeader.Visible)
                             continue;
 
                         <th>@columnHeader.Title</th>
@@ -31,12 +31,12 @@
                     {
                         <th style="text-align:right">
                             <button type="button"
-                                    class="btn btn-secondary btn-sm"
-                                    style="background-color:inherit; border:none"
-                                    id="refreshGridBtn"
-                                    data-grid-searchId="@formSearchId"
-                                    data-grid-partialViewId="@partialViewId"
-                                    data-grid-action="@gridUrlAction">
+                            class="btn btn-secondary btn-sm"
+                            style="background-color:inherit; border:none"
+                            id="refreshGridBtn"
+                            data-grid-searchId="@formSearchId"
+                            data-grid-partialViewId="@partialViewId"
+                            data-grid-action="@gridUrlAction">
                                 <i class="fa fa-sync"></i>
                             </button>
                         </th>
@@ -66,6 +66,7 @@
 
                                 var useCodeAsRedirection = false;
 
+                                // Binding of ColumnRecord property Value into Dictionary
                                 foreach (var property in propertyList)
                                 {
                                     var currentPropertyIndex = 0;
@@ -106,6 +107,7 @@
 
                                 var configurationSystemName = "";
 
+                                // Generating table data element
                                 foreach (var data in rowDataArrangement.OrderBy(c => c.Key))
                                 {
                                     // needed to know column control type (checkbox, int, dropdown etc.)
@@ -120,11 +122,14 @@
                                         // sanity check
                                         if (!rowHasId)
                                             rowDataId = Guid.Empty;
+
+                                        @Html.Raw($"<td style='display: none'><input type='hidden' id='{@columnDefinition.RecordData}' name='{@columnDefinition.RecordData}' value='{@data.Value}' /></td>")
                                     }
                                     else
                                     {
                                         if (!columnDefinition.Visible && !columnDefinition.ShowConfiguration)
                                         {
+                                            @Html.Raw($"<td style='display: none'><input type='hidden' id='{@columnDefinition.RecordData}' name='{@columnDefinition.RecordData}' value='{@data.Value}' /></td>")
                                             continue;
                                         }
                                         else if (columnDefinition.Visible && !columnDefinition.ShowConfiguration)
@@ -161,17 +166,38 @@
                                             }
                                             else
                                             {
-                                                // will need to add control type (enum) in ColumnDefinition model
                                                 switch (columnDefinition.ControlType)
                                                 {
                                                     case ControlType.Text:
-                                                        // remain as is
-                                                        columnTableData = $"<td class='{dataAlignment}'>{data.Value}</td>";
+                                                        if (columnDefinition.Editable)
+                                                        {
+                                                            columnTableData = $"<td class='{dataAlignment}' data-editable='{columnDefinition.Editable}' data-element-type='text' data-element-header='{columnDefinition.RecordData}' data-element-originalvalue='{data.Value}'>{data.Value}</td>";
+                                                        }
+                                                        else
+                                                        {
+                                                            // remain as is
+                                                            columnTableData = $"<td class='{dataAlignment}'>{data.Value}\n<input type='hidden' name='{columnDefinition.RecordData}' id='{columnDefinition.RecordData}' value='{data.Value}'/></td>";
+                                                        }
                                                         break;
 
                                                     case ControlType.Number:
-                                                        // remain as is
-                                                        columnTableData = $"<td class='{dataAlignment}'>{data.Value}</td>";
+
+                                                        var dataValue = data.Value;
+                                                        if (columnDefinition.DecimalPlaces > 0)
+                                                        {
+                                                            var decimalStringFormat = "N" + columnDefinition.DecimalPlaces.ToString();
+                                                            dataValue = Convert.ToDecimal(dataValue).ToString(decimalStringFormat); // N2 - 2 decimals places
+                                                        }
+
+                                                        if (columnDefinition.Editable)
+                                                        {
+                                                            columnTableData = $"<td class='{dataAlignment}' data-editable='{columnDefinition.Editable}' data-element-type='number' data-element-header='{columnDefinition.RecordData}' data-element-originalvalue='{dataValue}'>{dataValue}</td>";
+                                                        }
+                                                        else
+                                                        {
+                                                            // remain as is
+                                                            columnTableData = $"<td class='{dataAlignment}'>{dataValue}\n<input type='hidden' name='{columnDefinition.RecordData}' id='{columnDefinition.RecordData}' value='{dataValue}'/></td>";
+                                                        }
                                                         break;
 
                                                     case ControlType.Button:
@@ -179,12 +205,15 @@
                                                         break;
 
                                                     case ControlType.Checkbox:
-                                                        var checkBoxValue = Boolean.Parse(data.Value);
+                                                        var dataHasValue = Boolean.Parse(data.Value);
                                                         var isChecked = "";
-                                                        if (checkBoxValue)
+                                                        var isDisabled = "";
+                                                        if (dataHasValue)
                                                             isChecked = "checked";
+                                                        if (!columnDefinition.Editable)
+                                                            isDisabled = "disabled";
 
-                                                        columnTableData = $"<td class='{dataAlignment}'><input type='checkbox' {isChecked} disabled /></td>";
+                                                        columnTableData = $"<td class='{dataAlignment}'><input type='checkbox' name='{columnDefinition.RecordData}' id='{columnDefinition.RecordData}' {isChecked} {isDisabled} /></td>";
                                                         break;
 
                                                     case ControlType.Link:
@@ -193,13 +222,45 @@
                                                             <td class="@dataAlignment"><a asp-action="Index" asp-controller="@Model.UrlController" asp-route-id="@rowDataId" target="_self">@data.Value</a></td>
                                                         }
                                                         break;
+
+                                                    case ControlType.Dropdown:
+                                                        if (columnDefinition.ColumnSelectList.Any())
+                                                        {
+                                                            if (columnDefinition.Editable)
+                                                            {
+                                                                <td class="@dataAlignment"
+                                                                    data-editable="@columnDefinition.Editable"
+                                                                    data-element-type="select"
+                                                                    data-element-header="@columnDefinition.RecordData" 
+                                                                    data-element-originalvalue="@data.Value">@data.Value
+                                                                </td>
+                                                                // <select style="appearance: none" name="@columnDefinition.RecordData" id="@columnDefinition.RecordData">
+                                                                //     @foreach (var selectListItem in columnDefinition.ColumnSelectList)
+                                                                //     {
+                                                                //         if (data.Value == selectListItem.Value)
+                                                                //         {
+                                                                //             <option value="@data.Value" selected>@selectListItem.Text</option>
+                                                                //         }
+                                                                //     }
+                                                                // </select>
+                                                            }
+                                                            else
+                                                            {
+                                                                // for now text only
+                                                                <td class="@dataAlignment">
+                                                                    @columnDefinition.ColumnSelectList.FirstOrDefault(c => c.Value == data.Value).Text.ToString()
+                                                                    <input type="hidden" name="@columnDefinition.RecordData" id="@columnDefinition.RecordData" value="@data.Value" />
+                                                                </td>
+                                                            }
+                                                        }
+                                                        break;
                                                 }
 
                                                 if (columnDefinition.ControlType != ControlType.Link)
                                                     @Html.Raw(columnTableData);
                                             }
-                                            
-                                            
+
+
                                             if (columnDefinition.IsSystemName && columnDefinition.Visible)
                                             {
                                                 configurationSystemName = data.Value;
@@ -214,6 +275,7 @@
 
                                 }
 
+                                // Table Actions
                                 @if (Model.CreateEnabled || Model.EditEnabled || Model.DeleteEnabled || Model.ConfigurationEnabled)
                                 {
                                     <td class="text-center">
@@ -226,37 +288,49 @@
                                                 var configurationAction = configurationUrl.Substring(actionIndex + 1);
                                                 var configurationController = configurationUrl.Substring(controllerIndex + 1, actionIndex - 1);
 
-                                                var isModalConfigure = columnRecord.GetType().GetProperties().Where(c => c.Name == "ModalConfigureEnabled").FirstOrDefault();
-                                                if (isModalConfigure != null)
+                                                var isModalConfigureEnabled = columnRecord.GetType().GetProperties().Where(c => c.Name == "ModalConfigureEnabled").FirstOrDefault();
+                                                if (isModalConfigureEnabled != null)
                                                 {
-                                                    var enabled = isModalConfigure.GetValue(columnRecord).ToString();
+                                                    var enabled = isModalConfigureEnabled.GetValue(columnRecord).ToString();
                                                     if (enabled.ToLower() == "true")
                                                     {
                                                         if (!string.IsNullOrEmpty(configurationSystemName))
                                                         {
-                                                            var originalSystemName = configurationSystemName;
+                                                            var configurationTitle = configurationController + " " + $"({configurationSystemName.Substring(configurationSystemName.LastIndexOf(".") + 1)})";
 
-                                                            configurationSystemName = configurationController + " " + $"({configurationSystemName.Substring(configurationSystemName.LastIndexOf(".") + 1)})";
-
-                                                            <button type="button" class="plugin-config-modal-trigger btn btn-secondary"
+                                                            if (rowDataId != Guid.Empty)
+                                                            {
+                                                                <button type="button" class="plugin-config-modal-trigger btn btn-secondary"
                                                                     data-plugin-config-url="@configurationUrl"
-                                                                    data-plugin-config-title="@configurationSystemName"
-                                                                    data-plugin-config-origName="@originalSystemName"
+                                                                    data-plugin-config-title="@configurationTitle"
+                                                                    data-plugin-config-systemName="@configurationSystemName"
                                                                     data-plugin-type-id="@rowDataId"
                                                                     data-bs-toggle="modal"
                                                                     data-bs-target="#pluginConfigurationModal">
-                                                                <i class="fa fa-cog"></i>
-                                                            </button>
+                                                                        <i class="fa fa-cog"></i>
+                                                                </button>
+                                                            }
+                                                            else
+                                                            {
+                                                                <button type="button" class="plugin-config-modal-trigger btn btn-secondary"
+                                                                    data-plugin-config-url="@configurationUrl"
+                                                                    data-plugin-config-title="@configurationTitle"
+                                                                    data-plugin-config-systemName="@configurationSystemName"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#pluginConfigurationModal">
+                                                                        <i class="fa fa-cog"></i>
+                                                                </button>
+                                                            }
                                                         }
                                                         else
                                                         {
                                                             <button type="button" class="plugin-config-modal-trigger btn btn-secondary"
-                                                                    data-plugin-config-url="@configurationUrl"
-                                                                    data-plugin-config-title="@configurationController"
-                                                                    data-plugin-type-id="@rowDataId"
-                                                                    data-bs-toggle="modal"
-                                                                    data-bs-target="#pluginConfigurationModal">
-                                                                <i class="fa fa-cog"></i>
+                                                                data-plugin-config-url="@configurationUrl"
+                                                                data-plugin-config-title="@configurationController"
+                                                                data-plugin-type-id="@rowDataId"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#pluginConfigurationModal">
+                                                                    <i class="fa fa-cog"></i>
                                                             </button>
                                                         }
                                                     }
@@ -271,20 +345,56 @@
                                                 }
                                             }
 
-                                            // add here the grid crud functions
-                                            if (!string.IsNullOrEmpty(Model.UrlCreate))
+                                            if (!Model.IsEmbeddedTableToForm)
                                             {
-                                                
-                                            }
+                                                // add here the grid crud functions
+                                                if (!string.IsNullOrEmpty(Model.UrlCreate))
+                                                {
 
-                                            if (!string.IsNullOrEmpty(Model.UrlEdit) && !useCodeAsRedirection)
-                                            {
-                                                <a class="btn btn-info" asp-action="@Model.UrlEdit" asp-controller="@Model.UrlController" asp-route-id="@rowDataId"><i class="fa fa-edit"></i></a>
-                                            }
+                                                }
 
-                                            if (!string.IsNullOrEmpty(Model.UrlDelete))
+                                                if (!string.IsNullOrEmpty(Model.UrlEdit) && !useCodeAsRedirection)
+                                                {
+                                                    <a class="btn btn-info" asp-action="@Model.UrlEdit" asp-controller="@Model.UrlController" asp-route-id="@rowDataId"><i class="fa fa-edit"></i></a>
+                                                }
+
+                                                if (!string.IsNullOrEmpty(Model.UrlDelete))
+                                                {
+                                                    <a class="btn btn-danger" asp-action="@Model.UrlDelete" asp-controller="@Model.UrlController" asp-route-id="@rowDataId"><i class="fa fa-trash"></i></a>
+                                                }
+                                            }
+                                            else
                                             {
-                                                <a class="btn btn-danger" asp-action="@Model.UrlDelete" asp-controller="@Model.UrlController" asp-route-id="@rowDataId"><i class="fa fa-trash"></i></a>
+                                                // add here the grid crud functions
+                                                if (!string.IsNullOrEmpty(Model.UrlCreate))
+                                                {
+
+                                                }
+
+                                                if (!string.IsNullOrEmpty(Model.UrlEdit) && !useCodeAsRedirection)
+                                                {
+                                                    <button type="button" class="embedded-table-edit-btn btn btn-info" id="embeddedTableEditBtn">
+                                                        <i class="fa fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" 
+                                                        class="embedded-table-save-btn btn btn-secondary" 
+                                                        id="embeddedTableSaveBtn"
+                                                        data-edit-url="@Url.Action(Model.UrlEdit, Model.UrlController)"
+                                                        data-partial-view-url="@Url.Action(Model.UrlGridPartialViewAction, Model.UrlController)"
+                                                        data-partial-view-id="@Model.UrlGridPartialViewId"
+                                                        style="display: none">
+                                                        <i class="fa fa-save"></i>
+                                                    </button>
+                                                }
+
+                                                if (!string.IsNullOrEmpty(Model.UrlDelete))
+                                                {
+                                                    <a class="embedded-table-delete-btn btn btn-danger" id="embeddedTableDeleteBtn" asp-action="@Model.UrlDelete" asp-controller="@Model.UrlController" asp-route-id="@rowDataId"><i class="fa fa-trash"></i></a>
+                                                }
+
+                                                <button type="button" class="embedded-table-cancel-btn btn btn-secondary" id="embeddedTableCancelBtn" style="display: none; border: 0px; color: grey; background: none;">
+                                                    <i class="fa fa-times"></i>
+                                                </button>
                                             }
                                         }
                                     </td>

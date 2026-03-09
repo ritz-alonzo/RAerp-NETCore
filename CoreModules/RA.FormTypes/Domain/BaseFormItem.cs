@@ -14,12 +14,15 @@ namespace RA.FormTypes.Domain
         /// </summary>
         public Guid FormId { get; set; }
         /// <summary>
-        /// Represents as Catalog, BusinessEntity, etc.
+        /// Represents as Catalog.
         /// </summary>
-        public Guid EntityId { get; set; }
+        public Guid CatalogId { get; set; }
+        public int LineNbr { get; set; }
         public Guid? CategoryId { get; set; }
-        public Guid? UOMId { get; set; }
         public string Description { get; set; }
+        public decimal Qty { get; set; }
+        public decimal Price { get; set; }
+        public decimal SubTotal { get; set; }
         public Guid CreatedById { get; set; }
         public Guid? ModifiedById { get; set; }
         public DateTime CreatedOn { get; set; }

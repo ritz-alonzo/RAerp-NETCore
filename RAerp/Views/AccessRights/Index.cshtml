@@ -22,11 +22,9 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="input-group">
-                            <div class="input-group-append">
-                                <span class="input-group-text"><i class="fa fa-search"></i></span>
-                            </div>
-                            <input asp-for="SearchRoleName" class="form-control" placeholder="Search Role.." autocomplete="off" />
+                        <div class="custom-input-set mb-2">
+                            <label asp-for="SearchRoleName" class="form-label"></label>
+                            <input asp-for="SearchRoleName" class="form-control" autocomplete="off" />
                         </div>
                     </div>
                 </div>

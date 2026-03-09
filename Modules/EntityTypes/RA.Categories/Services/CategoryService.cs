@@ -6,6 +6,7 @@ using RA.Categories.Domain;
 using RA.Categories.Helpers;
 using RA.Core.DataCaching.CacheManagement;
 using RA.EntityTypes.Services;
+using RA.WebFramework.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,15 +17,19 @@ namespace RA.Categories.Services
 {
     public class CategoryService : EntityTypeService<Category, CategorySetting, RACategoryContext>, ICategoryService
     {
+        #region Constants
         private readonly RACategoryContext _context;
         private readonly DbSet<Category> _category;
         private readonly DbSet<CategoryEntityMapping> _categoryMapping;
         private readonly ICacheManager<Category> _cacheManager;
         private readonly IEntityTypeManager _entityTypeManager;
+        #endregion
 
+        #region Ctor
         public CategoryService(RACategoryContext context,
             ICacheManager<Category> cacheManager,
-            IEntityTypeManager entityTypeManager) : base(context, cacheManager, entityTypeManager)
+            IEntityTypeManager entityTypeManager) 
+            : base(context, cacheManager, entityTypeManager)
         {
             _context = context;
             _category = _context.Set<Category>();
@@ -32,32 +37,34 @@ namespace RA.Categories.Services
             _cacheManager = cacheManager;
             _entityTypeManager = entityTypeManager;
         }
+        #endregion
 
         #region Category
 
-        public async Task<IEnumerable<Category>> GetCategoryList(List<Guid> categoryTypeIds = null)
+        public async Task<IEnumerable<Category>> GetCategoryListAsync(List<Guid> categoryTypeIds)
         {
-            if (categoryTypeIds == null)
+            if (!categoryTypeIds.HasAny())
                 throw new ArgumentNullException(CategoryMessages.EmptyCategoryIds);
 
-            var query = GetList(categoryTypeIds).Result.AsQueryable();
+            var query = GetListAsync(categoryTypeIds).Result.AsQueryable();
 
             // additional filters
             return await query.ToListAsync();
         }
 
-        public async Task<List<SelectListItem>> GetCategoryTypesSelectList(List<Guid> categoryTypeIds = null)
+        #region Select List Items
+        public async Task<List<SelectListItem>> GetCategoryTypesSelectListAsync(List<Guid> categoryTypeIds = null)
         {
             var categoryTypeList = new List<SelectListItem>();
 
-            if (categoryTypeIds == null)
+            if (!categoryTypeIds.HasAny())
             {
-                var categoryTypes = await _entityTypeManager.GetTypesBySystemName(typeof(Category).FullName);
+                var categoryTypes = await _entityTypeManager.GetTypesBySystemNameAsync(typeof(Category).FullName);
                 if (categoryTypes.Any())
                 {
                     foreach (var categoryType in categoryTypes)
                     {
-                        var settings = await _entityTypeManager.GetSettingDataOfEntity<Category, CategorySetting>(categoryType.Id);
+                        var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<Category, CategorySetting>(categoryType.Id);
                         if (settings == null)
                             continue;
 
@@ -76,7 +83,7 @@ namespace RA.Categories.Services
             {
                 foreach (var categoryTypeId in categoryTypeIds)
                 {
-                    var settings = await _entityTypeManager.GetSettingDataOfEntity<Category, CategorySetting>(categoryTypeId);
+                    var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<Category, CategorySetting>(categoryTypeId);
                     if (settings == null)
                         continue;
 
@@ -86,7 +93,7 @@ namespace RA.Categories.Services
                     categoryTypeList.Add(new SelectListItem()
                     {
                         Value = categoryTypeId.ToString(),
-                        Text = _entityTypeManager.GetById(categoryTypeId).Result.EntityName
+                        Text = _entityTypeManager.GetByIdAsync(categoryTypeId).Result.EntityName
                     });
                 }
             }
@@ -94,12 +101,12 @@ namespace RA.Categories.Services
             return categoryTypeList;
         }
 
-        public async Task<List<SelectListItem>> GetCategoriesSelectList(List<Guid> categoryTypeIds = null)
+        public async Task<List<SelectListItem>> GetCategoriesSelectListAsync(List<Guid> categoryTypeIds)
         {
-            if (categoryTypeIds == null)
+            if (!categoryTypeIds.HasAny())
                 throw new ArgumentNullException(CategoryMessages.EmptyCategoryIds);
 
-            var categories = await GetCategoryList(categoryTypeIds);
+            var categories = await GetCategoryListAsync(categoryTypeIds);
 
             var categoryList = new List<SelectListItem>
             {
@@ -122,17 +129,18 @@ namespace RA.Categories.Services
 
             return categoryList;
         }
+        #endregion
 
         #endregion
 
         #region Category - Entity Mapping
 
-        public async Task<List<Guid>> GetEntityIdsByCategoryId(Guid categoryId)
+        public async Task<List<Guid>> GetEntityIdsByCategoryIdAsync(Guid categoryId)
         {
             return await _categoryMapping.Where(c => c.CategoryId == categoryId).Select(c => c.EntityId).ToListAsync();
         }
 
-        public async Task<Category> GetCategoryByEntityId(Guid entityId)
+        public async Task<Category> GetCategoryByEntityIdAsync(Guid entityId)
         {
             var query = await (from cat in _category
                                 join map in _categoryMapping on cat.Id equals map.CategoryId

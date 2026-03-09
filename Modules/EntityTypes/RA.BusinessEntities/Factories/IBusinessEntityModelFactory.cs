@@ -5,9 +5,9 @@ namespace RA.BusinessEntities.Factories
 {
     public interface IBusinessEntityModelFactory
     {
-        Task<BusinessEntityConfigureModel> PrepareBusinessEntityConfigureModel(Guid entityTypeId, string systemNamee);
-        Task<BusinessEntityModel> PrepareBusinessEntityModel(BusinessEntityModel BusinessEntityModel, BusinessEntity businessEntity, Guid entityTypeId);
-        Task<BusinessEntitySearchModel> PrepareBusinessEntitySearchModel(BusinessEntitySearchModel searchModel, int pageSize, int pageNumber);
-        Task<BusinessEntityListModel> PrepareBusinessEntityListModel(BusinessEntitySearchModel searchModel);
+        Task<BusinessEntityConfigureModel> PrepareBusinessEntityConfigureModelAsync(Guid entityTypeId, string systemNamee);
+        Task<BusinessEntityModel> PrepareBusinessEntityModelAsync(BusinessEntityModel BusinessEntityModel, BusinessEntity businessEntity, Guid entityTypeId);
+        Task<BusinessEntitySearchModel> PrepareBusinessEntitySearchModelAsync(BusinessEntitySearchModel searchModel, int pageSize, int pageNumber);
+        Task<BusinessEntityListModel> PrepareBusinessEntityListModelAsync(BusinessEntitySearchModel searchModel);
     }
 }

@@ -14,6 +14,8 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
+// 03-04-26 - Need to add Generation and Consuming of client_id and client_secret should be different for every client application.
+
 namespace RA.WebServiceEndpoints.Controllers
 {
     [ApiController]
@@ -29,8 +31,6 @@ namespace RA.WebServiceEndpoints.Controllers
         {
             _userService = userService;
             _jwtSecretKey = configuration.GetValue<string>("ApiSettings:JWTSecretKey");
-            _clientId = configuration.GetValue<string>("ApiSettings:ClientId");
-            _clientSecret = configuration.GetValue<string>("ApiSettings:ClientSecret");
         }
 
         [HttpPost]
@@ -38,6 +38,19 @@ namespace RA.WebServiceEndpoints.Controllers
         {
             if (model == null)
                 return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "No username and password entered." });
+
+            if (HttpContext.Request.Headers["client_id"].FirstOrDefault() == null)
+            {
+                return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "No username and password entered." });
+            }
+
+            if (HttpContext.Request.Headers["client_secret"].FirstOrDefault() == null)
+            {
+                return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "No username and password entered." });
+            }
+
+            _clientId = HttpContext.Request.Headers["client_id"].ToString();
+            _clientSecret = HttpContext.Request.Headers["client_secret"].ToString();
 
             if (model.UserName == null || model.Password == null)
                 return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "Username or password should have value." });

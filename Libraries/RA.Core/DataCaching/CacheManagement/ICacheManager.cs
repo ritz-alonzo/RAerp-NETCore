@@ -10,9 +10,9 @@ namespace RA.Core.DataCaching.CacheManagement
         bool EntityCacheNotExists(Guid typeId);
         bool EntityCacheNotExists(List<Guid> typeIds);
         bool EntityCacheNotExists(string systemName);
-        IEnumerable<TEntity> GenerateCache(IEnumerable<TEntity> entityList, Guid typeId);
-        IEnumerable<TEntity> GenerateCache(IEnumerable<TEntity> entityList, List<Guid> typeIds);
-        IEnumerable<TEntity> GenerateCache(IEnumerable<TEntity> entityList, string systemName);
+        Task<IEnumerable<TEntity>> GenerateCacheAsync(IEnumerable<TEntity> entityList, Guid typeId);
+        Task<IEnumerable<TEntity>> GenerateCacheAsync(IEnumerable<TEntity> entityList, List<Guid> typeIds);
+        Task<IEnumerable<TEntity>> GenerateCacheAsync(IEnumerable<TEntity> entityList, string systemName);
         string GenerateEntityCacheKey(Guid typeId);
         string GenerateEntityCacheKey(List<Guid> typeIds);
         string GenerateEntityCacheKey(string systemName);

@@ -1,0 +1,109 @@
+﻿@model OrderListModel
+
+@{
+    Layout = null;
+}
+
+<div class="card">
+    <div class="card-body">
+        @{
+            var gridTable = new DataTablesModel();
+            gridTable.GridName = "orders_table";
+            gridTable.ClassName = "table-dark";
+            gridTable.UrlController = "Orders";
+            gridTable.UrlEdit = "Index";
+            gridTable.UrlDelete = "Delete";
+            gridTable.UrlGridPartialViewAction = "OrderListSearch";
+            gridTable.EditEnabled = true;
+            gridTable.DeleteEnabled = true;
+
+            gridTable.Records = Model.Items;
+
+            gridTable.ColumnCollection = new List<ColumnDefinition>
+            {
+                new ColumnDefinition(nameof(OrderModel.Id))
+                {
+                    IsPrimaryKey = true,
+                    Visible = false,
+                },
+                new ColumnDefinition(nameof(OrderModel.FormNbr))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderModel>(nameof(OrderModel.FormNbr)),
+                    Visible = true,
+                    RedirectUsingCodeEnabled = Model.FormSettings.RedirectUsingFormNbrEnabled
+                },
+                new ColumnDefinition(nameof(OrderModel.ServiceId))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderModel>(nameof(OrderModel.ServiceId)),
+                    Visible = true,
+                    ColumnSelectList = Model.Items.Any() ? Model.Items.Select(c => c.AvailableServices).FirstOrDefault() : new List<SelectListItem>(),
+                    ControlType = ControlType.Dropdown
+                },
+                new ColumnDefinition(nameof(OrderModel.CustomerName))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderModel>(nameof(OrderModel.CustomerName)),
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(OrderModel.OrderDate))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderModel>(nameof(OrderModel.OrderDate)),
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(OrderModel.TotalQty))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderModel>(nameof(OrderModel.TotalQty)),
+                    Visible = true
+                },
+                new ColumnDefinition(nameof(OrderModel.TotalNetAmount))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderModel>(nameof(OrderModel.TotalNetAmount)),
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(OrderModel.CreatedOn))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderModel>(nameof(OrderModel.CreatedOn)),
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(OrderModel.ModifiedOn))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderModel>(nameof(OrderModel.ModifiedOn)),
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(OrderModel.Status))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderModel>(nameof(OrderModel.StatusId)),
+                    Visible = true,
+                },
+                new ColumnDefinition(nameof(OrderModel.CreatedByUser))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderModel>(nameof(OrderModel.CreatedByUser)),
+                    Visible = true,
+                    PropertyValueHolder = nameof(OrderModel.CreatedByUser.FullName),
+                },
+                new ColumnDefinition(nameof(OrderModel.CreatedById))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderModel>(nameof(OrderModel.CreatedByUser)),
+                    Visible = false,
+                },
+            };
+
+            @await Html.PartialAsync("~/Views/Shared/Tables/_Table.cshtml", gridTable)
+        }
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/Tables/_Pagination.cshtml", Model)
+
+<script type="text/javascript">
+    var timeOut = null;
+    $('#orders_search').on("input", function (e) {
+        if (e.key === 'Enter' || e.keyCode === 13) return;
+        var formSearchId = 'orders_search';
+        var url = '@Url.Action("OrderListSearch", "Orders")'
+        var partialViewId = 'orders';
+        clearTimeout(timeOut);
+        timeOut = setTimeout(function (e) { SearchFunction(formSearchId, url, partialViewId); }, 500);
+    });
+    var tableId = "orders_table";
+    formatStatus(tableId);
+</script>

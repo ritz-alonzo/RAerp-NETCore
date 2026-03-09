@@ -32,7 +32,7 @@ namespace RA.Categories.Infrastructure
         {
             var categoryNode = new PluginNode();
 
-            var parentEntity = await _entityTypeManager.GetTypeBySystemName(typeof(Category).FullName);
+            var parentEntity = await _entityTypeManager.GetTypeBySystemNameAsync(typeof(Category).FullName);
 
             if (parentEntity == null)
                 return categoryNode;
@@ -40,18 +40,18 @@ namespace RA.Categories.Infrastructure
             if (parentEntity.ParentEntityTypeId.IsNotNullOrEmpty() || !parentEntity.Installed)
                 return categoryNode;
 
-            bool hasAccess = await _accessControl.HasViewAccess<Category>();
+            bool hasAccess = await _accessControl.HasViewAccessAsync<Category>();
 
             categoryNode.MenuTitle = "Categories";
             categoryNode.SystemName = parentEntity.EntitySystemName;
             categoryNode.Url = "/Categories/List";
-            categoryNode.IconClass = "fa fa-th-list";
+            categoryNode.IconClass = "fas fa-tags";
             categoryNode.Visible = hasAccess;
             //categoryNode.Visible = true;
             categoryNode.DisplayOrder = 2;
             categoryNode.IsParentNode = true;
 
-            var childEntities = _entityTypeManager.GetChildEntities(parentEntity.Id).Result.Where(c => c.Installed).ToList();
+            var childEntities = _entityTypeManager.GetChildEntitiesAsync(parentEntity.Id).Result.Where(c => c.Installed).ToList();
 
             if (childEntities.Any() && hasAccess)
             {
@@ -61,7 +61,7 @@ namespace RA.Categories.Infrastructure
 
                 foreach (var childEntity in childEntities)
                 {
-                    var settings = await _entityTypeManager.GetSettingDataOfEntity<Category, CategorySetting>(childEntity.Id);
+                    var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<Category, CategorySetting>(childEntity.Id);
 
                     if (settings == null)
                         continue;
@@ -73,7 +73,7 @@ namespace RA.Categories.Infrastructure
                     childNode.MenuTitle = childEntity.EntityName;
                     childNode.SystemName = childEntity.EntitySystemName;
                     childNode.Url = $"/Categories/List/?entityTypeId={childEntity.Id}";
-                    childNode.IconClass = "fa fa-th-list";
+                    childNode.IconClass = "fas fa-tag";
                     childNode.Visible = childEntity.Installed;
                     childNode.DisplayOrder = displayOrderCount;
                     childNode.IsParentNode = false;

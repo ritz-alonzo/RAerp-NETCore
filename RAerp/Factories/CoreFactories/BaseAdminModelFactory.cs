@@ -13,10 +13,13 @@ namespace RAerp.Factories.CoreFactories
 {
     public class BaseAdminModelFactory : IBaseAdminModelFactory
     {
+        #region Constants
         private readonly IUserIdentity _userIdentity;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ISettingService _settingService;
+        #endregion
 
+        #region Ctor
         public BaseAdminModelFactory(IUserIdentity userIdentity, 
             IHttpContextAccessor httpContextAccessor,
             ISettingService settingService)
@@ -25,6 +28,7 @@ namespace RAerp.Factories.CoreFactories
             _httpContextAccessor = httpContextAccessor;
             _settingService = settingService;
         }
+        #endregion
 
         public TSearch PrepareBaseAdminSearchModel<TSearch>(TSearch searchModel, int pageSize, int pageNumber)
             where TSearch : BaseSearchModel
@@ -58,7 +62,7 @@ namespace RAerp.Factories.CoreFactories
             return list;
         }
 
-        public TModel PrepareBaseAdminModel<TModel, TEntity>(TModel model, TEntity entity)
+        public async Task<TModel> PrepareBaseAdminModelAsync<TModel, TEntity>(TModel model, TEntity entity)
             where TModel: BaseAdminModel
             where TEntity: BaseAdminEntity
         {
@@ -66,16 +70,15 @@ namespace RAerp.Factories.CoreFactories
 
             if (model.CreatedByUser.Id.IsNullOrEmpty() && model.CreatedByUser == null)
             {
-                // Disable for now until User Functionality is added - 02/14/2024
-                //var currentUser = _userIdentity.GetCurrentUser(_httpContextAccessor.HttpContext);
-                //if (currentUser != null && model.CreatedByUser == null)
-                //{
-                //    model.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(currentUser);
-                //}
+                var currentUser = await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext);
+                if (currentUser != null && model.CreatedByUser == null)
+                {
+                    model.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(currentUser);
+                }
             }
             else
             {
-                var user = _userIdentity.GetUserDetails(model.CreatedByUser.Id);
+                var user = await _userIdentity.GetUserDetailsAsync(model.CreatedByUser.Id);
                 if (user != null)
                     model.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(user);
             }

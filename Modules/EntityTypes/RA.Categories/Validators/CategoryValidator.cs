@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace RA.Categories.Validators
 {
-    public class CategoryValidator : BaseEntityValidator<CategoryModel>
+    public class CategoryValidator : BaseEntityModelValidator<CategoryModel>
     {
     }
 }

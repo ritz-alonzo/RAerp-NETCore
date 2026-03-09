@@ -6,14 +6,11 @@ namespace RAerp.Factories.CoreFactories
     {
         TSearch PrepareBaseSearchModel<TSearch>(TSearch searchModel, int pageSize, int pageNumber) 
             where TSearch : BaseSearchModel;
-        TModel PrepareBaseModel<TModel>(TModel model)
+        Task<TModel> PrepareBaseModelAsync<TModel>(TModel model)
             where TModel : BaseModel;
         TList PrepareBaseListModel<TList, TModel, TSearch>(TList list, List<TModel> listModel, TSearch searchModel, int totalItems)
             where TList : BaseListModel<TModel>
             where TModel : BaseModel
             where TSearch : BaseSearchModel;
-        TList PrepareBaseListFormSettingsModel<TList, TModel>(TList listModel)
-            where TList : BaseListModel<TModel>
-            where TModel: BaseModel;
     }
 }

@@ -5,7 +5,7 @@ namespace RAerp.Helpers.UserHelper
 {
     public interface IUserIdentity
     {
-        User GetCurrentUser(HttpContext httpContext);
-        User GetUserDetails(Guid userId);
+        Task<User> GetCurrentUserAsync(HttpContext httpContext);
+        Task<User> GetUserDetailsAsync(Guid userId);
     }
 }

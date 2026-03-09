@@ -113,7 +113,7 @@ namespace RAerp.Controllers.Admin
                     accessRecordSystemNameList.Add(accessRecord.SystemName);
                     accessRights = new AccessRights();
                     // add created by id
-                    accessRights.CreatedById = _userIdentity.GetCurrentUser(HttpContext).Id;
+                    accessRights.CreatedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
                     accessRights.AccessRecordData = JsonConvert.SerializeObject(accessRecordSystemNameList);
                     accessRights.UserRoleId = userRoleId;
                     accessRights.Rolename = userRole.Rolename;
@@ -127,7 +127,7 @@ namespace RAerp.Controllers.Admin
                     accessRecordSystemNameList.Add(accessRecord.SystemName);
                     accessRights.AccessRecordData = JsonConvert.SerializeObject(accessRecordSystemNameList);
                     // add modified by id
-                    accessRights.ModifiedById = _userIdentity.GetCurrentUser(HttpContext).Id;
+                    accessRights.ModifiedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
                     await _accessRightsService.Update(accessRights);
                 }
             }
@@ -149,7 +149,7 @@ namespace RAerp.Controllers.Admin
                             accessRights.AccessRecordData = JsonConvert.SerializeObject(accessRecordSystemNameList);
                         else
                             accessRights.AccessRecordData = "{}";
-                        accessRights.ModifiedById = _userIdentity.GetCurrentUser(HttpContext).Id;
+                        accessRights.ModifiedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
                         await _accessRightsService.Update(accessRights);
                     }
                 }
@@ -170,7 +170,7 @@ namespace RAerp.Controllers.Admin
         }
 
         // add Unathorize View here
-        public IActionResult NoAccess()
+        public IActionResult AccessDenied()
         {
             return View();
         }

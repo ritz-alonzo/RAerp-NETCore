@@ -1,0 +1,88 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+	  <OutputPath>..\..\..\RAerp\Plugins\RA.OrdersManagement</OutputPath>
+	  <OutDir>$(OutputPath)</OutDir>
+	  <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Views\Orders\Configuration.cshtml" />
+    <None Remove="Views\Orders\_OrderList.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Views\Orders\Configuration.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Orders\Create.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Orders\Index.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Orders\List.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Orders\_Configuration.Main.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Orders\_Configuration.Mapping.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Orders\_CreateAndEdit.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Orders\_CreateAndEdit.General.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Orders\_CreateAndEdit.System.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Orders\_CreateAndEdit.Items.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Orders\_OrderList.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\_ViewImports.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+	  <ProjectReference Include="..\..\..\CoreModules\RA.EntityTypes\RA.EntityTypes.csproj">
+		  <Private>False</Private>
+		  <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+		  <CopyLocal>False</CopyLocal>
+	  </ProjectReference>
+	  <ProjectReference Include="..\..\..\CoreModules\RA.FormTypes\RA.FormTypes.csproj">
+		  <Private>False</Private>
+			<CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+			<CopyLocal>False</CopyLocal>
+	  </ProjectReference>
+	  <ProjectReference Include="..\..\..\RAerp\RAerp.csproj">
+		  <Private>False</Private>
+		  <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+		  <CopyLocal>False</CopyLocal>
+	  </ProjectReference>
+	  <ProjectReference Include="..\..\EntityTypes\RA.Catalogs\RA.Catalogs.csproj">
+		  <Private>False</Private>
+		  <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+		  <CopyLocal>False</CopyLocal>
+	  </ProjectReference>
+	  <ProjectReference Include="..\..\EntityTypes\RA.Categories\RA.Categories.csproj">
+		  <Private>False</Private>
+		  <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+		  <CopyLocal>False</CopyLocal>
+	  </ProjectReference>
+	  <ProjectReference Include="..\..\Inventory\RA.Inventory\RA.Inventory.csproj">
+		  <Private>False</Private>
+		  <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+		  <CopyLocal>False</CopyLocal>
+	  </ProjectReference>
+  </ItemGroup>
+
+</Project>

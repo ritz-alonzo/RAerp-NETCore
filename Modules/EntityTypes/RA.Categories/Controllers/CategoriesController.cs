@@ -16,12 +16,15 @@ namespace RA.Categories.Controllers
 {
     public class CategoriesController : AdminController
     {
+        #region Constants
         private readonly ICategoryService _categoryService;
         private readonly IEntityTypeManager _entityTypeManager;
         private readonly ICategoryModelFactory _categoryModelFactory;
         private readonly IMapper _mapper;
         private readonly IUserIdentity _userIdentity;
+        #endregion
 
+        #region Ctor
         public CategoriesController(ICategoryService categoryService,
             IEntityTypeManager entityTypeManager,
             ICategoryModelFactory categoryModelFactory,
@@ -34,6 +37,7 @@ namespace RA.Categories.Controllers
             _mapper = mapper;
             _userIdentity = userIdentity;
         }
+        #endregion
 
         #region Configuration
 
@@ -43,7 +47,7 @@ namespace RA.Categories.Controllers
             if (entityTypeId.IsNullOrEmpty())
                 return JsonError(EntityTypeMessages.EntityTypeNotExists);
 
-            var categoryConfigureModel = await _categoryModelFactory.PrepareCategoryConfigureModel(entityTypeId, systemName);
+            var categoryConfigureModel = await _categoryModelFactory.PrepareCategoryConfigureModelAsync(entityTypeId, systemName);
 
             return View("~/Plugins/RA.Categories/Views/Configuration.cshtml", categoryConfigureModel);
         }
@@ -58,19 +62,19 @@ namespace RA.Categories.Controllers
                 return JsonError(EntityTypeMessages.EntityTypeIdNotExists);
 
             // will insert automatically when GetSettingDataOfEntity is used
-            var settings = await _entityTypeManager.GetSettingDataOfEntity<Category, CategorySetting>(categoryConfigureModel.EntityTypeId, categoryConfigureModel.SystemName);
+            var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<Category, CategorySetting>(categoryConfigureModel.EntityTypeId, categoryConfigureModel.SystemName);
 
             // sanity check if settings is not created in GetSettingDataOfEntity
             if (settings == null)
             {
                 // insert
-                await _entityTypeManager.InsertEntitySetting<Category, CategorySetting>(categoryConfigureModel.EntityTypeId, categoryConfigureModel.SystemName);
+                await _entityTypeManager.InsertEntitySettingAsync<Category, CategorySetting>(categoryConfigureModel.EntityTypeId, categoryConfigureModel.SystemName);
             }
 
             settings = _mapper.Map(categoryConfigureModel, settings);
 
             // update
-            await _entityTypeManager.UpdateSettingDataOfEntity<Category, CategorySetting>(settings, categoryConfigureModel.EntityTypeId);
+            await _entityTypeManager.UpdateSettingDataOfEntityAsync<Category, CategorySetting>(settings, categoryConfigureModel.EntityTypeId);
 
             return NullJsonResult();
         }
@@ -84,14 +88,14 @@ namespace RA.Categories.Controllers
             if (entityTypeId.IsNullOrEmpty())
                 return NotFound();
 
-            var entityTypeSetting = await _entityTypeManager.GetSettingDataOfEntity<Category, CategorySetting>(entityTypeId);
+            var entityTypeSetting = await _entityTypeManager.GetSettingDataOfEntityAsync<Category, CategorySetting>(entityTypeId);
             if (entityTypeSetting == null)
                 return NotFound();
 
             if (!entityTypeSetting.Enabled)
                 return NotFound();
 
-            var model = await _categoryModelFactory.PrepareCategorySearchModel(new CategorySearchModel() { SearchEntityTypeId = entityTypeId }, 10, page);
+            var model = await _categoryModelFactory.PrepareCategorySearchModelAsync(new CategorySearchModel() { SearchEntityTypeId = entityTypeId }, 10, page);
 
             return View("~/Plugins/RA.Categories/Views/List.cshtml", model);
         }
@@ -99,7 +103,7 @@ namespace RA.Categories.Controllers
         [HttpGet]
         public async Task<IActionResult> CategoryListSearch(CategorySearchModel searchModel)
         {
-            var model = await _categoryModelFactory.PrepareCategoryListModel(searchModel);
+            var model = await _categoryModelFactory.PrepareCategoryListModelAsync(searchModel);
 
             return PartialView("~/Plugins/RA.Categories/Views/_CategoryList.cshtml", model);
         }
@@ -109,14 +113,14 @@ namespace RA.Categories.Controllers
             if (id.IsNullOrEmpty())
                 return NotFound();
 
-            var entity = await _categoryService.GetById(id);
+            var entity = await _categoryService.GetByIdAsync(id);
             if (entity == null)
                 return NotFound();
 
             if (entity.EntityTypeId.IsNullOrEmpty())
                 return NotFound();
 
-            var model = await _categoryModelFactory.PrepareCategoryModel(new CategoryModel(), entity, entity.EntityTypeId);
+            var model = await _categoryModelFactory.PrepareCategoryModelAsync(new CategoryModel(), entity, entity.EntityTypeId);
 
             return View("~/Plugins/RA.Categories/Views/Index.cshtml", model);
         }
@@ -126,14 +130,14 @@ namespace RA.Categories.Controllers
             if (entityTypeId.IsNullOrEmpty())
                 return NotFound();
 
-            var entityTypeSetting = await _entityTypeManager.GetSettingDataOfEntity<Category, CategorySetting>(entityTypeId);
+            var entityTypeSetting = await _entityTypeManager.GetSettingDataOfEntityAsync<Category, CategorySetting>(entityTypeId);
             if (entityTypeSetting == null)
                 return NotFound();
 
             if (!entityTypeSetting.Enabled)
                 return NotFound();
 
-            var model = await _categoryModelFactory.PrepareCategoryModel(new CategoryModel(), null, entityTypeId);
+            var model = await _categoryModelFactory.PrepareCategoryModelAsync(new CategoryModel(), null, entityTypeId);
 
             return View("~/Plugins/RA.Categories/Views/Create.cshtml", model);
         }
@@ -145,8 +149,8 @@ namespace RA.Categories.Controllers
             if (ModelState.IsValid)
             {
                 var entity = _mapper.Map<Category>(model);
-                entity.CreatedById = _userIdentity.GetCurrentUser(HttpContext).Id;
-                await _categoryService.Insert(entity);
+                entity.CreatedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
+                await _categoryService.InsertAsync(entity);
                 // sanity check
                 model.Id = entity.Id;
 
@@ -167,8 +171,8 @@ namespace RA.Categories.Controllers
             if (ModelState.IsValid)
             {
                 var entity = _mapper.Map<Category>(model);
-                entity.ModifiedById = _userIdentity.GetCurrentUser(HttpContext).Id;
-                await _categoryService.Update(entity);
+                entity.ModifiedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
+                await _categoryService.UpdateAsync(entity);
                 // sanity check
                 model.Id = entity.Id;
                 SuccessNotification(model, "Successfully updated Category");
@@ -188,14 +192,14 @@ namespace RA.Categories.Controllers
             if (id.IsNullOrEmpty())
                 return NotFound();
 
-            var entity = await _categoryService.GetById(id);
+            var entity = await _categoryService.GetByIdAsync(id);
             if (entity == null)
                 return NotFound();
 
             if (entity.EntityTypeId.IsNullOrEmpty())
                 return NotFound();
 
-            await _categoryService.Delete(entity);
+            await _categoryService.DeleteAsync(entity);
             SuccessNotification(new CategoryModel() { Id = entity.Id }, "Successfully deleted Category");
 
             return RedirectToAction("List", new { entityTypeId = id });

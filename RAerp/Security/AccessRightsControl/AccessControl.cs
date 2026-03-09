@@ -9,16 +9,20 @@ using RAerp.Helpers.Security;
 using RAerp.Helpers.UserHelper;
 using RAerp.Security.AccessRights;
 using RAerp.Services.AccessRightsServices;
+using System.Data.Entity;
 
 namespace RAerp.Security.AccessRightsControl
 {
     public class AccessControl : IAccessControl
     {
+        #region Constants
         private readonly IAccessRightsService _accessRightsService;
         private readonly IUserIdentity _userIdentity;
         private readonly RAerpContext _erpContext;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        #endregion
 
+        #region Ctor
         public AccessControl(IAccessRightsService accessRightsService,
             IUserIdentity userIdentity,
             RAerpContext erpContext,
@@ -29,18 +33,19 @@ namespace RAerp.Security.AccessRightsControl
             _erpContext = erpContext;
             _httpContextAccessor = httpContextAccessor;
         }
+        #endregion
 
         #region CRUD Access
 
         #region View
 
-        public async Task<bool> HasViewAccess<TEntity>()
+        public async Task<bool> HasViewAccessAsync<TEntity>()
             where TEntity : class
         {
             if (!SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
                 return false;
 
-            var userId = _userIdentity.GetCurrentUser(_httpContextAccessor.HttpContext)?.Id;
+            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id;
 
             if (userId.IsNullOrEmpty())
                 throw new ArgumentNullException(AdminErrorMessages.UserIdNotExists);
@@ -54,19 +59,19 @@ namespace RAerp.Security.AccessRightsControl
             if (userRole == null)
                 throw new ArgumentNullException(AdminErrorMessages.UserRoleNotExists);
 
-            return await CheckRoleAccessRecord(userRole.Id, AccessType.View, typeof(TEntity));
+            return await CheckRoleAccessRecordAsync(userRole.Id, AccessType.View, typeof(TEntity));
         }
         #endregion
 
         #region Create
 
-        public async Task<bool> HasCreateAccess<TEntity>()
+        public async Task<bool> HasCreateAccessAsync<TEntity>()
             where TEntity : class
         {
             if (!SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
                 return false;
 
-            var userId = _userIdentity.GetCurrentUser(_httpContextAccessor.HttpContext)?.Id;
+            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id;
 
             if (userId.IsNullOrEmpty())
                 throw new ArgumentNullException(AdminErrorMessages.UserIdNotExists);
@@ -80,19 +85,19 @@ namespace RAerp.Security.AccessRightsControl
             if (userRole == null)
                 throw new ArgumentNullException(AdminErrorMessages.UserRoleNotExists);
 
-            return await CheckRoleAccessRecord(userRole.Id, AccessType.Create, typeof(TEntity));
+            return await CheckRoleAccessRecordAsync(userRole.Id, AccessType.Create, typeof(TEntity));
         }
         #endregion
 
         #region Update
 
-        public async Task<bool> HasUpdateAccess<TEntity>()
+        public async Task<bool> HasUpdateAccessAsync<TEntity>()
             where TEntity : class
         {
             if (!SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
                 return false;
 
-            var userId = _userIdentity.GetCurrentUser(_httpContextAccessor.HttpContext)?.Id;
+            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id;
 
             if (userId.IsNullOrEmpty())
                 throw new ArgumentNullException(AdminErrorMessages.UserIdNotExists);
@@ -106,19 +111,19 @@ namespace RAerp.Security.AccessRightsControl
             if (userRole == null)
                 throw new ArgumentNullException(AdminErrorMessages.UserRoleNotExists);
 
-            return await CheckRoleAccessRecord(userRole.Id, AccessType.Update, typeof(TEntity));
+            return await CheckRoleAccessRecordAsync(userRole.Id, AccessType.Update, typeof(TEntity));
         }
         #endregion
 
         #region Delete
 
-        public async Task<bool> HasDeleteAccess<TEntity>()
+        public async Task<bool> HasDeleteAccessAsync<TEntity>()
             where TEntity : class
         {
             if (!SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
                 return false;
 
-            var userId = _userIdentity.GetCurrentUser(_httpContextAccessor.HttpContext)?.Id;
+            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id;
 
             if (userId.IsNullOrEmpty())
                 throw new ArgumentNullException(AdminErrorMessages.UserIdNotExists);
@@ -132,7 +137,7 @@ namespace RAerp.Security.AccessRightsControl
             if (userRole == null)
                 throw new ArgumentNullException(AdminErrorMessages.UserRoleNotExists);
 
-            return await CheckRoleAccessRecord(userRole.Id, AccessType.Delete, typeof(TEntity));
+            return await CheckRoleAccessRecordAsync(userRole.Id, AccessType.Delete, typeof(TEntity));
         }
         #endregion
 
@@ -140,7 +145,7 @@ namespace RAerp.Security.AccessRightsControl
 
         #region Access Rights Checking w/o Access Record
 
-        private async Task<bool> CheckRoleAccessRecord(Guid userRoleId, AccessType accessRecordType, Type moduleType)
+        private async Task<bool> CheckRoleAccessRecordAsync(Guid userRoleId, AccessType accessRecordType, Type moduleType)
         {
             if (moduleType == null)
                 throw new ArgumentNullException("Type cannot be empty");
@@ -160,8 +165,8 @@ namespace RAerp.Security.AccessRightsControl
 
             if (!accessRecordSystemNameList.Any())
                 return false;
-
-            var arType = moduleType.Assembly.GetTypes().Where(c => c.Name.Contains("AccessRightsRecord") && c.IsClass).FirstOrDefault();
+            
+            var arType = moduleType.Assembly.GetTypes().Where(c => c.Name.Contains(moduleType.Name) && c.Name.Contains("AccessRightsRecord") && c.IsClass).FirstOrDefault();
             if (arType == null)
                 return false;
 
@@ -169,9 +174,9 @@ namespace RAerp.Security.AccessRightsControl
             if (!arrFields.Any())
                 return false;
 
-            var ARRInstance = Activator.CreateInstance(arType);
+            var arrInstance = Activator.CreateInstance(arType);
 
-            var accessRecordByAccessType = arrFields.Select(c => c.GetValue(ARRInstance) as AccessRecord).FirstOrDefault(c => c.AccessRecordType == accessRecordType);
+            var accessRecordByAccessType = arrFields.Select(c => c.GetValue(arrInstance) as AccessRecord).FirstOrDefault(c => c.AccessRecordType == accessRecordType);
             if (accessRecordByAccessType == null)
                 return false;
             // will add switch in case there's complexity
@@ -184,7 +189,7 @@ namespace RAerp.Security.AccessRightsControl
 
         #region Direct checking of Access with Access Record
 
-        public async Task<bool> AccessPermitted<TEntity>(AccessRecord accessRecord)
+        public async Task<bool> AccessPermittedAsync<TEntity>(AccessRecord accessRecord)
             where TEntity : class
         {
             if (!SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
@@ -193,7 +198,7 @@ namespace RAerp.Security.AccessRightsControl
             if (accessRecord == null)
                 return false;
 
-            var userId = _userIdentity.GetCurrentUser(_httpContextAccessor.HttpContext)?.Id;
+            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id;
 
             if (userId.IsNullOrEmpty())
                 throw new ArgumentNullException(AdminErrorMessages.UserIdNotExists);
@@ -227,12 +232,12 @@ namespace RAerp.Security.AccessRightsControl
 
         #region Super Admin Access
 
-        public bool HasSuperAdminAccess()
+        public async Task<bool> HasSuperAdminAccessAsync()
         {
             if (!SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
                 return false;
 
-            var userId = _userIdentity.GetCurrentUser(_httpContextAccessor.HttpContext)?.Id;
+            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id;
 
             if (userId.IsNullOrEmpty())
                 throw new ArgumentNullException(AdminErrorMessages.UserIdNotExists);

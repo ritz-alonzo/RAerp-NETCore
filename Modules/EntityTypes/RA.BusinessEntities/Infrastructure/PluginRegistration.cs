@@ -33,7 +33,7 @@ namespace RA.BusinessEntities.Infrastructure
         {
             var businessEntityNode = new PluginNode();
 
-            var parentEntity = await _entityTypeManager.GetTypeBySystemName(typeof(BusinessEntity).FullName);
+            var parentEntity = await _entityTypeManager.GetTypeBySystemNameAsync(typeof(BusinessEntity).FullName);
 
             if (parentEntity == null)
                 return businessEntityNode;
@@ -41,18 +41,18 @@ namespace RA.BusinessEntities.Infrastructure
             if (parentEntity.ParentEntityTypeId.IsNotNullOrEmpty() || !parentEntity.Installed)
                 return businessEntityNode;
 
-            bool hasAccess = await _accessControl.HasViewAccess<BusinessEntity>();
+            bool hasAccess = await _accessControl.HasViewAccessAsync<BusinessEntity>();
 
             businessEntityNode.MenuTitle = "Business Entities";
             businessEntityNode.SystemName = parentEntity.EntitySystemName;
             businessEntityNode.Url = "/BusinessEntities/List";
-            businessEntityNode.IconClass = "fa fa-th-list";
+            businessEntityNode.IconClass = "fas fa-industry";
             businessEntityNode.Visible = hasAccess;
             //businessEntityNode.Visible = true;
             businessEntityNode.DisplayOrder = 2;
             businessEntityNode.IsParentNode = true;
 
-            var childEntities = _entityTypeManager.GetChildEntities(parentEntity.Id).Result.Where(c => c.Installed).ToList();
+            var childEntities = _entityTypeManager.GetChildEntitiesAsync(parentEntity.Id).Result.Where(c => c.Installed).ToList();
 
             if (childEntities.Any() && hasAccess)
             {
@@ -62,7 +62,7 @@ namespace RA.BusinessEntities.Infrastructure
 
                 foreach(var childEntity in childEntities)
                 {
-                    var settings = await _entityTypeManager.GetSettingDataOfEntity<BusinessEntity, BusinessEntitySetting>(childEntity.Id);
+                    var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(childEntity.Id);
 
                     if (settings == null)
                         continue;
@@ -74,7 +74,7 @@ namespace RA.BusinessEntities.Infrastructure
                     childNode.MenuTitle = childEntity.EntityName;
                     childNode.SystemName = childEntity.EntitySystemName;
                     childNode.Url = $"/BusinessEntities/List/?entityTypeId={childEntity.Id}";
-                    childNode.IconClass = "fa fa-th-list";
+                    childNode.IconClass = "fas fa-building";
                     childNode.Visible = childEntity.Installed;
                     childNode.DisplayOrder = displayOrderCount;
                     childNode.IsParentNode = false;

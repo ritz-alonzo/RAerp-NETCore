@@ -14,10 +14,10 @@ namespace RAerp.Factories.UserFactory
         #endregion
 
         #region UserRoles
-        Task<UserRoleModel> PrepareUserRoleModel(UserRoleModel model, UserRole entity);
-        Task<UserRoleSearchModel> PrepareUserRoleSearchModel(UserRoleSearchModel searchModel, int pageNumber, int pageSize);
-        Task<UserRoleListModel> PrepareUserRoleListModel(UserRoleSearchModel searchModel);
-        Task<List<SelectListItem>> PrepareUserRoleSelectList(bool showDefault = true);
+        Task<UserRoleModel> PrepareUserRoleModelAsync(UserRoleModel model, UserRole entity);
+        Task<UserRoleSearchModel> PrepareUserRoleSearchModelAsync(UserRoleSearchModel searchModel, int pageNumber, int pageSize);
+        Task<UserRoleListModel> PrepareUserRoleListModelAsync(UserRoleSearchModel searchModel);
+        Task<List<SelectListItem>> PrepareUserRoleSelectListAsync(bool showDefault = true);
         #endregion
     }
 }

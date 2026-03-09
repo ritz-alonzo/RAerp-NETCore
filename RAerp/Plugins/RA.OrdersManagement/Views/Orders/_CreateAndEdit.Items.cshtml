@@ -1,0 +1,168 @@
+﻿@model OrderItemListModel
+
+@{
+    Layout = null;
+    var mappedCatalogTypeIds = Model.FormSettings.MappedCatalogTypeIds.Any() ? String.Join(",", Model.FormSettings.MappedCatalogTypeIds) : "";
+    var existingCatalogIds = Model.Items.Any() ? String.Join(",", Model.Items.Select(c => c.CatalogId).ToList()) : "";
+}
+
+<div class="row">
+    <div class="form-item-detail-tab-action">
+        @* style="display: flex; justify-content: end; position: absolute; left: -70px; top: 565px" *@
+        <button type="button" class="form-item-modal-trigger btn-sm btn-info"
+        data-form-item-url="@Url.Action("CatalogSelectorList", "Catalogs")"
+        data-form-item-post-url="@Url.Action("InsertItem", "Orders")"
+        data-form-item-view-url="@Url.Action("OrderItemList", "Orders")"
+        data-form-item-view-id="orderItems"
+        data-form-item-title="Add Items"
+        data-form-item-id="@mappedCatalogTypeIds"
+        data-form-item-catalog-ids="@existingCatalogIds"
+        data-bs-toggle="modal"
+        data-bs-target="#formItemModal">
+            <i class="fa fa-plus"></i>
+            @HtmlContentConstants.AddItem
+        </button>
+    </div>
+</div>
+<div class="row">
+    @{
+        var gridTable = new DataTablesModel();
+        gridTable.GridName = "orderItems_table";
+        gridTable.ClassName = "table-dark";
+        gridTable.UrlController = "Orders";
+        gridTable.UrlEdit = "EditItem";
+        gridTable.UrlDelete = "DeleteItem";
+        gridTable.UrlGridPartialViewAction = "OrderItemList";
+        gridTable.UrlGridPartialViewId = "orderItems";
+        gridTable.EditEnabled = true;
+        gridTable.DeleteEnabled = true;
+        gridTable.IsEmbeddedTableToForm = true;
+
+        gridTable.Records = Model.Items;
+
+        gridTable.ColumnCollection = new List<ColumnDefinition>
+        {
+            new ColumnDefinition(nameof(OrderItemModel.Id))
+            {
+                IsPrimaryKey = true,
+                Visible = false,
+            },
+            new ColumnDefinition(nameof(OrderItemModel.FormId))
+            {
+                Visible = false
+            },
+            new ColumnDefinition(nameof(OrderItemModel.LineNbr))
+            {
+                Visible = false
+            },
+            new ColumnDefinition(nameof(OrderItemModel.CatalogCode))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.CatalogCode)),
+                Visible = Model.FormSettings.ShowItemCodeInGrid  
+            },
+            new ColumnDefinition(nameof(OrderItemModel.CatalogId))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.CatalogId)),
+                Visible = true,
+                ColumnSelectList = Model.Items.Any() ? Model.Items.Select(c => c.AvailableCatalogs).FirstOrDefault() : new List<SelectListItem>(),
+                ControlType = ControlType.Dropdown
+            },
+            new ColumnDefinition(nameof(OrderItemModel.CategoryId))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.CategoryId)),
+                Visible = true,
+                ColumnSelectList = Model.Items.Any() ? Model.Items.Select(c => c.AvailableCategories).FirstOrDefault() : new List<SelectListItem>(),
+                ControlType = ControlType.Dropdown
+            },
+            new ColumnDefinition(nameof(OrderItemModel.Description))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.Description)),
+                Visible = true,
+            },
+            new ColumnDefinition(nameof(OrderItemModel.Qty))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.Qty)),
+                Visible = true,
+                ControlType = ControlType.Number,
+                DecimalPlaces = 2, // for now set default value, but will use settings
+                Editable = true
+            },
+            new ColumnDefinition(nameof(OrderItemModel.Price))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.Price)),
+                Visible = true,
+                ControlType = ControlType.Number,
+                DecimalPlaces = 2, // for now set default value, but will use settings
+            },
+            new ColumnDefinition(nameof(OrderItemModel.DiscountAmount))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.DiscountAmount)),
+                Visible = true,
+                ControlType = ControlType.Number,
+                DecimalPlaces = 2, // for now set default value, but will use settings
+                Editable = true
+            },
+            new ColumnDefinition(nameof(OrderItemModel.SubTotal))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.SubTotal)),
+                Visible = true,
+                ControlType = ControlType.Number,
+                DecimalPlaces = 2, // for now set default value, but will use settings
+            },
+
+            #region System Fields
+            new ColumnDefinition(nameof(OrderItemModel.CreatedById))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.CreatedByUser)),
+                Visible = false,
+            },
+            new ColumnDefinition(nameof(OrderItemModel.CreatedOn))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.CreatedOn)),
+                Visible = false,
+            },
+            new ColumnDefinition(nameof(OrderItemModel.ModifiedById))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.CreatedByUser)),
+                Visible = false,
+            },
+            new ColumnDefinition(nameof(OrderItemModel.ModifiedOn))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.ModifiedOn)),
+                Visible = false,
+            },
+            new ColumnDefinition(nameof(OrderItemModel.DeletedOn))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.DeletedOn)),
+                Visible = false,
+            },
+            new ColumnDefinition(nameof(OrderItemModel.Deleted))
+            {
+                Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<OrderItemModel>(nameof(OrderItemModel.Deleted)),
+                Visible = false,
+            },
+            #endregion
+        };
+
+        @await Html.PartialAsync("~/Views/Shared/Tables/_Table.cshtml", gridTable)
+    }
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/Tables/_Pagination.cshtml", Model)
+
+@await Html.PartialAsync("~/Views/Shared/Modals/_FormModal.cshtml")
+
+<script type="text/javascript">
+    // modal button save trigger after click add items
+    var timeOut = null;
+    $('#orders_search').on("input", function (e) {
+        if (e.key === 'Enter' || e.keyCode === 13) return;
+        var formSearchId = 'orders_search';
+        var url = '@Url.Action("OrderListSearch", "Orders")'
+        var partialViewId = 'orders';
+        clearTimeout(timeOut);
+        timeOut = setTimeout(function (e) { SearchFunction(formSearchId, url, partialViewId); }, 500);
+    });
+    var tableId = "orders_table";
+    formatStatus(tableId);
+</script>

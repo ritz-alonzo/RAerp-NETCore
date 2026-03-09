@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using RA.Data.App_Data;
-using RA.Data.Domain.FormTypes;
 using RA.Data.Domain.Settings;
 using RA.FormTypes.Data;
 using RA.FormTypes.Domain;
@@ -16,89 +15,25 @@ namespace RA.FormTypes.Services
 {
     public class FormTypeManager : IFormTypeManager
     {
+        #region Constants
         private readonly RAerpContext _erpContext;
+        #endregion
 
+        #region Ctor
         public FormTypeManager(RAerpContext erpContext)
         {
             _erpContext = erpContext;
         }
-
-        #region CRUD
-
-        public virtual async Task<FormType> GetById(Guid id)
-        {
-            return await _erpContext.FormType.FirstOrDefaultAsync(c => c.Id == id);
-        }
-
-        public virtual async Task<FormType> GetTypeBySystemName(string systemName)
-        {
-            return await _erpContext.FormType.FirstOrDefaultAsync(c => c.FormTypeSystemName.ToLower() == systemName.ToLower());
-        }
-
-        public virtual async Task<List<FormType>> GetTypesBySystemName(string systemName)
-        {
-            return await _erpContext.FormType.Where(c => c.FormTypeSystemName.Contains(systemName)).ToListAsync();
-        }
-
-        public virtual async Task<FormType> GetTypeByEntityClassificationName(string systemName, string formTypeClassName)
-        {
-            return await _erpContext.FormType.FirstOrDefaultAsync(c => c.FormTypeSystemName.ToLower() == systemName.ToLower() && c.FormTypeClassificationName.ToLower() == formTypeClassName.ToLower());
-        }
-
-        public virtual async Task<IEnumerable<FormType>> GetList(
-            string searchQuery = null,
-            DateTime? createdOn = null,
-            string formClassificationName = null)
-        {
-            var query = _erpContext.FormType.AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchQuery))
-                query = query.Where(c =>
-                c.FormTypeName.ToLower().Equals(searchQuery.ToLower()) ||
-                c.FormTypeSystemName.ToLower().Equals(searchQuery.ToLower()));
-
-            if (!string.IsNullOrEmpty(formClassificationName))
-                query = query.Where(c => c.FormTypeClassificationName.Contains(formClassificationName, StringComparison.InvariantCultureIgnoreCase));
-
-            if (createdOn.HasValue)
-                query = query.Where(c => c.InstalledOn >= createdOn.Value);
-
-            query = query.OrderBy(c => c.InstalledOn);
-
-            return await query.ToListAsync();
-        }
-
-        public virtual async Task Insert(FormType formType)
-        {
-            formType.InstalledOn = DateTime.Now;
-            await _erpContext.FormType.AddAsync(formType);
-            await _erpContext.SaveChangesAsync();
-        }
-
-        public virtual async Task Update(FormType formType)
-        {
-            _erpContext.FormType.Update(formType);
-            await _erpContext.SaveChangesAsync();
-        }
-
-        public virtual async Task Delete(FormType formType)
-        {
-            formType.Installed = false;
-            formType.UnInstalledOn = DateTime.Now;
-            _erpContext.FormType.Update(formType);
-            await _erpContext.SaveChangesAsync();
-        }
-
         #endregion
 
         #region Settings
 
-        public async Task<Setting> GetSettingById(Guid id)
+        public async Task<Setting> GetSettingByIdAsync(Guid id)
         {
             return await _erpContext.Setting.FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public virtual async Task<Setting> GetSettingByFormSystemName<TForm, TSettings>()
+        public virtual async Task<Setting> GetSettingByFormSystemNameAsync<TForm, TSettings>()
             where TForm : BaseForm
             where TSettings : BaseFormSetting
         {
@@ -111,7 +46,7 @@ namespace RA.FormTypes.Services
         /// Data of Setting will be converted here
         /// </summary>
         /// <param name="settings"></param>
-        public virtual async Task InsertFormSetting<TForm, TSettings>()
+        public virtual async Task InsertFormSettingAsync<TForm, TSettings>()
             where TForm : BaseForm
             where TSettings : BaseFormSetting
         {
@@ -133,13 +68,13 @@ namespace RA.FormTypes.Services
         /// Data of Setting will be converted here
         /// </summary>
         /// <param name="settings"></param>
-        public virtual async Task UpdateSettingDataOfForm<TForm, TSettings>(TSettings settings)
+        public virtual async Task UpdateSettingDataOfFormAsync<TForm, TSettings>(TSettings settings)
             where TForm : BaseForm
             where TSettings : BaseFormSetting
         {
             var settingData = JsonConvert.SerializeObject(settings);
 
-            var setting = await GetSettingByFormSystemName<TForm, TSettings>();
+            var setting = await GetSettingByFormSystemNameAsync<TForm, TSettings>();
             if (setting != null)
             {
                 setting.Data = settingData;
@@ -161,18 +96,17 @@ namespace RA.FormTypes.Services
         /// <param name="entity"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public virtual async Task<TSettings> GetSettingDataOfForm<TForm, TSettings>()
+        public virtual async Task<TSettings> GetSettingDataOfFormAsync<TForm, TSettings>()
             where TForm : BaseForm
             where TSettings : BaseFormSetting
         {
             Setting setting = null;
 
-            setting = await GetSettingByFormSystemName<TForm, TSettings>();
-
+            setting = await GetSettingByFormSystemNameAsync<TForm, TSettings>();
             if (setting == null)
             {
-                await InsertFormSetting<TForm, TSettings>();
-                setting = await GetSettingByFormSystemName<TForm, TSettings>();
+                await InsertFormSettingAsync<TForm, TSettings>();
+                setting = await GetSettingByFormSystemNameAsync<TForm, TSettings>();
             }
 
             TSettings settingsData = new BaseFormSetting() as TSettings;
@@ -184,34 +118,34 @@ namespace RA.FormTypes.Services
         }
 
         // will be used in insert, update of Form
-        public virtual async Task<string> GetCurrentTemplateOfForm<TForm, TSettings>()
+        public virtual async Task<string> GetCurrentTemplateOfFormAsync<TForm, TSettings>()
             where TForm : BaseForm
             where TSettings : BaseFormSetting
         {
-            var setting = await GetSettingDataOfForm<TForm, TSettings>();
+            var setting = await GetSettingDataOfFormAsync<TForm, TSettings>();
 
             if (setting == null)
                 throw new Exception(nameof(setting));
 
-            if (string.IsNullOrEmpty(setting.Template))
+            if (string.IsNullOrEmpty(setting.FormNbrTemplate))
                 return null;
 
-            return (setting.TemplateCount + setting.TemplateIncrementCount).ToString(setting.Template);
+            return (setting.FormNbrCount + setting.FormNbrIncrementCount).ToString(setting.FormNbrTemplate);
         }
 
         // will be used in insert, update of Form
-        public virtual async Task IncreaseTemplateCountOfForm<TForm, TSettings>()
+        public virtual async Task IncreaseTemplateCountOfFormAsync<TForm, TSettings>()
             where TForm : BaseForm
             where TSettings : BaseFormSetting
         {
-            var setting = await GetSettingDataOfForm<TForm, TSettings>();
+            var setting = await GetSettingDataOfFormAsync<TForm, TSettings>();
 
             if (setting == null)
                 throw new Exception(nameof(setting));
 
-            setting.TemplateCount += setting.TemplateIncrementCount;
+            setting.FormNbrCount += setting.FormNbrIncrementCount;
 
-            await UpdateSettingDataOfForm<TForm, TSettings>(setting);
+            await UpdateSettingDataOfFormAsync<TForm, TSettings>(setting);
         }
 
         #endregion

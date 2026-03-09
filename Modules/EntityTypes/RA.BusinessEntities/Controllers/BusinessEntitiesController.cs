@@ -28,13 +28,16 @@ namespace RA.BusinessEntities.Controllers
 {
     public class BusinessEntitiesController : AdminController
     {
+        #region Constants
         private readonly IBusinessEntityService _businessEntityService;
         private readonly IEntityTypeManager _entityTypeManager;
         private readonly IBusinessEntityModelFactory _businessEntityModelFactory;
         private readonly IMapper _mapper;
         private readonly IUserIdentity _userIdentity;
         private readonly IAddressService _addressService;
+        #endregion
 
+        #region Ctor
         public BusinessEntitiesController(IBusinessEntityService businessEntityService,
             IEntityTypeManager entityTypeManager,
             IBusinessEntityModelFactory businessEntityModelFactory,
@@ -49,6 +52,7 @@ namespace RA.BusinessEntities.Controllers
             _userIdentity = userIdentity;
             _addressService = addressService;
         }
+        #endregion
 
         #region Configuration
 
@@ -58,7 +62,7 @@ namespace RA.BusinessEntities.Controllers
             if (entityTypeId.IsNullOrEmpty())
                 return JsonError(EntityTypeMessages.EntityTypeNotExists);
 
-            var businessEntityConfigureModel = await _businessEntityModelFactory.PrepareBusinessEntityConfigureModel(entityTypeId, systemName);
+            var businessEntityConfigureModel = await _businessEntityModelFactory.PrepareBusinessEntityConfigureModelAsync(entityTypeId, systemName);
 
             return View("~/Plugins/RA.BusinessEntities/Views/Configuration.cshtml", businessEntityConfigureModel);
         }
@@ -73,13 +77,13 @@ namespace RA.BusinessEntities.Controllers
                 return JsonError(EntityTypeMessages.EntityTypeIdNotExists);
 
             // will insert automatically when GetSettingDataOfEntity is used
-            var settings = await _entityTypeManager.GetSettingDataOfEntity<BusinessEntity, BusinessEntitySetting>(businessEntityConfigureModel.EntityTypeId, businessEntityConfigureModel.SystemName);
+            var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(businessEntityConfigureModel.EntityTypeId, businessEntityConfigureModel.SystemName);
 
             // sanity check if settings is not created in GetSettingDataOfEntity
             if (settings == null)
             {
                 // insert
-                await _entityTypeManager.InsertEntitySetting<BusinessEntity, BusinessEntitySetting>(businessEntityConfigureModel.EntityTypeId, businessEntityConfigureModel.SystemName);
+                await _entityTypeManager.InsertEntitySettingAsync<BusinessEntity, BusinessEntitySetting>(businessEntityConfigureModel.EntityTypeId, businessEntityConfigureModel.SystemName);
             }
 
             settings = _mapper.Map(businessEntityConfigureModel, settings);
@@ -87,7 +91,7 @@ namespace RA.BusinessEntities.Controllers
             settings.MappedCategoryIds = businessEntityConfigureModel.MappedCategoryTypeIds;
 
             // update
-            await _entityTypeManager.UpdateSettingDataOfEntity<BusinessEntity, BusinessEntitySetting>(settings, businessEntityConfigureModel.EntityTypeId);
+            await _entityTypeManager.UpdateSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(settings, businessEntityConfigureModel.EntityTypeId);
 
             return NullJsonResult();
         }
@@ -101,14 +105,14 @@ namespace RA.BusinessEntities.Controllers
             if (entityTypeId.IsNullOrEmpty())
                 return NotFound();
 
-            var entityTypeSetting = await _entityTypeManager.GetSettingDataOfEntity<BusinessEntity, BusinessEntitySetting>(entityTypeId);
+            var entityTypeSetting = await _entityTypeManager.GetSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(entityTypeId);
             if (entityTypeSetting == null)
                 return NotFound();
 
             if (!entityTypeSetting.Enabled)
                 return NotFound();
 
-            var model = await _businessEntityModelFactory.PrepareBusinessEntitySearchModel(new BusinessEntitySearchModel() { SearchEntityTypeId = entityTypeId }, 10, page);
+            var model = await _businessEntityModelFactory.PrepareBusinessEntitySearchModelAsync(new BusinessEntitySearchModel() { SearchEntityTypeId = entityTypeId }, 10, page);
 
             return View("~/Plugins/RA.BusinessEntities/Views/List.cshtml", model);
         }
@@ -116,7 +120,7 @@ namespace RA.BusinessEntities.Controllers
         [HttpGet]
         public async Task<IActionResult> BusinessEntityListSearch(BusinessEntitySearchModel searchModel)
         {
-            var model = await _businessEntityModelFactory.PrepareBusinessEntityListModel(searchModel);
+            var model = await _businessEntityModelFactory.PrepareBusinessEntityListModelAsync(searchModel);
 
             return PartialView("~/Plugins/RA.BusinessEntities/Views/_BusinessEntityList.cshtml", model);
         }
@@ -126,14 +130,14 @@ namespace RA.BusinessEntities.Controllers
             if (id.IsNullOrEmpty())
                 return NotFound();
 
-            var entity = await _businessEntityService.GetById(id);
+            var entity = await _businessEntityService.GetByIdAsync(id);
             if (entity == null)
                 return NotFound();
 
             if (entity.EntityTypeId.IsNullOrEmpty())
                 return NotFound();
 
-            var model = await _businessEntityModelFactory.PrepareBusinessEntityModel(new BusinessEntityModel(), entity, entity.EntityTypeId);
+            var model = await _businessEntityModelFactory.PrepareBusinessEntityModelAsync(new BusinessEntityModel(), entity, entity.EntityTypeId);
 
             return View("~/Plugins/RA.BusinessEntities/Views/Index.cshtml", model);
         }
@@ -143,14 +147,14 @@ namespace RA.BusinessEntities.Controllers
             if (entityTypeId.IsNullOrEmpty())
                 return NotFound();
 
-            var entityTypeSetting = await _entityTypeManager.GetSettingDataOfEntity<BusinessEntity, BusinessEntitySetting>(entityTypeId);
+            var entityTypeSetting = await _entityTypeManager.GetSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(entityTypeId);
             if (entityTypeSetting == null)
                 return NotFound();
 
             if (!entityTypeSetting.Enabled)
                 return NotFound();
 
-            var model = await _businessEntityModelFactory.PrepareBusinessEntityModel(new BusinessEntityModel(), null, entityTypeId);
+            var model = await _businessEntityModelFactory.PrepareBusinessEntityModelAsync(new BusinessEntityModel(), null, entityTypeId);
 
             return View("~/Plugins/RA.BusinessEntities/Views/Create.cshtml", model);
         }
@@ -159,7 +163,7 @@ namespace RA.BusinessEntities.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(BusinessEntityModel model)
         {
-            var entityTypeSetting = await _entityTypeManager.GetSettingDataOfEntity<BusinessEntity, BusinessEntitySetting>(model.EntityTypeId);
+            var entityTypeSetting = await _entityTypeManager.GetSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(model.EntityTypeId);
             if (entityTypeSetting == null)
                 return NotFound();
 
@@ -174,7 +178,7 @@ namespace RA.BusinessEntities.Controllers
                     Address address = AddressOverviewModelHelper.PrepareAddressEntity(model.Address);
                     if (address != null && address.Id.IsNullOrEmpty())
                     {
-                        address.CreatedById = _userIdentity.GetCurrentUser(HttpContext).Id;
+                        address.CreatedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
                         address = await _addressService.Insert(address);
                         entity.AddressId = address.Id;
                     }
@@ -182,8 +186,8 @@ namespace RA.BusinessEntities.Controllers
 
                 #endregion
 
-                entity.CreatedById = _userIdentity.GetCurrentUser(HttpContext).Id;
-                await _businessEntityService.Insert(entity);
+                entity.CreatedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
+                await _businessEntityService.InsertAsync(entity);
                 // sanity check
                 model.Id = entity.Id;
 
@@ -201,7 +205,7 @@ namespace RA.BusinessEntities.Controllers
         [HttpPost]
         public async Task<IActionResult> Edit(BusinessEntityModel model)
         {
-            var entityTypeSetting = await _entityTypeManager.GetSettingDataOfEntity<BusinessEntity, BusinessEntitySetting>(model.EntityTypeId);
+            var entityTypeSetting = await _entityTypeManager.GetSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(model.EntityTypeId);
             if (entityTypeSetting == null)
                 return NotFound();
 
@@ -218,7 +222,7 @@ namespace RA.BusinessEntities.Controllers
                     {
                         var originalAddress = await _addressService.GetById(address.Id);
                         originalAddress = AddressOverviewModelHelper.PrepareAddressRemapping(originalAddress, address);
-                        originalAddress.ModifiedById = _userIdentity.GetCurrentUser(HttpContext).Id;
+                        originalAddress.ModifiedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
                         await _addressService.Update(originalAddress);
                     }
                     else
@@ -230,8 +234,8 @@ namespace RA.BusinessEntities.Controllers
 
                 #endregion
 
-                entity.ModifiedById = _userIdentity.GetCurrentUser(HttpContext).Id;
-                await _businessEntityService.Update(entity);
+                entity.ModifiedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
+                await _businessEntityService.UpdateAsync(entity);
 
                 SuccessNotification(model, "Successfully updated Business Entity");
             }
@@ -250,25 +254,19 @@ namespace RA.BusinessEntities.Controllers
             if (id.IsNullOrEmpty())
                 return NotFound();
 
-            var entity = await _businessEntityService.GetById(id);
+            var entity = await _businessEntityService.GetByIdAsync(id);
             if (entity == null)
                 return NotFound();
 
             if (entity.EntityTypeId.IsNullOrEmpty())
                 return NotFound();
 
-            await _businessEntityService.Delete(entity);
+            await _businessEntityService.DeleteAsync(entity);
             SuccessNotification(new BusinessEntityModel() { Id = entity.Id }, "Successfully deleted Business Entity");
 
             return RedirectToAction("List", new { entityTypeId =  id });
         }
 
         #endregion
-
-        //public async Task<IActionResult> Test(CategoryModel categoryModel)
-        //{
-        //    var model = new BusinessEntityModel();
-        //    return View("~/Plugins/RA.BusinessEntities/Views/Test.cshtml", model);
-        //}
     }
 }

@@ -40,7 +40,17 @@ namespace RAerp.Services.AccessRightsServices
         {
             accessRights.ModifiedOn = DateTime.Now;
             _erpContext.AccessRights.Update(accessRights);
-            await _erpContext.SaveChangesAsync();
+            try
+            {
+                await _erpContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                Console.WriteLine(innerMessage); // or log it
+                throw;
+            }
+            //await _erpContext.SaveChangesAsync();
         }
 
         public async Task Delete(AccessRights accessRights)

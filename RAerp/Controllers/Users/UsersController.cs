@@ -78,7 +78,7 @@ namespace RAErp.Controllers.Users
             var model = new UserModel();
             // add permission here if user can create
             // add prepare model in create
-            model.AvailableUserRoles = await _userModelFactory.PrepareUserRoleSelectList(showDefault: false);
+            model.AvailableUserRoles = await _userModelFactory.PrepareUserRoleSelectListAsync(showDefault: false);
 
             return View(model);
         }
@@ -267,7 +267,7 @@ namespace RAErp.Controllers.Users
 
         public async Task<IActionResult> UserRoleList(int page = 1)
         {
-            var model = await _userModelFactory.PrepareUserRoleSearchModel(new UserRoleSearchModel(), page, 10);
+            var model = await _userModelFactory.PrepareUserRoleSearchModelAsync(new UserRoleSearchModel(), page, 10);
 
             return View(model);
         }
@@ -275,7 +275,7 @@ namespace RAErp.Controllers.Users
         [HttpGet]
         public async Task<IActionResult> UserRoleListSearch(UserRoleSearchModel searchModel)
         {
-            var model = await _userModelFactory.PrepareUserRoleListModel(searchModel);
+            var model = await _userModelFactory.PrepareUserRoleListModelAsync(searchModel);
 
             return PartialView("_UserRoleSearchList", model);
         }
@@ -284,7 +284,7 @@ namespace RAErp.Controllers.Users
         {
             // add permission here if user role can create
             // add prepare model in create
-            var model = await _userModelFactory.PrepareUserRoleModel(new UserRoleModel(), null);
+            var model = await _userModelFactory.PrepareUserRoleModelAsync(new UserRoleModel(), null);
 
             return View(model);
         }
@@ -319,7 +319,7 @@ namespace RAErp.Controllers.Users
                 return NotFound();
             }
 
-            var model = await _userModelFactory.PrepareUserRoleModel(new UserRoleModel(), entity);
+            var model = await _userModelFactory.PrepareUserRoleModelAsync(new UserRoleModel(), entity);
 
             return View(model);
         }

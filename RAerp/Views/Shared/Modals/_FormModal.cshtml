@@ -1,0 +1,113 @@
+﻿@* Modal of Adding Form Item *@
+<div class="modal fade" id="formItemModal" tabindex="-1" aria-labelledby="formItemModalLabel"
+     aria-hidden="true" style="padding-top: 100px;">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="formItemModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                </button>
+            </div>
+            <div class="modal-body">
+                <form-ajax id="formItemData" data-form-item-post-url="">
+
+                </form-ajax>
+            </div>
+            <div class="modal-footer">
+                <button id="formItemDataAddBtn" class="btn btn-success btn-sm" type="button">Add Items</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    // cannot use id because it will be the same for all buttons
+    $('.form-item-modal-trigger').on('click', (e) => {
+
+        // check if already opened modal
+        // will prevent looping
+        // e.stopImmediatePropagation();
+
+        var formItemModal = $('#formItemModal');
+        console.log(formItemModal);
+
+        console.log('hello world modal');
+        var selectedButton = $(e.currentTarget);
+        var formItemUrl = selectedButton.attr('data-form-item-url');
+        if (formItemUrl == null || formItemUrl == '') {
+            alert('Failed to load form item table');
+            return;
+        }
+
+        var formItemPostUrl = selectedButton.attr('data-form-item-post-url');
+        if (formItemPostUrl == null || formItemPostUrl == '') {
+            alert('Failed to load form item table');
+            return;
+        }
+
+        var formItemTitle = selectedButton.attr('data-form-item-title');
+        $('#formItemModalLabel').html(formItemTitle);
+
+        var mappedTypeIds = selectedButton.attr('data-form-item-id');
+        console.log('showing mappedtypeids ' + mappedTypeIds);
+        if (mappedTypeIds == null || mappedTypeIds == '') {
+            alert('Faild to load form item mapped ids');
+            return;
+        }
+
+        var existingCatalogIds = [];
+        var existingItemIds = selectedButton.attr('data-form-item-catalog-ids');
+        if (existingItemIds != null || existingItemIds != undefined) {
+            if (existingItemIds.indexOf(',') != -1) {
+                existingCatalogIds = existingItemIds.split(',');
+            }
+            else {
+                existingCatalogIds = existingItemIds;
+            }
+        }
+        console.log(existingCatalogIds);
+
+        $.ajax({
+            url: formItemUrl,
+            method: 'GET',
+            traditional: true,
+            data: {
+                typeIds: mappedTypeIds,
+                existingCatalogIds: existingCatalogIds
+            },
+        })
+        .done((data) => {
+            $('#formItemData').html(data);
+            $('#formItemData').attr('data-form-item-post-url', formItemPostUrl);
+            // to show/hide button
+            //$('#pluginConfigSaveBtn').css('display', '');
+        })
+        .fail((data) => {
+            console.log('Failed to add form item');
+        });
+    })
+
+    // post save action of modal
+    $('#formItemDataAddBtn').on('click', (e) => {
+        var insertItemPostUrl = $('#formItemData').attr('data-form-item-post-url');
+        if (insertItemPostUrl == null || insertItemPostUrl == '') {
+            alert('Add Item Action not found.');
+            return;
+        }
+
+        var itemsTabUrl = $('.form-item-modal-trigger').attr('data-form-item-view-url');
+        if (itemsTabUrl == null || itemsTabUrl == '') {
+            alert('Items tab url not defined');
+            return;
+        }
+
+        var itemsTabPartialViewId = $('.form-item-modal-trigger').attr('data-form-item-view-id');
+        if (itemsTabPartialViewId == null || itemsTabPartialViewId == '') {
+            alert('Items tab view id not defined');
+            return;
+        }
+
+        var formItemDataId = 'formItemData';
+        SelectorInsertItemPost(formItemDataId, insertItemPostUrl, itemsTabUrl, itemsTabPartialViewId);
+    });
+</script>

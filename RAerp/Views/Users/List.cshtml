@@ -22,18 +22,14 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="input-group">
-                            <div class="input-group-append">
-                                <span class="input-group-text"><i class="fa fa-search"></i></span>
-                            </div>
-                            <input asp-for="SearchQuery" class="form-control" placeholder="Search.." autocomplete="off" />
+                        <div class="custom-input-set mb-2">
+                            <label asp-for="SearchQuery" class="form-label"></label>
+                            <input asp-for="SearchQuery" class="form-control" autocomplete="off" />
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">Date: </span>
-                            </div>
+                        <div class="custom-input-set mb-2">
+                            <label asp-for="SearchCreatedOn" class="form-label"></label>
                             <input asp-for="SearchCreatedOn" id="datepicker-autoclose" class="form-control" type="date" />
                         </div>
                     </div>

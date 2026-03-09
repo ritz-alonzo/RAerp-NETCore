@@ -1,5 +1,4 @@
-﻿
-@inject IModelAttributeHelper modelAttributeHelper;
+﻿@inject IModelAttributeHelper modelAttributeHelper;
 
 @model BusinessEntityListModel
 
@@ -49,6 +48,13 @@
                 {
                     Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<BusinessEntityModel>(nameof(BusinessEntityModel.Description)),
                     Visible = true,
+                },
+                new ColumnDefinition(nameof(BusinessEntityModel.CategoryId))
+                {
+                    Title = modelAttributeHelper.GetModelAttributeDisplayNameValue<BusinessEntityModel>(nameof(BusinessEntityModel.CategoryId)),
+                    Visible = true,
+                    ColumnSelectList = Model.Items.Any() ? Model.Items.Select(c => c.AvailableCategories).FirstOrDefault() : new List<SelectListItem>(),
+                    ControlType = ControlType.Dropdown
                 },
                 new ColumnDefinition(nameof(BusinessEntityModel.CreatedOn))
                 {

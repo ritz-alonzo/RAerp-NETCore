@@ -1,20 +1,20 @@
-﻿.login-form-container {
+﻿.layout-body {
+    background-color: black;
+}
+
+.login-form-container {
     display: flex;
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
-    flex-direction: row;
-    margin-top: 200px;
-    margin-left: 350px;
-    margin-bottom: 300px;
+    flex-direction: column;
+    margin-top: 100px;
+    /* margin-left: 700px;
+    margin-bottom: 200px;
     margin-right: 350px;
     width: 400px;
-    height: 280px;
+    height: 280px; */
     border-radius: 10px;
-}
-
-.layout-body {
-    background-color: #282727;
 }
 
 .login-form-logo {
@@ -36,19 +36,21 @@
 
 .login-form-container .card {
     display: flex;
-    width: 400px;
-    height: 350px;
+    width: 350px;
+    height: auto;
     border: 2px solid rgb(239, 236, 236);
     border-radius: 10px;
     box-shadow: rgb(128, 128, 128) 0px 0px 15px;
 }
 
-.login-form-container .card .card-body {
-}
-
 .login-form-group {
     font-size: 15px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    width: auto;
+    position: static;
+    margin-bottom: 10px;
 }
 
 /*.login-form-label {
@@ -69,10 +71,10 @@
 }*/
 
 .login-form-control {
-    width: 100%;
+    /*width: 100%;
     height: 34px;
-    margin-top: 30px;
-    margin-bottom: 5px;
+    margin-top: 20px;
+    margin-bottom: 0px;
     border-radius: 3px;
     border-bottom-color: rgb(13, 211, 213);
     border-bottom-width: 1px;
@@ -80,31 +82,49 @@
     border-left: 0px;
     border-right: 0px;
     transition: ease-in-out 0.2s;
-    position: relative;
+    position: relative;*/
+    padding: 11px 3px;
+    border-bottom: 2px #a0a7ab solid;
+    border-top-style: hidden;
+    border-left-style: hidden;
+    border-right-style: hidden;
+    height: 40px;
+    font-size: 14px;
 }
 
 .login-form-label-username, .login-form-label-password {
-    position: absolute;
+    /*position: absolute;
     left: 18px;
     padding-top: 25px;
     cursor: text;
     color: gray;
-    transition: ease-in-out 0.5s;
+    transition: ease-in-out 0.5s;*/
+    color: #5c6061;
+    font-size: 14px;
+    position: relative;
+    padding: 0 3px;
+    background: #fff;
+    width: fit-content;
+    border-radius: 20px;
+    margin-bottom: 0px;
 }
 
 .login-form-control:focus {
-    border-bottom-width: 4px;
+    /*outline: none;
+    border-bottom-width: 4px;*/
+    border-bottom: 3px #5c6061 solid;
+    box-shadow: none;
 }
 
-    .login-form-control:focus + .login-form-label-username {
+    /*.login-form-control:focus + .login-form-label-username {
         color: rgb(13, 211, 213);
         top: -15px;
     }
 
     .login-form-control:focus + .login-form-label-password {
         color: rgb(13, 211, 213);
-        top: 50px;
-    }
+        top: 60px;
+    }*/
 
 .login-form-button {
     margin-top: 20px;
@@ -158,8 +178,8 @@
 }
 
 
-@media only screen and (max-width: 800px) {
-    .login-form-container {
-        margin-left: 50px;
+/* @media only screen and (max-width: 800px) {
+     .login-form-container {
+        margin-right: 50px;
     }
-}
+} */

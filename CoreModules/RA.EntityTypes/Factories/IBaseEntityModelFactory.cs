@@ -13,26 +13,26 @@ namespace RA.EntityTypes.Factories
             where TListModel : BaseListModel<TModelList>
             where TModelList : BaseEntityModel
             where TSearch : BaseEntitySearchModel;
-        TModel PrepareBaseEntityModel<TModel, TEntity, TSettings>(TModel model, TEntity entity, TSettings settings)
+        Task<TModel> PrepareBaseEntityModelAsync<TModel, TEntity, TSettings>(TModel model, TEntity entity, TSettings settings)
             where TModel : BaseEntityModel
             where TSettings : BaseEntityTypeSetting
             where TEntity : BaseEntityType;
         TSearch PrepareBaseEntitySearchModel<TSearch>(TSearch searchModel, EntityType entityType, int pageSize, int pageNumber)
             where TSearch : BaseEntitySearchModel;
-        TModel PrepareBaseEntityConfigureModel<TModel, TEntity, TSettings>(TModel configureModel, Guid entityTypeId, string entityTypeSystemName = null)
+        Task<TModel> PrepareBaseEntityConfigureModelAsync<TModel, TEntity, TSettings>(TModel configureModel, Guid entityTypeId, string entityTypeSystemName = null)
             where TModel : BaseEntityConfigureModel
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting;
-        TModel PrepareBaseEntityModelUIAccess<TModel, TEntity, TSettings>(TModel model, TEntity entityType, TSettings settings)
+        Task<TModel> PrepareBaseEntityModelUIAccessAsync<TModel, TEntity, TSettings>(TModel model, TEntity entityType, TSettings settings)
             where TModel : BaseEntityModel
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting;
-        TList PrepareBaseEntityListModelUIAccess<TList, TModel, TEntity, TSettings>(TList model, Guid entityTypeId)
+        Task<TList> PrepareBaseEntityListModelUIAccessAsync<TList, TModel, TEntity, TSettings>(TList model, Guid entityTypeId)
             where TList : BaseListModel<TModel>
             where TModel : BaseEntityModel
             where TEntity : BaseEntityType
             where TSettings : BaseEntityTypeSetting;
-        TModel PrepareBaseEntityPortableView<TModel, TEntity>(TModel model, TEntity entity)
+        TModel PrepareBaseEntityViewComponent<TModel, TEntity>(TModel model, TEntity entity)
             where TModel : BaseEntityModel
             where TEntity : BaseEntityType;
     }

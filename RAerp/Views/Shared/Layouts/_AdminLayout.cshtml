@@ -25,6 +25,7 @@
     <link href="~/assets/libs/toastr/build/toastr.min.css" rel="stylesheet" />
     <link rel="icon" href="~/assets/images/logo-icon.png" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.14/css/bootstrap-multiselect.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
     <!-- ============================================================== -->
@@ -335,22 +336,31 @@
     <script src="~/js/address.js"></script>
     <script src="~/assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.13/js/bootstrap-multiselect.js"></script>
-    
-    <script>
-        var jsFunction = '';
-        var message = '';
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script type="text/javascript">
         @if (TempData.ContainsKey("notificationScript") && TempData.ContainsKey("notificationMessage"))
         {
-            <text>
-                jsFunction = '@TempData["notificationScript"]'
-                message = '@TempData["notificationMessage"]'
-            </text>
+            var jsFunction = TempData["notificationScript"]?.ToString();
+            var message = TempData["notificationMessage"]?.ToString();
+            if (!string.IsNullOrEmpty(jsFunction))
+            {
+                <text>
+                    var notifFunction = @Html.Raw(Json.Serialize(jsFunction));
+                    var notifMessage = @Html.Raw(Json.Serialize(message));
+                    initializeControllerNotification(notifFunction, notifMessage);
+                </text>
+            }
         }
-        if (jsFunction != null || jsFunction != "" || jsFunction != '') {
-            initializeControllerNotification(jsFunction, message);
-        }
-    </script>
 
+    </script>
+    <script type="text/javascript">
+        $('#formItemModal').on('hidden.bs.modal', (e) => {
+            console.log('hiding modal');
+            $('#formItemData').html("");
+            $('#formItemModalLabel').html("");
+        });
+    </script>
     @await RenderSectionAsync("scripts", required: false)
 </div>
 

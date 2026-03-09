@@ -11,7 +11,7 @@ namespace RAerp.Factories.CoreFactories
         TList PrepareBaseAdminListModel<TList, TModel>(TList list, List<TModel> listModel, int pageSize, int pageNumber, int skip, int totalItems)
             where TList : BaseAdminListModel<TModel>
             where TModel : BaseAdminModel;
-        TModel PrepareBaseAdminModel<TModel, TEntity>(TModel model, TEntity entity)
+        Task<TModel> PrepareBaseAdminModelAsync<TModel, TEntity>(TModel model, TEntity entity)
             where TModel : BaseAdminModel
             where TEntity : BaseAdminEntity;
     }

@@ -34,5 +34,6 @@ namespace RA.Core.Models.PluginModels.WebServiceEndpoints
         [DisplayName("Entity Type")]
         public string EndpointEntityTypeName { get; set; }
         public List<SelectListItem> AvailableEntityTypes { get; set; }
+        public bool IsMappingVisible { get; set; }
     }
 }

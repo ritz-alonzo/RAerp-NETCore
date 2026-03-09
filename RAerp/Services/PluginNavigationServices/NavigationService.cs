@@ -38,7 +38,7 @@ namespace RAerp.Services.PluginNavigationServices
             accessRightsNode.SystemName = typeof(AccessRights).FullName;
             accessRightsNode.Url = "/AccessRights/Index";
             accessRightsNode.IconClass = "fa fa-lock";
-            accessRightsNode.Visible = _accessControl.HasSuperAdminAccess();
+            accessRightsNode.Visible = await _accessControl.HasSuperAdminAccessAsync();
             accessRightsNode.DisplayOrder = 1;
             accessRightsNode.IsParentNode = true;
             
@@ -51,7 +51,7 @@ namespace RAerp.Services.PluginNavigationServices
             userNode.SystemName = typeof(User).FullName;
             userNode.Url = "/Users/List";
             userNode.IconClass = "fa fa-users";
-            userNode.Visible = _accessControl.HasSuperAdminAccess();
+            userNode.Visible = await _accessControl.HasSuperAdminAccessAsync();
             userNode.DisplayOrder = 2;
             userNode.IsParentNode = true;
 

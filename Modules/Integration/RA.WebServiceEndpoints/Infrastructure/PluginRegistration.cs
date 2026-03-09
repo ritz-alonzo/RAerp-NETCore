@@ -26,9 +26,9 @@ namespace RA.WebServiceEndpoints.Infrastructure
             webServiceEndpointNode.MenuTitle = "Web Service Endpoints";
             webServiceEndpointNode.SystemName = typeof(WebServiceEndpoint).FullName;
             webServiceEndpointNode.Url = "/WebServiceEndpoints/List";
-            webServiceEndpointNode.IconClass = "fa fa-th-list";
-            webServiceEndpointNode.Visible = _accessControl.HasSuperAdminAccess();
-            webServiceEndpointNode.DisplayOrder = 4;
+            webServiceEndpointNode.IconClass = "fas fa-sitemap";
+            webServiceEndpointNode.Visible = await _accessControl.HasSuperAdminAccessAsync();
+            webServiceEndpointNode.DisplayOrder = 10;
             webServiceEndpointNode.IsParentNode = true;
             return webServiceEndpointNode;
         }

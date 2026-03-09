@@ -1,0 +1,52 @@
+﻿@model CatalogSearchModel
+
+@{
+    Layout = null;
+}
+
+<form-search id="catalogItems_search">
+    @Html.HiddenFor(c => c.SearchCatalogTypeIds)
+    @Html.HiddenFor(c => c.SearchExistingCatalogIds)
+    @Html.HiddenFor(c => c.PageNumber)
+    @Html.HiddenFor(c => c.PageSize)
+    @Html.HiddenFor(c => c.TotalItems)
+    <div id="search">
+        <div class="card">
+            <div class="card-header-search">
+                <h4 class="text-muted">Search</h4>
+            </div>
+            <div class="card-body-search">
+                 <div class="row">
+                    <div class="custom-input-set col-md-4">
+                        <label asp-for="SearchQuery" class="form-label"></label>
+                        <input asp-for="SearchQuery" class="form-control" autocomplete="off" />
+                    </div>
+                    <div class="custom-input-set col-md-4">
+                        <label asp-for="SearchCreatedOn" class="form-label"></label>
+                        <input asp-for="SearchCreatedOn" id="datepicker-autoclose" class="form-control" type="date" />
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="custom-input-set col-md-4">
+                        <label asp-for="SearchStatusId" class="form-label"></label>
+                        <select asp-for="SearchStatusId"
+                                class="select2 form-select shadow-none"
+                                asp-items="@(new SelectList(Model.AvailableCatalogStatus, "Value", "Text"))">
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form-search>
+
+<div id="catalogItems">
+    @await Html.PartialAsync("~/Plugins/RA.Catalogs/Views/_CatalogSelectorItemList.cshtml", Model.Catalogs)
+</div>
+
+
+@section scripts{
+    <script>
+
+    </script>
+}

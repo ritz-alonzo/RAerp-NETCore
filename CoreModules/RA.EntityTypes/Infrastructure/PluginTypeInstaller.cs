@@ -30,7 +30,7 @@ namespace RA.EntityTypes.Infrastructure
                 {
                     var typesToInstall = new List<Type>();
 
-                    var entityTypes = entityTypeManager.GetList().Result.Where(c => c.EntityClassificationName == null).Select(c => c.EntitySystemName).ToList();
+                    var entityTypes = entityTypeManager.GetListAsync().Result.Where(c => c.EntityClassificationName == null).Select(c => c.EntitySystemName).ToList();
                     if (entityTypes.Any())
                     {
                         var typeList = types.ToList();
@@ -47,7 +47,7 @@ namespace RA.EntityTypes.Infrastructure
                         foreach (var type in typesToInstall)
                         {
                             // sanity check to avoid duplicates
-                            var entity = await entityTypeManager.GetTypeBySystemName(type.FullName);
+                            var entity = await entityTypeManager.GetTypeBySystemNameAsync(type.FullName);
                             if (entity != null)
                                 continue;
                             // just to get the name of the assembly full name
@@ -62,7 +62,7 @@ namespace RA.EntityTypes.Infrastructure
                                     EntitySystemName = type.FullName,
                                     Installed = true
                                 };
-                                await entityTypeManager.Insert(entityType);
+                                await entityTypeManager.InsertAsync(entityType);
                             }
                             else
                             {
