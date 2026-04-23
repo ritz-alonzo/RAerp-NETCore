@@ -32,5 +32,21 @@ namespace RA.Data.App_Data
         public DbSet<DataChange> DataChange { get; set; }
         public DbSet<Address> Address { get; set; }
         #endregion
+
+        #region Overrides
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return base.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                Console.WriteLine(innerMessage); // or log it
+                throw;
+            }
+        }
+        #endregion
     }
 }

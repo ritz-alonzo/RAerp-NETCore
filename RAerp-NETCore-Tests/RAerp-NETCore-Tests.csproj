@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>RAerp_NETCore_Tests</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="Microsoft.Playwright.NUnit" Version="1.27.1" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit.Analyzers" Version="3.9.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoreModules\RA.EntityTypes\RA.EntityTypes.csproj" />
+    <ProjectReference Include="..\CoreModules\RA.FormTypes\RA.FormTypes.csproj" />
+    <ProjectReference Include="..\Libraries\RA.Core\RA.Core.csproj" />
+    <ProjectReference Include="..\Libraries\RA.Data\RA.Data.csproj" />
+    <ProjectReference Include="..\Modules\Accounting\RA.AccountSavings\RA.AccountsManagement.csproj" />
+    <ProjectReference Include="..\Modules\EntityTypes\RA.BusinessEntities\RA.BusinessEntities.csproj" />
+    <ProjectReference Include="..\Modules\EntityTypes\RA.Catalogs\RA.Catalogs.csproj" />
+    <ProjectReference Include="..\Modules\EntityTypes\RA.Categories\RA.Categories.csproj" />
+    <ProjectReference Include="..\Modules\Integration\RA.WebServiceEndpoints\RA.WebServiceEndpoints.csproj" />
+    <ProjectReference Include="..\Modules\Inventory\RA.Inventory\RA.Inventory.csproj" />
+    <ProjectReference Include="..\Modules\PointOfSale\RA.OrdersManagement\RA.OrdersManagement.csproj" />
+    <ProjectReference Include="..\RAerp\RAerp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.Playwright.NUnit" />
+    <Using Include="NUnit.Framework" />
+    <Using Include="System.Text.RegularExpressions" />
+    <Using Include="System.Threading.Tasks" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="IntegrationTests\" />
+  </ItemGroup>
+</Project>

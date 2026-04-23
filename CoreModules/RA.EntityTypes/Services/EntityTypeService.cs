@@ -83,7 +83,16 @@ namespace RA.EntityTypes.Services
 
             entity.CreatedOn = DateTime.Now;
             await _erpContext.Set<TEntity>().AddAsync(entity);
-            await _erpContext.SaveChangesAsync();
+            try
+            {
+                await _erpContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                Console.WriteLine(innerMessage); // or log it
+                throw;
+            }
             _cacheManager.ClearCache(entity.EntityTypeId);
         }
 
@@ -91,7 +100,16 @@ namespace RA.EntityTypes.Services
         {
             entity.ModifiedOn = DateTime.Now;
             _erpContext.Set<TEntity>().Update(entity);
-            await _erpContext.SaveChangesAsync();
+            try
+            {
+                await _erpContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                Console.WriteLine(innerMessage); // or log it
+                throw;
+            }
             _cacheManager.ClearCache(entity.EntityTypeId);
         }
 
@@ -100,7 +118,16 @@ namespace RA.EntityTypes.Services
             entity.Deleted = true;
             entity.DeletedOn = DateTime.Now;
             _erpContext.Set<TEntity>().Update(entity);
-            await _erpContext.SaveChangesAsync();
+            try
+            {
+                await _erpContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                Console.WriteLine(innerMessage); // or log it
+                throw;
+            }
             _cacheManager.ClearCache(entity.EntityTypeId);
         }
         #endregion

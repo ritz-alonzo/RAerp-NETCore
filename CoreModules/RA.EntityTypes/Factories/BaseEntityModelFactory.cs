@@ -225,7 +225,10 @@ namespace RA.EntityTypes.Factories
                             if (viewComponentList.Any())
                             {
                                 var entityComponentList = viewComponentList.Where(c => c.TargetEntity == typeof(TEntity).Name).ToList();
-                                model.PluginComponents = entityComponentList.Any() ? entityComponentList : new List<PluginViewComponentModel>();
+                                foreach (var component in entityComponentList)
+                                {
+                                    model.PluginComponents.Add(component);
+                                }
                             }
                         }
                     }

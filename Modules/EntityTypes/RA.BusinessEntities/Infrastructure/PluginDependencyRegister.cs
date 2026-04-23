@@ -34,7 +34,7 @@ namespace RA.BusinessEntities.Infrastructure
             // factory
             services.AddTransient<IBusinessEntityModelFactory, BusinessEntityModelFactory>();
             // automapper profile
-            services.AddAutoMapper(typeof(BusinessEntityMappingProfile));
+            services.AddAutoMapper(cfg => { cfg.AddProfile<BusinessEntityMappingProfile>(); });
         }
     }
 }

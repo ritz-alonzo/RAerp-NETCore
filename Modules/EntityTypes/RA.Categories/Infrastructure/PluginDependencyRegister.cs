@@ -33,7 +33,7 @@ namespace RA.Categories.Infrastructure
             // factory
             services.AddTransient<ICategoryModelFactory, CategoryModelFactory>();
             // automapper profile
-            services.AddAutoMapper(typeof(CategoryMappingProfile));
+            services.AddAutoMapper(cfg => { cfg.AddProfile<CategoryMappingProfile>(); });
         }
     }
 }

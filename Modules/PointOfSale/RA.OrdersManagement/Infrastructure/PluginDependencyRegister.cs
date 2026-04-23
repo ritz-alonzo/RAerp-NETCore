@@ -52,7 +52,10 @@ namespace RA.OrdersManagement.Infrastructure
             services.AddTransient<ICartModelFactory, CartModelFactory>();
             services.AddTransient<IPaymentModelFactory, PaymentModelFactory>();
             // auto mapper profile
-            services.AddAutoMapper(typeof(OrderManagementMapping));
+            services.AddAutoMapper(cfg =>
+            {
+                cfg.AddProfile<OrderManagementMapping>();
+            });
         }
     }
 }

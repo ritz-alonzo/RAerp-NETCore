@@ -59,7 +59,7 @@ namespace RAerp.Extensions
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             // needed for Angular
-            app.UseCors(options => options.WithOrigins("http://localhost:4200")
+            app.UseCors(options => options.WithOrigins("http://localhost:4200", "http://localhost:5173")
             .AllowAnyMethod()
             .AllowAnyHeader());
             // end
@@ -71,6 +71,8 @@ namespace RAerp.Extensions
             app.UseSwagger();
             app.UseSwaggerUI();
 
+            // rate limiting for requests
+            app.UseRateLimiter();
 
             app.UseEndpoints(endpoints =>
             {

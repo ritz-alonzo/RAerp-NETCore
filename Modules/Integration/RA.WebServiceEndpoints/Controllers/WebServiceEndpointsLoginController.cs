@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using RA.Core.Domain;
@@ -34,6 +35,7 @@ namespace RA.WebServiceEndpoints.Controllers
         }
 
         [HttpPost]
+        [EnableRateLimiting("LoginPolicy")]
         public async Task<IActionResult> Login([FromBody] WebServiceEndpointLoginRequestModel model)
         {
             if (model == null)
@@ -41,16 +43,18 @@ namespace RA.WebServiceEndpoints.Controllers
 
             if (HttpContext.Request.Headers["client_id"].FirstOrDefault() == null)
             {
-                return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "No username and password entered." });
+                return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "No client id in Headers." });
             }
 
             if (HttpContext.Request.Headers["client_secret"].FirstOrDefault() == null)
             {
-                return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "No username and password entered." });
+                return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "No client secret in Headers." });
             }
 
             _clientId = HttpContext.Request.Headers["client_id"].ToString();
             _clientSecret = HttpContext.Request.Headers["client_secret"].ToString();
+
+            // Add check of client ID and client secret in database. For now, we are hardcoding the values in appsettings.json file.
 
             if (model.UserName == null || model.Password == null)
                 return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "Username or password should have value." });

@@ -12,6 +12,7 @@ using RAerp.Factories.UserFactory;
 using RAerp.Helpers.Constants;
 using RAerp.Helpers.PluginHelper;
 using RAerp.Helpers.Security;
+using RAerp.Helpers.SMSHelper;
 using RAerp.Models.UsersModel;
 using RAerp.Security.AccessRights;
 using RAerp.Security.AccessRightsControl;
@@ -31,13 +32,15 @@ namespace RAErp.Controllers.Users
         private readonly IMapper _mapper;
         private readonly IAccessControl _accessControl;
         private readonly IAddressService _addressService;
+        private readonly string _smsAPIKey;
 
         public UsersController(RAerpContext erpContext,
             IUserService userService,
             IUserModelFactory userModelFactory,
             IMapper mapper,
             IAccessControl accessControl,
-            IAddressService addressService)
+            IAddressService addressService,
+            IConfiguration configuration)
         {
             _erpContext = erpContext;
             _userService = userService;
@@ -45,6 +48,7 @@ namespace RAErp.Controllers.Users
             _mapper = mapper;
             _accessControl = accessControl;
             _addressService = addressService;
+            _smsAPIKey = configuration.GetValue<string>("ApiSettings:SMSApiKey");
         }
 
         #region Users CRUD
@@ -173,16 +177,75 @@ namespace RAErp.Controllers.Users
             {
                 var entity = _mapper.Map(model, new User());
 
+                // Send SMS One Time PIN for verification
+                entity = await SendSMSHelper.SendSMSOTPRequest(entity, _smsAPIKey);
+
                 entity.Salt = EncryptionHelper.GenerateSalt();
                 entity.Password = await EncryptionHelper.EncryptData(entity.Password, entity.Salt);
+                entity.Email = await EncryptionHelper.EncryptData(entity.Email, entity.Salt);
+                entity.ContactNo = await EncryptionHelper.EncryptData(entity.ContactNo, entity.Salt);
 
                 await _userService.Insert(entity);
 
-                return RedirectToAction("Profile", new { id = entity.Id });
+                return RedirectToAction("VerifyAccount", new { id = entity.Id });
             }
             else
             {
                 AdminErrorNotification(model, "Failed to create user");
+                return View(model);
+            }
+        }
+
+        public async Task<IActionResult> VerifyAccount(Guid id)
+        {
+            var entity = await _userService.GetById(id);
+            if (entity == null)
+            {
+                // notifies error message
+                return NotFound();
+            }
+
+            var model = await _userModelFactory.PrepareUserModel(new UserModel(), entity);
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> VerifyAccount(UserModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var entity = await _userService.GetById(model.Id);
+                if (entity == null)
+                {
+                    // notifies error message
+                    return NotFound();
+                }
+
+                if (string.IsNullOrEmpty(model.OneTimePIN))
+                {
+                    AdminErrorNotification(model, "One Time PIN is required");
+                    return View(model);
+                }
+
+                if (model.OneTimePIN != entity.OneTimePIN)
+                {
+                    AdminErrorNotification(model, "Invalid One Time PIN");
+                    return View(model);
+                }
+
+                entity.IsVerified = true;
+                entity.OneTimePIN = null;
+                entity.AccountStatus = UserAccountStatus.Active;
+
+                await _userService.Update(entity);
+
+                AdminSuccessNotification(model, "Successfully verified user account");
+                return RedirectToAction("Profile", new { id = entity.Id });
+            }
+            else
+            {
+                AdminErrorNotification(model, "Failed to validate user");
                 return View(model);
             }
         }

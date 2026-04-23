@@ -68,10 +68,10 @@ namespace RAerp.Factories.CoreFactories
         {
             model.SystemName = typeof(TEntity).FullName;
 
-            if (model.CreatedByUser.Id.IsNullOrEmpty() && model.CreatedByUser == null)
+            if (model.CreatedByUser.Id.IsNullOrEmpty())
             {
                 var currentUser = await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext);
-                if (currentUser != null && model.CreatedByUser == null)
+                if (currentUser != null)
                 {
                     model.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(currentUser);
                 }

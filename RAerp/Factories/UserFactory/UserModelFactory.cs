@@ -91,7 +91,7 @@ namespace RAerp.Factories.UserFactory
             {
                 entity = new User();
 
-                entity.AccountStatus = UserAccountStatus.Active;
+                entity.AccountStatus = UserAccountStatus.Pending;
                 entity.CreatedOn = DateTime.Now;
                 // but for now disable
                 //entity.CreatedById = _userIdentity.GetCurrentUser(_httpContextAccessor.HttpContext)?.Id;

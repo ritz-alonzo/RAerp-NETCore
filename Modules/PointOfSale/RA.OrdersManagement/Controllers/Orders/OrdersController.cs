@@ -192,7 +192,7 @@ namespace RA.OrdersManagement.Controllers.Orders
                 orderForm.TotalDiscountAmount = orderItems.Sum(c => c.DiscountAmount);
                 orderForm.TotalGrossAmount = orderItems.Sum(c => c.SubTotal);
                 orderForm.TotalVatAmount = orderForm.TotalGrossAmount * 0.12m;
-                orderForm.TotalNetAmount = orderForm.TotalGrossAmount - orderForm.TotalVatAmount;
+                orderForm.TotalNetAmount = orderForm.TotalGrossAmount * 1.12m;
                 #endregion
 
                 await _orderService.InsertFormAsync(orderForm);
@@ -253,7 +253,7 @@ namespace RA.OrdersManagement.Controllers.Orders
                 orderForm.TotalDiscountAmount = orderItems.Sum(c => c.DiscountAmount);
                 orderForm.TotalGrossAmount = orderItems.Sum(c => c.SubTotal);
                 orderForm.TotalVatAmount = orderForm.TotalGrossAmount * 0.12m;
-                orderForm.TotalNetAmount = orderForm.TotalGrossAmount - orderForm.TotalVatAmount;
+                orderForm.TotalNetAmount = orderForm.TotalGrossAmount * 1.12m;
                 #endregion
 
                 orderForm.ModifiedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
@@ -391,7 +391,7 @@ namespace RA.OrdersManagement.Controllers.Orders
             decimal totalDiscountAmount = orderItems.Any() ? orderItems.Sum(c => c.DiscountAmount) : 0m;
             decimal totalGrossAmount = orderItems.Any() ? orderItems.Sum(c => c.SubTotal) : 0m;
             decimal totalVatAmount = totalGrossAmount > 0m ? totalGrossAmount * 0.12m : 0m;
-            decimal totalNetAmount = (totalGrossAmount > 0m && totalVatAmount > 0m) ? totalGrossAmount - totalVatAmount : 0m;
+            decimal totalNetAmount = (totalGrossAmount > 0m && totalVatAmount > 0m) ? totalGrossAmount * 1.12m : 0m;
             #endregion
 
             var jsonDataResponse = new

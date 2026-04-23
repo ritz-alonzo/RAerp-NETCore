@@ -153,13 +153,13 @@ function FormItemsReload(urlAction, partialViewDivId) {
 
 function SelectorInsertItemPost(formAjaxId, postUrl, itemsTabUrl, itemsPartialViewId) {
     console.log('starting form item insert');
-    var itemList = [];
+    var catalogIds = [];
     var selectedItems = $(`#${formAjaxId}`).find('tbody tr td input[type="checkbox"]:checked');
     $(selectedItems).each((index, item) => {
         var idTableData = $(item).parent('td').siblings('td')[0];
-        var itemId = $(idTableData).find('input[id="Id"]').val();
-        if (itemId != null || itemId != undefined) {
-            itemList.push(itemId);
+        var catalogId = $(idTableData).find('input[id="Id"]').val();
+        if (catalogId != null || catalogId != undefined) {
+            catalogIds.push(catalogId);
         }
     });
 
@@ -174,13 +174,13 @@ function SelectorInsertItemPost(formAjaxId, postUrl, itemsTabUrl, itemsPartialVi
         traditional: true,
         data: {
             formId: formId,
-            catalogIds: itemList
+            catalogIds: catalogIds
         }
      })
         .done((data) => {
             console.log("Successfully added items");
-            /*$('#formItemModal').hide();*/
-            $('#formItemModal').modal('hide');
+            $('#formItemModal').hide();
+            /*$('#formItemModal').modal('hide');*/
             $('.modal-backdrop').addClass("modal").removeClass("modal-backdrop fade show");
             $('.modal-open').attr("style", "");
             $('.modal-open').removeClass("modal-open");
@@ -190,8 +190,8 @@ function SelectorInsertItemPost(formAjaxId, postUrl, itemsTabUrl, itemsPartialVi
         })
         .fail((data) => {
             console.log("Failed to add items");
-            /*$('#formItemModal').hide();*/
-            $('#formItemModal').modal('hide');
+            $('#formItemModal').hide();
+            /*$('#formItemModal').modal('hide');*/
             $('.modal-backdrop').addClass("modal").removeClass("modal-backdrop fade show");
             $('.modal-open').attr("style", "");
             $('.modal-open').removeClass("modal-open");
@@ -341,9 +341,9 @@ $('.embedded-table-save-btn').on('click', (e) => {
         data: formItemData
     })
         .done((data) => {
-            console.log("Successfully added items");
-            toastr.success("Successfully added items");
-            // compute totals
+            console.log("Successfully saved items");
+            toastr.success("Successfully saved items");
+            // format total decimals
             $.each(data, (key, value) => {
                 var formElementId = key.at(0).toUpperCase() + key.slice(1);
                 var formElement = $('form').find(`input[id='${formElementId}']`);
@@ -484,6 +484,9 @@ $('.embedded-table-cancel-btn').on('click', (e) => {
 //});
 
 // Date Formatter for Forms
+
+/* Field on load Format */
+
 $(window).on('load', (e) => {
     var createdOnElements = $('.custom-input-set input[type="datetime"]');
     if (createdOnElements.length > 0) {

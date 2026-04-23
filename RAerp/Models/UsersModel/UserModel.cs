@@ -22,6 +22,10 @@ namespace RAerp.Models.UsersModel
         public string Username { get; set; }
         [DisplayName("Password")]
         public string Password { get; set; }
+        [DisplayName("Contact Number")]
+        public string ContactNo { get; set; }
+        [DisplayName("One Time PIN")]
+        public string OneTimePIN { get; set; }
         [DisplayName("Created On")]
         public DateTime CreatedOn { get; set; }
         [DisplayName("Modified On")]
@@ -38,6 +42,8 @@ namespace RAerp.Models.UsersModel
         public bool Deleted { get; set; }
         [DisplayName("Role")]
         public Guid UserRoleId { get; set; }
+        [DisplayName("Verified")]
+        public bool IsVerified { get; set; }
         public List<SelectListItem> AvailableUserRoles { get; set; }
         public List<SelectListItem> AvailableAccounts { get; set; }
 

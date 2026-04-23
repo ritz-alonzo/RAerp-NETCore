@@ -16,5 +16,21 @@ namespace RA.WebServiceEndpoints.App_Data
         }
 
         public DbSet<WebServiceEndpoint> WebServiceEndpoint { get; set; }
+
+        #region Overrides
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return base.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                Console.WriteLine(innerMessage); // or log it
+                throw;
+            }
+        }
+        #endregion
     }
 }

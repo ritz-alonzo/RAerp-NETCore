@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.RateLimiting;
 using System.Threading.Tasks;
 
 namespace RA.WebServiceEndpoints.Infrastructure
@@ -29,7 +33,7 @@ namespace RA.WebServiceEndpoints.Infrastructure
             // mvc controller
             services.AddMvc()
                 .AddApplicationPart(typeof(WebServiceEndpointsController).Assembly);
-                // api controller
+            // api controller
             //services.AddControllers()
             //    .AddApplicationPart(typeof(WebServiceEndpointsAPIController).Assembly);
             // service
@@ -37,7 +41,7 @@ namespace RA.WebServiceEndpoints.Infrastructure
             // factory
             services.AddTransient<IWebServiceEndpointModelFactory, WebServiceEndpointModelFactory>();
             // automapper profile
-            services.AddAutoMapper(typeof(WebServiceEndpointMappingProfile));
+            services.AddAutoMapper(cfg => { cfg.AddProfile<WebServiceEndpointMappingProfile>(); });
 
             // api token 
             var jwtSecretKey = configuration.GetValue<string>("ApiSettings:JWTSecretKey");
@@ -56,6 +60,37 @@ namespace RA.WebServiceEndpoints.Infrastructure
                     ValidateIssuer = false,
                     ValidateAudience = false
                 };
+            });
+
+            // rate limiting for requests
+            services.AddRateLimiter(options =>
+            {
+                options.AddFixedWindowLimiter("LoginPolicy", config =>
+                {
+                    config.PermitLimit = 5;                        // Max 5 requests
+                    config.Window = TimeSpan.FromMinutes(1);       // per 1 minute
+                    config.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    config.QueueLimit = 0;                         // No queuing — reject immediately
+                });
+                options.AddPolicy("LoginPerIp", httpContext =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 5,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        }));
+                options.AddFixedWindowLimiter("TransactionPolicy", config =>
+                {
+                    config.PermitLimit = 100;                        // Max 100 requests
+                    config.Window = TimeSpan.FromMinutes(1);       // per 1 minute
+                    config.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    config.QueueLimit = 0;                         // No queuing — reject immediately
+                });
+                // Return 429 Too Many Requests
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             });
         }
     }

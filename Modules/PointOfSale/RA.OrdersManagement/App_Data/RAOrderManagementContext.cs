@@ -23,5 +23,21 @@ namespace RA.OrdersManagement.App_Data
         public DbSet<CartItem> CartItem { get; set; }
         public DbSet<Payment> Payment { get; set; }
         public DbSet<PaymentItem> PaymentItem { get; set; }
+
+        #region Overrides
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return base.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                Console.WriteLine(innerMessage); // or log it
+                throw;
+            }
+        }
+        #endregion
     }
 }

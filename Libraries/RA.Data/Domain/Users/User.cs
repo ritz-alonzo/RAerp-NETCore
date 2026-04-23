@@ -13,6 +13,7 @@ namespace RA.Data.Domain.Users
         public string ContactNo { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
+        public string OneTimePIN { get; set; }
         public Guid? CreatedById { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime? ModifiedOn { get; set; }
@@ -29,6 +30,7 @@ namespace RA.Data.Domain.Users
             set { AccountStatusId = (int)value; }
         }
         public bool Deleted { get; set; }
+        public bool IsVerified { get; set; }
         public string Salt { get; set; }
     }
 }

@@ -84,7 +84,11 @@ namespace RAerp.Extensions
         public static void RegisterAutoMapper(this IServiceCollection services)
         {
             // auto mapper
-            services.AddAutoMapper(typeof(AdminMappingProfile));
+            //services.AddAutoMapper(typeof(AdminMappingProfile));
+            services.AddAutoMapper(cfg =>
+            {
+                cfg.AddProfile<AdminMappingProfile>();
+            });
         }
 
         public static void RegisterMiddlewares(this IServiceCollection services)

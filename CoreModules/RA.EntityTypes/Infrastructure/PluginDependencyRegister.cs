@@ -28,7 +28,7 @@ namespace RA.EntityTypes.Infrastructure
             services.AddTransient<IEntityTypeManager, EntityTypeManager>();
             services.AddTransient<IBaseEntityModelFactory, BaseEntityModelFactory>();
             services.AddTransient<IEntityTypeModelFactory, EntityTypeModelFactory>();
-            services.AddAutoMapper(typeof(MappingProfile));
+            services.AddAutoMapper(cfg => { cfg.AddProfile<MappingProfile>(); });
             //services.AddDbContextPool<TestContext>(c => c.UseSqlServer("CurrentConnection"));
             //services.AddAutoMapper(typeof(EntityTypeMappingProfile));
             // Validators

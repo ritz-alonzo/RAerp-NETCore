@@ -11,7 +11,7 @@
                 type="button" role="tab"
                 aria-controls="configMain"
                 aria-selected="true">
-            Main
+            @HtmlContentConstants.MainTab
         </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -23,7 +23,7 @@
                 role="tab"
                 aria-controls="configMapping"
                 aria-selected="false">
-            Mappings
+            @HtmlContentConstants.MappingsTab
         </button>
     </li>
 </ul>
@@ -47,7 +47,7 @@
                 },
             });
             $('#selectCatalogTypeIdsBtn').on('click', (e) => {
-                $('ul.multiselect-container').css('display', 'contents');
+                $('#selectCatalogTypeIdsBtn').siblings('ul.multiselect-container').css('display', 'contents');
             });
             // Service Types
             $('#MappedServiceTypeIds').multiselect({
@@ -57,7 +57,7 @@
                 },
             });
             $('#selectServiceTypeIdsBtn').on('click', (e) => {
-                $('ul.multiselect-container').css('display', 'contents');
+                $('#selectServiceTypeIdsBtn').siblings('ul.multiselect-container').css('display', 'contents');
             });
         });
     });
