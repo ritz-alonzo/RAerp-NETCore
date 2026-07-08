@@ -1,30 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
 	  <OutputPath>..\..\RAerp\Plugins\RA.FormTypes</OutputPath>
 	  <OutDir>$(OutputPath)</OutDir>
+	  <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+	  <!-- Compile views into the plugin's own assembly -->
+	  <RazorCompileOnBuild>true</RazorCompileOnBuild>
+	  <RazorCompileOnPublish>true</RazorCompileOnPublish>
+	  <!-- Prevent duplicate/leaking of shared static-web-asset manifests across plugins -->
+	  <GenerateStaticWebAssetsManifest>false</GenerateStaticWebAssetsManifest>
+	  <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Domain\Mappings\**" />
-    <EmbeddedResource Remove="Domain\Mappings\**" />
-    <None Remove="Domain\Mappings\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Views\List.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\_FormTypeList.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\_ViewImports.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
   <ItemGroup>
 	  <ProjectReference Include="..\..\Libraries\RA.Core\RA.Core.csproj">
 		  <Private>False</Private>

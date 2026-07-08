@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using RA.Catalogs.Data;
@@ -18,6 +19,7 @@ using RA.WebFramework.Extensions;
 using RAerp.Controllers.Admin;
 using RAerp.Helpers.AddressHelper;
 using RAerp.Helpers.UserHelper;
+using RAerp.Services.FileServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,20 +36,26 @@ namespace RA.Catalogs.Controllers
         private readonly ICatalogModelFactory _catalogModelFactory;
         private readonly IMapper _mapper;
         private readonly IUserIdentity _userIdentity;
+        private readonly IFileService _fileService;
+        private readonly IWebHostEnvironment _env;
         #endregion
 
         #region Ctor
-        public CatalogsController(ICatalogService catalogService, 
-            IEntityTypeManager entityTypeManager, 
-            ICatalogModelFactory catalogModelFactory, 
-            IMapper mapper, 
-            IUserIdentity userIdentity)
+        public CatalogsController(ICatalogService catalogService,
+            IEntityTypeManager entityTypeManager,
+            ICatalogModelFactory catalogModelFactory,
+            IMapper mapper,
+            IUserIdentity userIdentity,
+            IFileService fileService,
+            IWebHostEnvironment env)
         {
             _catalogService = catalogService;
             _entityTypeManager = entityTypeManager;
             _catalogModelFactory = catalogModelFactory;
             _mapper = mapper;
             _userIdentity = userIdentity;
+            _fileService = fileService;
+            _env = env;
         }
         #endregion
 
@@ -61,7 +69,7 @@ namespace RA.Catalogs.Controllers
 
             var catalogConfigureModel = await _catalogModelFactory.PrepareCatalogConfigureModelAsync(entityTypeId, systemName);
 
-            return View("~/Plugins/RA.Catalogs/Views/Configuration.cshtml", catalogConfigureModel);
+            return View(catalogConfigureModel);
         }
 
         [HttpPost]
@@ -110,7 +118,7 @@ namespace RA.Catalogs.Controllers
 
             var model = await _catalogModelFactory.PrepareCatalogSearchModelAsync(new CatalogSearchModel() { SearchEntityTypeId = entityTypeId }, 10, page);
 
-            return View("~/Plugins/RA.Catalogs/Views/List.cshtml", model);
+            return View(model);
         }
 
         [HttpGet]
@@ -118,7 +126,7 @@ namespace RA.Catalogs.Controllers
         {
             var model = await _catalogModelFactory.PrepareCatalogListModelAsync(searchModel);
 
-            return PartialView("~/Plugins/RA.Catalogs/Views/_CatalogList.cshtml", model);
+            return PartialView(model);
         }
 
         public async Task<IActionResult> Index(Guid id)
@@ -135,7 +143,7 @@ namespace RA.Catalogs.Controllers
 
             var model = await _catalogModelFactory.PrepareCatalogModelAsync(new CatalogModel(), entity, entity.EntityTypeId);
 
-            return View("~/Plugins/RA.Catalogs/Views/Index.cshtml", model);
+            return View(model);
         }
 
         public async Task<IActionResult> Create(Guid entityTypeId)
@@ -152,7 +160,7 @@ namespace RA.Catalogs.Controllers
 
             var model = await _catalogModelFactory.PrepareCatalogModelAsync(new CatalogModel(), null, entityTypeId);
 
-            return View("~/Plugins/RA.Catalogs/Views/Create.cshtml", model);
+            return View(model);
         }
 
         [HttpPost]
@@ -169,6 +177,20 @@ namespace RA.Catalogs.Controllers
 
                 entity.CreatedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
                 entity.TypeId = model.TypeId;
+                // Image upload handling
+                if (model.UseImageUrlEnabled && model.ImageUrl.IsValidUrl() && !string.IsNullOrEmpty(model.ImageUrl))
+                {
+                    entity.ImagePath = model.ImageUrl;
+                }
+                else
+                {
+                    if (model.ImageFile != null && model.ImageFile.Length > 0 && model.ImageFile.IsValidImageFile())
+                    {
+                        // Assuming you have a method to handle file uploads and return the path
+                        var imagePath = await _fileService.SaveFileAsync(model.ImageFile);
+                        entity.ImagePath = imagePath;
+                    }
+                }
                 await _catalogService.InsertAsync(entity);
                 // sanity check
                 model.Id = entity.Id;
@@ -241,7 +263,7 @@ namespace RA.Catalogs.Controllers
             // search model preparation
             var searchModel = await _catalogModelFactory.PrepareCatalogSelectorSearchModelAsync(new CatalogSearchModel() { SearchCatalogTypeIds = typeIds, SearchExistingCatalogIds = existingCatalogIds }, 10, 1);
 
-            return View("~/Plugins/RA.Catalogs/Views/CatalogSelectorList.cshtml", searchModel);
+            return View(searchModel);
         }
 
         public async Task<IActionResult> CatalogSelectorListSearch(CatalogSearchModel searchModel)
@@ -251,7 +273,7 @@ namespace RA.Catalogs.Controllers
 
             var model = await _catalogModelFactory.PrepareCatalogSelectorListModelAsync(searchModel);
 
-            return View("~/Plugins/RA.Catalogs/Views/_CatalogSelectorItemList.cshtml", model);
+            return View(model);
         }
 
         #endregion

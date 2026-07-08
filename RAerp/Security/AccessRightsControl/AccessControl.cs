@@ -42,10 +42,18 @@ namespace RAerp.Security.AccessRightsControl
         public async Task<bool> HasViewAccessAsync<TEntity>()
             where TEntity : class
         {
-            if (!SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
-                return false;
+            bool hasAccess = false;
+            if (SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
+            {
+                hasAccess = true;
+            }
 
-            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id;
+            if (_httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true)
+            {
+                hasAccess = true;
+            }
+
+            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id ?? (await _userIdentity.GetCurrentApiUserAsync(_httpContextAccessor.HttpContext.User))?.Id;
 
             if (userId.IsNullOrEmpty())
                 throw new ArgumentNullException(AdminErrorMessages.UserIdNotExists);
@@ -59,7 +67,7 @@ namespace RAerp.Security.AccessRightsControl
             if (userRole == null)
                 throw new ArgumentNullException(AdminErrorMessages.UserRoleNotExists);
 
-            return await CheckRoleAccessRecordAsync(userRole.Id, AccessType.View, typeof(TEntity));
+            return await CheckRoleAccessRecordAsync(userRole.Id, AccessType.View, typeof(TEntity)) && hasAccess;
         }
         #endregion
 
@@ -68,10 +76,18 @@ namespace RAerp.Security.AccessRightsControl
         public async Task<bool> HasCreateAccessAsync<TEntity>()
             where TEntity : class
         {
-            if (!SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
-                return false;
+            bool hasAccess = false;
+            if (SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
+            {
+                hasAccess = true;
+            }
 
-            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id;
+            if (_httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true)
+            {
+                hasAccess = true;
+            }
+
+            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id ?? (await _userIdentity.GetCurrentApiUserAsync(_httpContextAccessor.HttpContext.User))?.Id;
 
             if (userId.IsNullOrEmpty())
                 throw new ArgumentNullException(AdminErrorMessages.UserIdNotExists);
@@ -85,7 +101,7 @@ namespace RAerp.Security.AccessRightsControl
             if (userRole == null)
                 throw new ArgumentNullException(AdminErrorMessages.UserRoleNotExists);
 
-            return await CheckRoleAccessRecordAsync(userRole.Id, AccessType.Create, typeof(TEntity));
+            return await CheckRoleAccessRecordAsync(userRole.Id, AccessType.Create, typeof(TEntity)) && hasAccess;
         }
         #endregion
 
@@ -94,10 +110,19 @@ namespace RAerp.Security.AccessRightsControl
         public async Task<bool> HasUpdateAccessAsync<TEntity>()
             where TEntity : class
         {
-            if (!SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
-                return false;
+            bool hasAccess = false;
+            if (SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
+            {
+                hasAccess = true;
+            }
 
-            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id;
+            if (_httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true)
+            {
+                hasAccess = true;
+            }
+
+            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id ?? (await _userIdentity.GetCurrentApiUserAsync(_httpContextAccessor.HttpContext.User))?.Id;
+
 
             if (userId.IsNullOrEmpty())
                 throw new ArgumentNullException(AdminErrorMessages.UserIdNotExists);
@@ -111,7 +136,7 @@ namespace RAerp.Security.AccessRightsControl
             if (userRole == null)
                 throw new ArgumentNullException(AdminErrorMessages.UserRoleNotExists);
 
-            return await CheckRoleAccessRecordAsync(userRole.Id, AccessType.Update, typeof(TEntity));
+            return await CheckRoleAccessRecordAsync(userRole.Id, AccessType.Update, typeof(TEntity)) && hasAccess;
         }
         #endregion
 
@@ -120,10 +145,18 @@ namespace RAerp.Security.AccessRightsControl
         public async Task<bool> HasDeleteAccessAsync<TEntity>()
             where TEntity : class
         {
-            if (!SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
-                return false;
+            bool hasAccess = false;
+            if (SessionHelper.SessionGenerated(_httpContextAccessor.HttpContext))
+            {
+                hasAccess = true;
+            }
 
-            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id;
+            if (_httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true)
+            {
+                hasAccess = true;
+            }
+
+            var userId = (await _userIdentity.GetCurrentUserAsync(_httpContextAccessor.HttpContext))?.Id ?? (await _userIdentity.GetCurrentApiUserAsync(_httpContextAccessor.HttpContext.User))?.Id;
 
             if (userId.IsNullOrEmpty())
                 throw new ArgumentNullException(AdminErrorMessages.UserIdNotExists);
@@ -137,7 +170,7 @@ namespace RAerp.Security.AccessRightsControl
             if (userRole == null)
                 throw new ArgumentNullException(AdminErrorMessages.UserRoleNotExists);
 
-            return await CheckRoleAccessRecordAsync(userRole.Id, AccessType.Delete, typeof(TEntity));
+            return await CheckRoleAccessRecordAsync(userRole.Id, AccessType.Delete, typeof(TEntity)) && hasAccess;
         }
         #endregion
 

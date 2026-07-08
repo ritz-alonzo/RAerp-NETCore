@@ -4,6 +4,7 @@ using RA.WebFramework.Extensions;
 using RAerp.Helpers.Security;
 using RAerp.Services.UserServices;
 using System;
+using System.Security.Claims;
 
 namespace RAerp.Helpers.UserHelper
 {
@@ -40,6 +41,22 @@ namespace RAerp.Helpers.UserHelper
                 user = await _userService.GetById(userId);
 
             return user;
+        }
+
+        public async Task<User> GetCurrentApiUserAsync(ClaimsPrincipal user)
+        {
+            User currentUser = null;
+            if (user.Identity is { IsAuthenticated: true })
+            {
+                var userId = user.Identity.Name;
+                if (string.IsNullOrEmpty(userId))
+                    return currentUser;
+
+                var convertedUserId = Guid.Parse(userId);
+                currentUser = await _userService.GetById(convertedUserId);
+            }
+
+            return currentUser;
         }
     }
 }

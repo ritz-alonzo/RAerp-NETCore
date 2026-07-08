@@ -1,0 +1,327 @@
+﻿@model RAerp.Models.ApplicationSettingsModel.ApplicationSettingModel
+
+@{
+    ViewData["Title"] = string.Format(HtmlContentFormat.PageTitle, "Application Setting");
+    Layout = "~/Views/Shared/Layouts/_AdminLayout.cshtml";
+    HtmlActiveNodeMenu.SetActivePluginMenu(Context, Model.SystemName);
+}
+
+<form asp-action="@(Model.Id == Guid.Empty ? "Create" : "Edit")" asp-controller="ApplicationSettings" method="post">
+    @Html.AntiForgeryToken()
+    <div class="form-content-header-title">
+        @{
+            <text>@Html.Raw(string.Format(HtmlContentFormat.PageTitle, Model.Id == Guid.Empty ? "New Application Setting" : "Edit Application Setting"))</text>
+        }
+    </div>
+    <div class="form-content-header-control">
+        <div class="form-content-back-redirection-control">
+            <a asp-action="Index" asp-controller="Home"><i class="fa fa-arrow-left"></i> Back to Home</a>
+        </div>
+        <div>
+            @if (Model.Id != Guid.Empty)
+            {
+                <button type="button" class="btn btn-danger" onclick="deleteApplicationSetting('@Model.Id')">
+                    <i class="fa fa-trash"></i> Delete
+                </button>
+            }
+            <input type="submit" value="Save" class="btn btn-success" />
+        </div>
+    </div>
+    <hr />
+    <div class="row">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="col-md-12">
+            <div class="card">
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs" id="formTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="general-form-tab" data-bs-toggle="tab" data-bs-target="#generalForm" type="button" role="tab" aria-controls="generalForm" aria-selected="true">
+                            @HtmlContentConstants.GeneralTab
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="credentials-tab" data-bs-toggle="tab" data-bs-target="#credentials" type="button" role="tab" aria-controls="credentials" aria-selected="false">
+                            <i class="fa fa-key"></i> Client Credentials
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="formTabContent">
+                    <!-- General Tab -->
+                    <div class="tab-pane fade show active" id="generalForm" role="tabpanel" aria-labelledby="general-form-tab">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="form-content-header-group">
+                                    <i class="fa fa-info-circle"></i> @HtmlContentConstants.InfoHeader
+                                </div>
+                                
+                                @if (Model.Id != Guid.Empty)
+                                {
+                                    <input type="hidden" asp-for="Id" />
+                                }
+
+                                <div class="custom-input-set col-md-6">
+                                    <label asp-for="@Model.ApplicationName" class="form-label" data-required="true"></label>
+                                    <input asp-for="@Model.ApplicationName" type="text" class="form-control" autocomplete="off" placeholder="Enter application name" />
+                                    <span asp-validation-for="@Model.ApplicationName" class="text-danger"></span>
+                                </div>
+
+                                <div class="custom-input-set col-md-6">
+                                    <label asp-for="@Model.IsActive" class="form-label"></label>
+                                    <div class="form-check form-switch">
+                                        <input asp-for="@Model.IsActive" class="form-check-input" type="checkbox" id="isActiveSwitch" style="border-radius: 30%" />
+                                        <label class="form-check-label" for="isActiveSwitch">
+                                            @(Model.IsActive ? "Active" : "Inactive")
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        Inactive applications will not be able to authenticate with the API.
+                                    </small>
+                                </div>
+
+                                <div class="custom-input-set col-md-12">
+                                    <label asp-for="@Model.Description" class="form-label"></label>
+                                    <textarea asp-for="@Model.Description" class="form-control" rows="3" placeholder="Enter description (optional)"></textarea>
+                                    <span asp-validation-for="@Model.Description" class="text-danger"></span>
+                                </div>
+                                <div class="custom-input-set col-md-6">
+                                    <label asp-for="@Model.LoginAttemptLimit" class="form-label" data-required="true"></label>
+                                    <input asp-for="@Model.LoginAttemptLimit" data-attr="int" type="number" class="form-control" autocomplete="off" />
+                                    <span asp-validation-for="@Model.LoginAttemptLimit" class="text-danger"></span>
+                                </div>
+                                <div class="custom-input-set col-md-6">
+                                    <label asp-for="@Model.OneTimePINAttemptLimit" class="form-label" data-required="true"></label>
+                                    <input asp-for="@Model.OneTimePINAttemptLimit" data-attr="int" type="number" class="form-control" autocomplete="off" />
+                                    <span asp-validation-for="@Model.OneTimePINAttemptLimit" class="text-danger"></span>
+                                </div>
+                                <div class="custom-input-set col-md-6">
+                                    <label asp-for="@Model.EmailVerificationAttemptLimit" class="form-label" data-required="true"></label>
+                                    <input asp-for="@Model.EmailVerificationAttemptLimit" data-attr="int" type="number" class="form-control" autocomplete="off" />
+                                    <span asp-validation-for="@Model.EmailVerificationAttemptLimit" class="text-danger"></span>
+                                </div>
+                                <div class="custom-input-set col-md-6">
+                                    <label asp-for="@Model.EmailLimit" class="form-label" data-required="true"></label>
+                                    <input asp-for="@Model.EmailLimit" data-attr="int" type="number" class="form-control" autocomplete="off" />
+                                    <span asp-validation-for="@Model.EmailLimit" class="text-danger"></span>
+                                </div>
+                                <div class="custom-input-set col-md-6">
+                                    <label asp-for="@Model.DefaultTimeZone" class="form-label" data-required="true"></label>
+                                    <select asp-for="@Model.DefaultTimeZone"
+                                            class="select2 form-select shadow-none"
+                                            asp-items="@(new SelectList(Model.AvailableTimeZones, "Value", "Text"))">
+                                    </select>
+                                    <span asp-validation-for="@Model.DefaultTimeZone" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="form-content-header-group">
+                                    <i class="fa fa-cogs"></i> @HtmlContentConstants.SystemHeader
+                                </div>
+                                <div class="custom-input-set col-md-6">
+                                    <label asp-for="@Model.CreatedByUser.FullName" class="form-label"></label>
+                                    <input asp-for="@Model.CreatedByUser.FullName" type="text" class="form-control" autocomplete="off" readonly />
+                                </div>
+                                <div class="custom-input-set col-md-6">
+                                    <label asp-for="@Model.CreatedOn" class="form-label"></label>
+                                    <input asp-for="@Model.CreatedOn" type="datetime-local" class="form-control" autocomplete="off" readonly />
+                                </div>
+                                <div class="custom-input-set col-md-6">
+                                </div>
+                                <div class="custom-input-set col-md-6">
+                                    <label asp-for="@Model.ModifiedOn" class="form-label"></label>
+                                    <input asp-for="@Model.ModifiedOn" type="datetime-local" class="form-control" autocomplete="off" readonly />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Client Credentials Tab -->
+                    <div class="tab-pane fade" id="credentials" role="tabpanel" aria-labelledby="credentials-tab">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="form-content-header-group">
+                                    <i class="fa fa-key"></i> API Authentication Credentials
+                                </div>
+                                    
+                                <div class="col-md-12">
+                                    <div class="alert alert-warning" role="alert">
+                                        <i class="fa fa-exclamation-triangle"></i>
+                                        <strong>Security Notice:</strong> Keep these credentials secure. They will be used to authenticate API requests for this application.
+                                    </div>
+                                </div>
+
+                                <div class="custom-input-set col-md-12">
+                                    <label class="form-label">Client ID</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" value="@Model.ClientId" readonly id="clientIdDisplay" />
+                                        <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('clientIdDisplay')">
+                                            <i class="fa fa-copy"></i> Copy
+                                        </button>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        This unique identifier is used to identify your application when making API requests.
+                                    </small>
+                                </div>
+
+                                <div class="custom-input-set col-md-12">
+                                    <label class="form-label">Client Secret</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" value="@Model.ClientSecret" readonly id="clientSecretDisplay" />
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility()" title="Show/Hide Secret">
+                                            <i class="fa fa-eye" id="toggleIcon"></i>
+                                        </button>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('clientSecretDisplay')" title="Copy to Clipboard">
+                                            <i class="fa fa-copy"></i> Copy
+                                        </button>
+                                        <button class="btn btn-warning" type="button" onclick="regenerateSecret('@Model.Id')" title="Regenerate Secret">
+                                            <i class="fa fa-refresh"></i> Regenerate
+                                        </button>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        This secret is used along with the Client ID to authenticate API requests. Store it securely.
+                                    </small>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <div class="alert alert-info" role="alert">
+                                        <i class="fa fa-info-circle"></i>
+                                        <strong>Regenerate Secret:</strong> If you suspect the secret has been compromised, click "Regenerate" to create a new one.
+                                        The old secret will immediately stop working.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        function deleteApplicationSetting(id) {
+            if (!confirm('Are you sure you want to delete this application setting? This action cannot be undone.')) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("Delete", "ApplicationSettings")',
+                type: 'POST',
+                data: {
+                    id: id,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    if (response.success === false) {
+                        alert(response.message || 'Error deleting application setting');
+                    } else {
+                        window.location.href = '@Url.Action("Index", "Home")';
+                    }
+                },
+                error: function () {
+                    alert('Error deleting application setting');
+                }
+            });
+        }
+
+        function regenerateSecret(id) {
+            if (!confirm('Are you sure you want to regenerate the client secret?\n\nWARNING: The old secret will immediately stop working and any applications using it will need to be updated.')) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("RegenerateSecret", "ApplicationSettings")',
+                type: 'POST',
+                data: {
+                    id: id,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        $('#clientSecretDisplay').val(response.clientSecret);
+                        alert('✓ Client secret regenerated successfully!\n\nPlease copy and save the new secret immediately. You will not be able to see it again.');
+                        
+                        // Briefly show the secret
+                        const input = document.getElementById('clientSecretDisplay');
+                        const icon = document.getElementById('toggleIcon');
+                        input.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        alert(response.message || 'Error regenerating secret');
+                    }
+                },
+                error: function () {
+                    alert('Error regenerating secret');
+                }
+            });
+        }
+
+        function togglePasswordVisibility() {
+            const input = document.getElementById('clientSecretDisplay');
+            const icon = document.getElementById('toggleIcon');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function copyToClipboard(elementId) {
+            const input = document.getElementById(elementId);
+            const originalType = input.type;
+            
+            // Temporarily change to text to select
+            input.type = 'text';
+            input.select();
+            input.setSelectionRange(0, 99999); // For mobile devices
+
+            try {
+                document.execCommand('copy');
+                
+                // Visual feedback
+                const button = event.target.closest('button');
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="fa fa-check"></i> Copied!';
+                button.classList.add('btn-success');
+                button.classList.remove('btn-outline-secondary');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-outline-secondary');
+                    input.type = originalType;
+                }, 2000);
+            } catch (err) {
+                alert('Failed to copy to clipboard');
+                input.type = originalType;
+            }
+        }
+
+        // Auto-hide secret after showing it
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.querySelector('[onclick*="togglePasswordVisibility"]');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    const input = document.getElementById('clientSecretDisplay');
+                    if (input.type === 'text') {
+                        // Auto-hide after 10 seconds
+                        setTimeout(() => {
+                            if (input.type === 'text') {
+                                togglePasswordVisibility();
+                            }
+                        }, 10000);
+                    }
+                });
+            }
+        });
+    </script>
+}

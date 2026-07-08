@@ -7,11 +7,6 @@ using RA.Categories.Helpers;
 using RA.Core.DataCaching.CacheManagement;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RA.Categories.Services
 {
@@ -46,10 +41,10 @@ namespace RA.Categories.Services
             if (!categoryTypeIds.HasAny())
                 throw new ArgumentNullException(CategoryMessages.EmptyCategoryIds);
 
-            var query = GetListAsync(categoryTypeIds).Result.AsQueryable();
+            var query = await GetListAsync(categoryTypeIds);
 
             // additional filters
-            return await query.ToListAsync();
+            return query.ToList();
         }
 
         #region Select List Items
@@ -103,11 +98,6 @@ namespace RA.Categories.Services
 
         public async Task<List<SelectListItem>> GetCategoriesSelectListAsync(List<Guid> categoryTypeIds)
         {
-            if (!categoryTypeIds.HasAny())
-                throw new ArgumentNullException(CategoryMessages.EmptyCategoryIds);
-
-            var categories = await GetCategoryListAsync(categoryTypeIds);
-
             var categoryList = new List<SelectListItem>
             {
                 // show default
@@ -118,6 +108,12 @@ namespace RA.Categories.Services
                 }
             };
 
+            if (!categoryTypeIds.HasAny())
+            {
+                return categoryList.ToList();
+            }
+                
+            var categories = await GetCategoryListAsync(categoryTypeIds);
             foreach (var category in categories)
             {
                 categoryList.Add(new SelectListItem()
@@ -127,7 +123,7 @@ namespace RA.Categories.Services
                 });
             }
 
-            return categoryList;
+            return categoryList.ToList();
         }
         #endregion
 

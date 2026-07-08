@@ -7,6 +7,8 @@ namespace RA.OrdersManagement.Services.Orders
 {
     public interface IOrderService : IFormItemService<Order, OrderItem, OrderSetting, RAOrderManagementContext>
     {
-        Task<IEnumerable<Order>> GetOrderListAsync(string searchQuery = null, string searchCustomerName = null, List<Guid> searchServiceIds = null, DateTime? searchOrderDate = null, DateTime? searchCreatedDate = null, List<int> formStatusIds = null, bool showDeleted = false);
+        Task<IEnumerable<Order>> GetOrderListAsync(string searchQuery = null, string searchCustomerName = null, List<Guid> searchServiceIds = null, DateTime? searchOrderDate = null, DateTime? searchCreatedDate = null, List<int> formStatusIds = null, bool showDeleted = false,
+            int? pageNumber = 0,
+            int? pageSize = int.MaxValue);
     }
 }

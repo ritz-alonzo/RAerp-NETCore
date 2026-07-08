@@ -1,0 +1,56 @@
+﻿@model WebServiceEndpointSearchModel
+@{
+    ViewData["Title"] = @Model.WebServiceEndpointName;
+    Layout = "~/Views/Shared/Layouts/_AdminLayout.cshtml";
+    HtmlActiveNodeMenu.SetActivePluginMenu(Context, Model.WebServiceEndpointSystemName);
+}
+
+<div class="float-right">
+    <a asp-action="Create" 
+    class="btn btn-primary"
+    asp-controller="WebServiceEndpoints">
+    <i class="fa fa-plus"></i> 
+    Create
+    </a>
+</div>
+<div class="col-md-9">
+    <h2>@Model.WebServiceEndpointName</h2>
+</div>
+<form-search id="webServiceEndpoints_search">
+    @Html.HiddenFor(c => c.WebServiceEndpointName)
+    @Html.HiddenFor(c => c.PageNumber)
+    @Html.HiddenFor(c => c.PageSize)
+    @Html.HiddenFor(c => c.TotalItems)
+    <div id="search">
+        <div class="card">
+            <div class="card-header-search">
+                <h4 class="text-muted">Search</h4>
+            </div>
+            <div class="card-body-search">
+                <div class="col-md-6">
+                    <div class="custom-input-set mb-2">
+                        <label asp-for="SearchQuery" class="form-label"></label>
+                        <input asp-for="SearchQuery" class="form-control" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="custom-input-set mb-2">
+                        <label asp-for="SearchCreatedOn" class="form-label"></label>
+                        <input asp-for="SearchCreatedOn" id="datepicker-autoclose" class="form-control" type="date" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form-search>
+
+<div id="webServiceEndpoints">
+    @await Html.PartialAsync("_WebServiceEndpointList.cshtml", Model.WebServiceEndpoints)
+</div>
+
+
+@section scripts{
+    <script>
+
+    </script>
+}

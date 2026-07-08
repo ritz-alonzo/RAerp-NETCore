@@ -15,5 +15,6 @@ namespace RA.Core.Models.PluginModels.EntityTypes
         public DateTime? SearchCreatedOn { get; set; }
         public bool ShowDeleted { get; set; }
         public string EntityTypeName { get; set; }
+        public Guid? CreatedById { get; set; }
     }
 }

@@ -3780,7 +3780,7 @@ input[type=button].btn-block, input[type=reset].btn-block, input[type=submit].bt
         margin-left: 0
     }
 
-.dropdown-menu {
+/*.dropdown-menu {
     position: absolute;
     top: 100%;
     left: 0;
@@ -3798,7 +3798,7 @@ input[type=button].btn-block, input[type=reset].btn-block, input[type=submit].bt
     background-clip: padding-box;
     border: 1px solid #e9ecef;
     border-radius: 2px
-}
+}*/
 
 .dropdown-menu-left {
     right: auto;

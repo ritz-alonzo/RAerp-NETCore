@@ -1,5 +1,8 @@
-﻿using RA.Core.Models.BaseModels;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using RA.Core.Models.BaseModels;
 using RAerp.Data;
+using RAerp.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,9 +11,10 @@ using System.Threading.Tasks;
 
 namespace RAerp.Factories.CoreFactories
 {
-    public static class BaseNotificationModelFactory<TModel> where TModel : BaseModel
+    public static class BaseNotificationModelFactory<TModel> 
+        where TModel : BaseModel
     {
-        public static TModel PrepareNotificationModel(TModel model, NotificationStatus notificationStatus, string message)
+        public static TModel PrepareNotificationModel(TModel model, NotificationStatus notificationStatus, string message, ModelStateDictionary modelState)
         {
             if (model == null)
                 throw new ArgumentNullException(typeof(TModel).Name);

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using RA.Core.Models.PluginModels.EntityTypes;
 using RA.Core.PluginData.EntityTypes.Catalogs;
 using System;
@@ -28,6 +29,14 @@ namespace RA.Core.Models.PluginModels.Catalogs
         public Guid? UOMId { get; set; }
         [DisplayName("Price")]
         public decimal? Price { get; set; }
+        [DisplayName("Image File")]
+        public IFormFile ImageFile { get; set; }
+        [DisplayName("Image URL")]
+        public string ImageUrl { get; set; }
+        [DisplayName("Image")]
+        public string ImagePath { get; set; }
+        [DisplayName("Use Image URL")]
+        public bool UseImageUrlEnabled { get; set; }
         public List<SelectListItem> AvailableCategories { get; set; }
         public List<SelectListItem> AvailableCatalogTypes { get; set; }
     }

@@ -10,11 +10,5 @@ namespace RA.Data.Domain.Users
     public class UserRole : BaseAdminEntity
     {
         public string Rolename { get; set; }
-        public Guid? CreatedById { get; set; }
-        public DateTime CreatedOn { get; set; }
-        public DateTime? ModifiedOn { get; set; }
-        public DateTime? DeletedOn { get; set; }
-        public bool Deleted { get; set; }
-
     }
 }

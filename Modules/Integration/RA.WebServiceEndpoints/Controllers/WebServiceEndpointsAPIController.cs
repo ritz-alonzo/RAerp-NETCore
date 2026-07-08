@@ -6,17 +6,25 @@ using Newtonsoft.Json.Linq;
 using RA.BusinessEntities.Data;
 using RA.BusinessEntities.Domain;
 using RA.BusinessEntities.Services;
+using RA.Catalogs.Services;
 using RA.Categories.Data;
 using RA.Categories.Domain;
 using RA.Categories.Services;
 using RA.Core.Domain;
+using RA.Core.Models.PluginModels.BusinessEntities;
+using RA.Core.Models.PluginModels.Catalogs;
+using RA.Core.Models.PluginModels.Categories;
+using RA.Data.Domain.Addresses;
 using RA.Data.Domain.Users;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
 using RA.WebServiceEndpoints.Models;
 using RA.WebServiceEndpoints.Services;
+using RAerp.Helpers.AddressHelper;
+using RAerp.Services.AddressServices;
 using RAerp.Services.UserServices;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -30,6 +38,9 @@ using System.Threading.Tasks;
 // 2. Need to add Access Rights
 namespace RA.WebServiceEndpoints.Controllers
 {
+    /// <summary>
+    /// This is for Entity Types only
+    /// </summary>
     [ApiController]
     [Route("api/[controller]/{endpoint}")]
     public class WebServiceEndpointsAPIController : ControllerBase
@@ -40,6 +51,9 @@ namespace RA.WebServiceEndpoints.Controllers
         private readonly IBusinessEntityService _businessEntityService;
         private readonly IUserService _userService;
         private readonly ICategoryService _categoryService;
+        private readonly ICatalogService _catalogService;
+        private readonly IMapper _mapper;
+        private readonly IAddressService _addressService;
         #endregion
 
         #region Ctor
@@ -47,13 +61,19 @@ namespace RA.WebServiceEndpoints.Controllers
             IEntityTypeManager entityTypeManager,
             IBusinessEntityService businessEntityService,
             IUserService userService,
-            ICategoryService categoryService)
+            ICategoryService categoryService,
+            ICatalogService catalogService,
+            IMapper mapper,
+            IAddressService addressService)
         {
             _webServiceEndpointService = webServiceEndpointService;
             _entityTypeManager = entityTypeManager;
             _businessEntityService = businessEntityService;
             _userService = userService;
             _categoryService = categoryService;
+            _catalogService = catalogService;
+            _mapper = mapper;
+            _addressService = addressService;
         }
         #endregion
 
@@ -70,25 +90,48 @@ namespace RA.WebServiceEndpoints.Controllers
             var webServiceEndpoint = await _webServiceEndpointService.GetEndpointByEndpointName(endpoint);
             if (webServiceEndpoint == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint doesn't exists, create this endpoint in Web Service Endpoints screen"));
-
+            
             var currentUser = await GetCurrentUserAsync();
             if (currentUser == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "User has not yet logged in"));
 
+            var requestQuery = Request.Query;
             #region Switch Domain
 
             switch (webServiceEndpoint.EndpointDomain)
             {
                 case "BusinessEntity":
+                    BusinessEntitySearchModel businessEntitySearchModel = new BusinessEntitySearchModel();
+                    businessEntitySearchModel = (BusinessEntitySearchModel)CreateEntityFromDictionary(typeof(BusinessEntitySearchModel), requestQuery.ToDictionary(x => x.Key, x => (object)x.Value.ToString()));
                     var businessEntityList = await _businessEntityService.GetListAsync(webServiceEndpoint.EndpointEntityTypeId.Value);
                     if (businessEntityList.Any())
-                        return Ok(GenerateEntityListResponseModel(HttpStatusCode.OK, "Successful GET", businessEntityList));
+                        return Ok(GenerateEntityListResponseModel(HttpStatusCode.OK, "Successful GET", dataList: businessEntityList));
                     break;
 
                 case "Category":
+                    CategorySearchModel categorySearchModel = new CategorySearchModel();
+                    categorySearchModel = (CategorySearchModel)CreateEntityFromDictionary(typeof(CategorySearchModel), requestQuery.ToDictionary(x => x.Key, x => (object)x.Value.ToString()));
                     var categoryEntityList = await _categoryService.GetListAsync(webServiceEndpoint.EndpointEntityTypeId.Value);
                     if (categoryEntityList.Any())
-                        return Ok(GenerateEntityListResponseModel(HttpStatusCode.OK, "Successful GET", categoryEntityList));
+                        return Ok(GenerateEntityListResponseModel(HttpStatusCode.OK, "Successful GET", dataList: categoryEntityList));
+                    break;
+
+                case "Catalog":
+                    CatalogSearchModel catalogSearchModel = new CatalogSearchModel();
+                    catalogSearchModel = (CatalogSearchModel)CreateEntityFromDictionary(typeof(CatalogSearchModel), requestQuery.ToDictionary(x => x.Key, x => (object)x.Value.ToString()));
+                    if (catalogSearchModel.PageNumber == 0 && catalogSearchModel.PageSize == 0)
+                    {
+                        var catalogEntityList = await _catalogService.GetCatalogListAsync(webServiceEndpoint.EndpointEntityTypeId.Value);
+                        if (catalogEntityList.Any())
+                            return Ok(GenerateEntityListResponseModel(HttpStatusCode.OK, "Successful GET", dataList: catalogEntityList));
+                    }
+                    else
+                    {
+                        var catalogEntityList = await _catalogService.GetCatalogPagedResultListAsync(webServiceEndpoint.EndpointEntityTypeId.Value, pageNumber: catalogSearchModel.PageNumber, pageSize: catalogSearchModel.PageSize);
+                        if (catalogEntityList != null)
+                            return Ok(GenerateEntityListResponseModel(HttpStatusCode.OK, "Successful GET", catalogSearchModel.PageNumber, catalogSearchModel.PageSize, catalogEntityList.Items));
+                    }
+                    
                     break;
             }
             #endregion
@@ -136,6 +179,12 @@ namespace RA.WebServiceEndpoints.Controllers
                     if (categoryEntity != null)
                         return Ok(GenerateEntityResponseModel(HttpStatusCode.OK, "Successful GET", categoryEntity));
                     break;
+
+                case "Catalog":
+                    var catalogEntity = await _catalogService.GetByIdAsync(entityId);
+                    if (catalogEntity != null)
+                        return Ok(GenerateEntityResponseModel(HttpStatusCode.OK, "Successful GET", catalogEntity));
+                    break;
             }
             #endregion
 
@@ -143,7 +192,6 @@ namespace RA.WebServiceEndpoints.Controllers
         }
 
         [HttpPost]
-        [Authorize]
         public async Task<IActionResult> Create(string endpoint, [FromBody] Dictionary<string, object> data)
         {
             // TODO: will add checking of access rights here
@@ -157,8 +205,8 @@ namespace RA.WebServiceEndpoints.Controllers
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint doesn't exists, create this endpoint in Web Service Endpoints screen"));
 
             var currentUser = await GetCurrentUserAsync();
-            if (currentUser == null)
-                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "User has not yet logged in"));
+            //if (currentUser == null)
+            //    return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "User has not yet logged in"));
 
             if (data == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Request body cannot be empty."));
@@ -170,23 +218,51 @@ namespace RA.WebServiceEndpoints.Controllers
                 #region Entity Types
 
                 case "BusinessEntity":
-                    var businessEntityRequest = (BusinessEntity)CreateEntityFromDictionary(typeof(BusinessEntity), data);
-                    if (businessEntityRequest == null)
+                    var businessEntityRequestModel = (BusinessEntityModel)CreateEntityFromDictionary(typeof(BusinessEntityModel), data);
+                    if (businessEntityRequestModel == null)
                         return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Incorrect object mapping"));
 
-                    var businessEntitySettings = await _entityTypeManager.GetSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(businessEntityRequest.EntityTypeId);
+                    if (businessEntityRequestModel.CreatedById.IsNullOrEmpty() && currentUser == null)
+                        return Unauthorized();
+
+                    var businessEntitySettings = await _entityTypeManager.GetSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(businessEntityRequestModel.EntityTypeId);
                     if (businessEntitySettings != null)
                     {
                         if (businessEntitySettings.AutoGeneratedTemplate)
-                            businessEntityRequest.Code = null;
+                            businessEntityRequestModel.Code = null;
+
+                        if (businessEntitySettings.AddressEnabled)
+                        {
+                            Address address = AddressOverviewModelHelper.PrepareAddressEntity(businessEntityRequestModel.Address);
+                            if (address != null && address.Id.IsNullOrEmpty())
+                            {
+                                if (currentUser != null)
+                                    address.CreatedById = currentUser.Id;
+                                if (businessEntityRequestModel.CreatedById.IsNotNullOrEmpty())
+                                    address.CreatedById = businessEntityRequestModel.CreatedById;
+                                address = await _addressService.Insert(address);
+                                businessEntityRequestModel.Address.Id = address.Id;
+                            }
+                        }
                     }
 
-                    businessEntityRequest.CreatedById = currentUser.Id;
-                    businessEntityRequest.ModifiedOn = null;
-                    businessEntityRequest.ModifiedById = null;
+                    if (currentUser != null)
+                        businessEntityRequestModel.CreatedById = currentUser.Id;
+                    businessEntityRequestModel.ModifiedOn = null;
+                    businessEntityRequestModel.ModifiedById = null;
+                    if (webServiceEndpoint.EndpointEntityTypeId.IsNotNullOrEmpty())
+                        businessEntityRequestModel.EntityTypeId = webServiceEndpoint.EndpointEntityTypeId.Value;
 
-                    await _businessEntityService.InsertAsync(businessEntityRequest);
-                    return Ok(GenerateEntityResponseModel(HttpStatusCode.OK, "Successfully created Business Entity", businessEntityRequest));
+                    var businessEntity = _mapper.Map<BusinessEntity>(businessEntityRequestModel);
+                    if (businessEntity == null) return NotFound();
+
+                    if (businessEntityRequestModel.Address != null && businessEntityRequestModel.Address.Id.IsNotNullOrEmpty())
+                    {
+                        businessEntity.AddressId = businessEntityRequestModel.Address.Id;
+                    }
+
+                    await _businessEntityService.InsertAsync(businessEntity);
+                    return Ok(GenerateEntityResponseModel(HttpStatusCode.OK, "Successfully created Business Entity", businessEntity));
 
                 case "Category":
                     var categoryEntityRequest = (Category)CreateEntityFromDictionary(typeof(Category), data);
@@ -342,7 +418,7 @@ namespace RA.WebServiceEndpoints.Controllers
 
         #region Methods
 
-        private WebServiceEndpointResponseEntityListModel<TEntity> GenerateEntityListResponseModel<TEntity>(HttpStatusCode statusCode, string message, IEnumerable<TEntity> dataList = null)
+        private WebServiceEndpointResponseEntityListModel<TEntity> GenerateEntityListResponseModel<TEntity>(HttpStatusCode statusCode, string message, int? pageNumber = null, int? pageSize = null, IEnumerable<TEntity> dataList = null)
             where TEntity : BaseEntity
         {
             var responseModel = new WebServiceEndpointResponseEntityListModel<TEntity>();
@@ -351,20 +427,27 @@ namespace RA.WebServiceEndpoints.Controllers
             {
                 case HttpStatusCode.OK:
                     responseModel.Status = HttpStatusCode.OK.ToString();
+                    responseModel.Success = true;
                     break;
 
                 case HttpStatusCode.NotFound:
-                    responseModel.Status= HttpStatusCode.NotFound.ToString();
+                    responseModel.Status = HttpStatusCode.NotFound.ToString();
+                    responseModel.Success = false;
                     break;
 
                 case HttpStatusCode.Unauthorized:
                     responseModel.Status = HttpStatusCode.Unauthorized.ToString();
+                    responseModel.Success = false;
                     break;
             }
 
             if (dataList.Any() && dataList != null)
             {
-                responseModel.Data = dataList.ToList();
+                List<TEntity> list = dataList.ToList();
+                responseModel.Data = list;
+                responseModel.TotalCount = list.Count;
+                responseModel.PageNumber = pageNumber ?? 1;
+                responseModel.PageSize = pageSize ?? int.MaxValue;
             }
 
             return responseModel;
@@ -379,14 +462,17 @@ namespace RA.WebServiceEndpoints.Controllers
             {
                 case HttpStatusCode.OK:
                     responseModel.Status = HttpStatusCode.OK.ToString();
+                    responseModel.Success = true;
                     break;
 
                 case HttpStatusCode.NotFound:
                     responseModel.Status = HttpStatusCode.NotFound.ToString();
+                    responseModel.Success = false;
                     break;
 
                 case HttpStatusCode.Unauthorized:
                     responseModel.Status = HttpStatusCode.Unauthorized.ToString();
+                    responseModel.Success = false;
                     break;
             }
 
@@ -406,14 +492,17 @@ namespace RA.WebServiceEndpoints.Controllers
             {
                 case HttpStatusCode.OK:
                     errorResponseModel.Status = HttpStatusCode.OK.ToString();
+                    errorResponseModel.Success = true;
                     break;
 
                 case HttpStatusCode.NotFound:
                     errorResponseModel.Status = HttpStatusCode.NotFound.ToString();
+                    errorResponseModel.Success = false;
                     break;
 
                 case HttpStatusCode.Unauthorized:
                     errorResponseModel.Status = HttpStatusCode.Unauthorized.ToString();
+                    errorResponseModel.Success = false;
                     break;
             }
             return errorResponseModel;
@@ -436,47 +525,135 @@ namespace RA.WebServiceEndpoints.Controllers
             return currentUser;
         }
 
-        private object CreateEntityFromDictionary(Type entityType, Dictionary<string, object> data)
+        //private object CreateEntityFromDictionary(Type entityType, Dictionary<string, object> data)
+        //{
+        //    var entity = Activator.CreateInstance(entityType);
+        //    foreach (var kv in data)
+        //    {
+        //        var prop = entityType.GetProperty(kv.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+        //        if (prop != null && kv.Value != null)
+        //        {
+        //            var jsonValueKind = ((JsonElement)kv.Value).ValueKind;
+        //            var valueString = kv.Value.ToString();
+        //            switch (jsonValueKind)
+        //            {
+        //                case JsonValueKind.String:
+        //                    // need to check if Guid or Date or String
+        //                    if (Guid.TryParse(valueString, out Guid guidResult))
+        //                    {
+        //                        if (guidResult.IsNotNullOrEmpty())
+        //                            prop.SetValue(entity, guidResult);
+        //                    }
+        //                    else if (DateTime.TryParse(valueString, out DateTime dateTimeResult))
+        //                    {
+        //                        prop.SetValue(entity, dateTimeResult);
+        //                    }
+        //                    else
+        //                    {
+        //                        prop.SetValue(entity, valueString);
+        //                    }
+        //                    break;
+        //                case JsonValueKind.Number:
+        //                    prop.SetValue(entity, JsonConvert.DeserializeObject<int>(kv.Value.ToString()));
+        //                    break;
+        //                case JsonValueKind.True:
+        //                    prop.SetValue(entity, bool.Parse(valueString));
+        //                    break;
+        //                case JsonValueKind.False:
+        //                    prop.SetValue(entity, bool.Parse(valueString));
+        //                    break;
+        //            }   
+        //        }
+        //    }
+        //    return entity;
+        //}
+
+        private object CreateEntityFromDictionary(Type entityType, IDictionary<string, object> data)
         {
             var entity = Activator.CreateInstance(entityType);
+
             foreach (var kv in data)
             {
-                var prop = entityType.GetProperty(kv.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                if (prop != null && kv.Value != null)
+                var prop = entityType.GetProperty(
+                    kv.Key,
+                    BindingFlags.IgnoreCase |
+                    BindingFlags.Public |
+                    BindingFlags.Instance);
+
+                if (prop == null || kv.Value == null)
+                    continue;
+
+                var targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+
+                object convertedValue = ConvertValue(kv.Value.ToString(), targetType);
+
+                if (convertedValue != null)
                 {
-                    var jsonValueKind = ((JsonElement)kv.Value).ValueKind;
-                    var valueString = kv.Value.ToString();
-                    switch (jsonValueKind)
-                    {
-                        case JsonValueKind.String:
-                            // need to check if Guid or Date or String
-                            if (Guid.TryParse(valueString, out Guid guidResult))
-                            {
-                                if (guidResult.IsNotNullOrEmpty())
-                                    prop.SetValue(entity, guidResult);
-                            }
-                            else if (DateTime.TryParse(valueString, out DateTime dateTimeResult))
-                            {
-                                prop.SetValue(entity, dateTimeResult);
-                            }
-                            else
-                            {
-                                prop.SetValue(entity, valueString);
-                            }
-                            break;
-                        case JsonValueKind.Number:
-                            prop.SetValue(entity, JsonConvert.DeserializeObject<int>(kv.Value.ToString()));
-                            break;
-                        case JsonValueKind.True:
-                            prop.SetValue(entity, bool.Parse(valueString));
-                            break;
-                        case JsonValueKind.False:
-                            prop.SetValue(entity, bool.Parse(valueString));
-                            break;
-                    }   
+                    prop.SetValue(entity, convertedValue);
                 }
             }
+
             return entity;
+        }
+
+        private object ConvertValue(string value, Type targetType)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            // Handle List<T>
+            if (targetType.IsGenericType &&
+                targetType.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                var itemType = targetType.GetGenericArguments()[0];
+
+                var values = value.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(itemType))!;
+
+                foreach (var v in values)
+                {
+                    list.Add(ConvertSingle(v.Trim(), itemType));
+                }
+
+                return list;
+            }
+            // Handle Object or Class
+            else if (targetType.IsClass && targetType != typeof(string))
+            {
+                return System.Text.Json.JsonSerializer.Deserialize(value, targetType,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+
+            return ConvertSingle(value, targetType);
+        }
+
+        private object ConvertSingle(string value, Type targetType)
+        {
+            if (targetType == typeof(Guid) &&
+                Guid.TryParse(value, out var guid))
+                return guid;
+
+            if (targetType == typeof(int) &&
+                int.TryParse(value, out var i))
+                return i;
+
+            if (targetType == typeof(long) &&
+                long.TryParse(value, out var l))
+                return l;
+
+            if (targetType == typeof(bool) &&
+                bool.TryParse(value, out var b))
+                return b;
+
+            if (targetType == typeof(DateTime) &&
+                DateTime.TryParse(value, out var d))
+                return d;
+
+            if (targetType.IsEnum)
+                return Enum.Parse(targetType, value, true);
+
+            return value;
         }
 
         #endregion

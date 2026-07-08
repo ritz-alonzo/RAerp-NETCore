@@ -14,7 +14,7 @@ namespace RA.Core.Models.PluginModels.Catalogs
         {
             AvailableCategoryTypes = new List<SelectListItem>();
         }
-
+        public bool IsImageEnabled { get; set; }
         public List<Guid> MappedCategoryTypeIds { get; set; }
         public List<SelectListItem> AvailableCategoryTypes { get; set; }
     }

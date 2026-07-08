@@ -62,11 +62,15 @@ function formatStatus(tableId) {
             if (item.innerText != null || item.innerText != '') {
                 var tag = item.innerText;
                 if (item.innerText == "Active") {
-                    tag = `<span class="badge badge-pill badge-success fs-6">Active</span>`;
+                    tag = `<span class="badge b-active fs-6">Active</span>`;
                     $(item).html(tag);
                 }
                 else if (item.innerText == "Inactive") {
-                    tag = `<span class="badge badge-pill badge-danger fs-6"><b>Inactive</b></span>`;
+                    tag = `<span class="badge b-done fs-6"><b>Inactive</b></span>`;
+                    $(item).html(tag);
+                }
+                else if (item.innerText == "Pending") {
+                    tag = `<span class="badge b-review fs-6"><b>Pending</b></span>`;
                     $(item).html(tag);
                 }
             }
@@ -520,10 +524,13 @@ $(window).on('load', (e) => {
     var numberElements = $('.custom-input-set input[type="number"]');
     if (numberElements.length > 0) {
         $(numberElements).each((index, item) => {
-            var currentItemValue = $(item).val();
-            if (currentItemValue != null || currentItemValue != undefined) {
-                var formattedValue = parseFloat(currentItemValue).toFixed(2); // 2 decimal places
-                $(item).val(formattedValue);
+            var dataAttr = $(item).attr('data-attr');
+            if (dataAttr == null || dataAttr == undefined) {
+                var currentItemValue = $(item).val();
+                if (currentItemValue != null || currentItemValue != undefined) {
+                    var formattedValue = parseFloat(currentItemValue).toFixed(2); // 2 decimal places
+                    $(item).val(formattedValue);
+                }
             }
         });
     }

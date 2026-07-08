@@ -16,8 +16,10 @@ namespace RA.Core.PluginData.FormTypes
         AwaitingApproval = 20,
         Approved = 30,
         Open = 40,
-        Closed = 50,
-        Cancelled = 60,
+        Processing = 45,
+        AwaitingDelivery = 50,
+        Closed = 60,
+        Cancelled = 70,
         Deleted = 90
     }
 }

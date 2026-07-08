@@ -1,8 +1,15 @@
 ﻿using AutoMapper;
 using RA.Catalogs.Services;
+using RA.Core.Models.PluginModels.BusinessEntities;
+using RA.Core.Models.PluginModels.OrdersManagement.Carts;
+using RA.Core.Models.PluginModels.OrdersManagement.Orders;
 using RA.Core.PluginData.EntityTypes.Catalogs;
 using RA.FormTypes.Factories;
 using RA.FormTypes.Services;
+using RA.OrdersManagement.Data;
+using RA.OrdersManagement.Domain.Carts;
+using RA.OrdersManagement.Services.Carts;
+using RA.WebFramework.Extensions;
 using RAerp.Helpers.UserHelper;
 using RAerp.Security.AccessRightsControl;
 using System;
@@ -10,12 +17,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using RA.Core.Models.PluginModels.OrdersManagement.Carts;
-using RA.OrdersManagement.Services.Carts;
-using RA.OrdersManagement.Data;
-using RA.OrdersManagement.Domain.Carts;
-using RA.Core.Models.PluginModels.OrdersManagement.Orders;
-using RA.WebFramework.Extensions;
 
 namespace RA.OrdersManagement.Factories.Carts
 {
@@ -86,7 +87,10 @@ namespace RA.OrdersManagement.Factories.Carts
                 searchCustomerName: searchModel.SearchCustomerName,
                 searchServiceIds: searchModel.SearchServiceId.HasValue ? new List<Guid> { searchModel.SearchServiceId.Value } : null,
                 searchCreatedDate: searchModel.SearchCreatedOn,
-                formStatusIds: searchModel.SearchStatusId > 0 ? new List<int> { searchModel.SearchStatusId } : null);
+                formStatusIds: searchModel.SearchStatusId > 0 ? new List<int> { searchModel.SearchStatusId } : null,
+                pageNumber: searchModel.PageNumber,
+                pageSize: searchModel.PageSize
+                );
 
             cartModelList = cartList.Select(cart =>
             {
@@ -102,6 +106,12 @@ namespace RA.OrdersManagement.Factories.Carts
                     if (_cartSettings.MappedServiceTypeIds.Any())
                         cartModel.AvailableServices = _catalogService.GetCatalogsSelectListAsync(_cartSettings.MappedServiceTypeIds, (int)CatalogType.Service).Result;
                 }
+
+                if (cartModel.CreatedOn != DateTime.MinValue)
+                    cartModel.CreatedOn = cartModel.CreatedOn.ConvertUTCToLocalDateTime();
+
+                if (cartModel.ModifiedOn.HasValue)
+                    cartModel.ModifiedOn = cartModel.ModifiedOn.ConvertUTCToLocalDateTime();
 
                 return cartModel;
 
@@ -153,10 +163,11 @@ namespace RA.OrdersManagement.Factories.Carts
 
             cartItemModelList = formItemList.Select(formItem =>
             {
-                CartItemModel orderItemModel = new CartItemModel();
-                orderItemModel = _mapper.Map(formItem, orderItemModel);
-
-                return orderItemModel;
+                CartItemModel cartItemModel = new CartItemModel();
+                cartItemModel = _mapper.Map(formItem, cartItemModel);
+                cartItemModel.CreatedOn = cartItemModel.CreatedOn.ConvertUTCToLocalDateTime();
+                cartItemModel.ModifiedOn = cartItemModel.ModifiedOn.HasValue ? cartItemModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+                return cartItemModel;
 
             }).ToList();
 

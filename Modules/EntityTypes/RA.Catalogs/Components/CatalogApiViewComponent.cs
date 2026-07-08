@@ -16,7 +16,7 @@ namespace RA.Catalogs.Components
         public IViewComponentResult Invoke()
         {
             var model = new CatalogModel();
-            return View("~/Plugins/RA.Catalogs/Views/Components/CatalogApiMapping.cshtml", model);
+            return View("/Views/Components/CatalogApiMapping.cshtml", model);
         }
     }
 }

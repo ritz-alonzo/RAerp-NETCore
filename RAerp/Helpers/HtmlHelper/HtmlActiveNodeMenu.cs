@@ -51,6 +51,25 @@ namespace RAerp.Helpers.HtmlHelper
 
             return activeControllerMenu;
         }
+
+        public static string GetActivePluginMenuModuleName(HttpContext context)
+        {
+            var selectMenuSystemName = "";
+
+            var contextItems = context.Items;
+
+            if (contextItems.Any(c => c.Key.ToString() == "ActiveMenu"))
+            {
+                var systemName = contextItems.Where(c => c.Key.ToString() == "ActiveMenu").Select(c => c.Value.ToString()).FirstOrDefault();
+                if (!string.IsNullOrEmpty(systemName))
+                {
+                    string[] splitSystemName = systemName.Split(".");
+                    selectMenuSystemName = string.Join(".", splitSystemName.Take(2));
+                }
+            }
+
+            return selectMenuSystemName;
+        }
     }
 }
 

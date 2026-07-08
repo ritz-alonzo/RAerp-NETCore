@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using RA.Core.Domain;
 using RA.Core.Helpers;
 using RA.Core.Models.BaseModels;
+using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.EntityTypes;
 using RA.Core.Models.PortableViewModels;
 using RA.Core.Models.UserInfaceModels;
@@ -97,7 +98,8 @@ namespace RA.EntityTypes.Factories
             model = await PrepareBaseModelAsync(model);
             model.EntityTypeSystemName = entity.EntitySystemName;
             model.EntityTypeName = GetEntityTypeNameFromSystemName(entity.EntitySystemName);
-
+            model.CreatedOn = entity.CreatedOn.ConvertUTCToLocalDateTime();
+            model.ModifiedOn = entity.ModifiedOn.HasValue ? entity.ModifiedOn.ConvertUTCToLocalDateTime() : null;
             // Preparation of UI Access Rights and Settings Model
             model = await PrepareBaseEntityModelUIAccessAsync<TModel, TEntity, TSettings>(model, entity, settings);
             // Preparation of View Components

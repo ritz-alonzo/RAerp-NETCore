@@ -71,7 +71,7 @@ namespace RA.OrdersManagement.Controllers.Orders
 
             var orderConfigureModel = await _orderModelFactory.PrepareOrderConfigureModelAsync(systemName);
 
-            return View("~/Plugins/RA.OrdersManagement/Views/Orders/Configuration.cshtml", orderConfigureModel);
+            return View(orderConfigureModel);
         }
 
         [HttpPost]
@@ -108,7 +108,7 @@ namespace RA.OrdersManagement.Controllers.Orders
 
             var model = await _orderModelFactory.PrepareOrderSearchModelAsync(new OrderSearchModel(), _orderSettings.ItemsPageSize, page);
 
-            return View("~/Plugins/RA.OrdersManagement/Views/Orders/List.cshtml", model);
+            return View(model);
         }
 
         [HttpGet]
@@ -125,12 +125,12 @@ namespace RA.OrdersManagement.Controllers.Orders
 
             var model = await _orderModelFactory.PrepareOrderListModelAsync(searchModel);
 
-            return PartialView("~/Plugins/RA.OrdersManagement/Views/Orders/_OrderListSearch.cshtml", model);
+            return PartialView(model);
         }
 
-        public async Task<IActionResult> Index(Guid formId)
+        public async Task<IActionResult> Index(Guid id)
         {
-            if (formId.IsNullOrEmpty())
+            if (id.IsNullOrEmpty())
                 return NotFound();
 
             if (!_accessControl.HasViewAccessAsync<Order>().Result)
@@ -142,13 +142,13 @@ namespace RA.OrdersManagement.Controllers.Orders
             if (!_orderSettings.Enabled)
                 return NotFound();
 
-            var orderForm = await _orderService.GetFormByIdAsync(formId);
+            var orderForm = await _orderService.GetFormByIdAsync(id);
             if (orderForm == null)
                 return NotFound();
 
             var model = await _orderModelFactory.PrepareOrderModelAsync(new OrderModel(), orderForm);
 
-            return View("~/Plugins/RA.OrdersManagement/Views/Orders/Index.cshtml", model);
+            return View(model);
         }
 
         public async Task<IActionResult> Create()
@@ -164,7 +164,7 @@ namespace RA.OrdersManagement.Controllers.Orders
 
             var model = await _orderModelFactory.PrepareOrderModelAsync(new OrderModel(), null);
 
-            return View("~/Plugins/RA.OrdersManagement/Views/Orders/Create.cshtml", model);
+            return View(model);
         }
 
         [HttpPost]
@@ -194,6 +194,8 @@ namespace RA.OrdersManagement.Controllers.Orders
                 orderForm.TotalVatAmount = orderForm.TotalGrossAmount * 0.12m;
                 orderForm.TotalNetAmount = orderForm.TotalGrossAmount * 1.12m;
                 #endregion
+
+                if (_orderSettings.OpenDocOnCreate)
 
                 await _orderService.InsertFormAsync(orderForm);
                 // sanity check
@@ -310,7 +312,7 @@ namespace RA.OrdersManagement.Controllers.Orders
 
             var itemModel = await _orderModelFactory.PrepareOrderItemListModelAsync(orderModel, page);
             
-            return PartialView("~/Plugins/RA.OrdersManagement/Views/Orders/_CreateAndEdit.Items.cshtml", itemModel);
+            return PartialView("/Views/Orders/_CreateAndEdit.Items.cshtml", itemModel);
         }
 
         public async Task<IActionResult> InsertItem(Guid formId, List<Guid> catalogIds)
@@ -352,7 +354,7 @@ namespace RA.OrdersManagement.Controllers.Orders
                 orderItem.DiscountAmount = 0m;
                 orderItem.SubTotal = 0m;
                 orderItem.CreatedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
-                orderItem.CreatedOn = DateTime.Now;
+                orderItem.CreatedOn = DateTime.UtcNow;
 
                 await _orderService.InsertTempItemAsync(orderItem, DataChangeStatus.Insert);
                 lineNbr ++;

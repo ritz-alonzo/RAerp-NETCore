@@ -15,8 +15,10 @@ namespace RA.FormTypes.Services
         Task DeleteFormAsync(TForm form);
         Task DeleteItemAsync(TItem formItem, bool saveChangesToDb = false);
         Task<TForm> GetFormByIdAsync(Guid id);
+        Task<TForm> GetFormByFormNbrAsync(string formNbr);
         Task<IEnumerable<TForm>> GetFormListAsync();
         Task<TItem> GetItemByIdAsync(Guid id);
+        Task<TItem> GetItemByFormIdAndCatalogId(Guid formId, Guid catalogId);
         Task<TItem> GetTempItemAsync(Guid formId, Guid catalogId);
         Task<IEnumerable<TItem>> GetItemListAsync();
         Task<IEnumerable<TItem>> GetItemsByFormIdAsync(Guid formId);

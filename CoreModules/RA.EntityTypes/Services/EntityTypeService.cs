@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace RA.EntityTypes.Services
 {
@@ -47,18 +48,28 @@ namespace RA.EntityTypes.Services
             return await _erpContext.Set<TEntity>().FirstOrDefaultAsync(c => c.Id == id);
         }
 
+        /// <summary>
+        /// Get List Cache for All rows
+        /// </summary>
+        /// <param name="entityTypeIds"></param>
+        /// <returns></returns>
         public virtual async Task<IEnumerable<TEntity>> GetListAsync(List<Guid> entityTypeIds)
         {
-            return _cacheManager.EntityCacheNotExists(entityTypeIds) ? 
-                await _cacheManager.GenerateCacheAsync(_erpContext.Set<TEntity>().Where(c => entityTypeIds.Contains(c.EntityTypeId)).AsEnumerable(), entityTypeIds) 
-                : _cacheManager.GetEntityCacheData(entityTypeIds);
+            return _cacheManager.EntityCacheNotExists(entityTypeIds) ?
+                await _cacheManager.GenerateCacheAsync(await _erpContext.Set<TEntity>().Where(c => entityTypeIds.Contains(c.EntityTypeId)).ToListAsync(), entityTypeIds)
+                : _cacheManager.GetEntityCacheData(entityTypeIds).ToList();
         }
         
+        /// <summary>
+        /// Get List Cache for All rows
+        /// </summary>
+        /// <param name="entityTypeId"></param>
+        /// <returns></returns>
         public virtual async Task<IEnumerable<TEntity>> GetListAsync(Guid entityTypeId)
         {
             return _cacheManager.EntityCacheNotExists(entityTypeId) ?
-                await _cacheManager.GenerateCacheAsync(_erpContext.Set<TEntity>().Where(c => c.EntityTypeId == entityTypeId).AsEnumerable(), entityTypeId) 
-                : _cacheManager.GetEntityCacheData(entityTypeId);
+                await _cacheManager.GenerateCacheAsync(await _erpContext.Set<TEntity>().Where(c => c.EntityTypeId == entityTypeId).ToListAsync(), entityTypeId) 
+                : _cacheManager.GetEntityCacheData(entityTypeId).ToList();
         }
 
         public virtual async Task InsertAsync(TEntity entity)
@@ -81,54 +92,78 @@ namespace RA.EntityTypes.Services
                 }
             }
 
-            entity.CreatedOn = DateTime.Now;
-            await _erpContext.Set<TEntity>().AddAsync(entity);
+            entity.CreatedOn = DateTime.UtcNow;
+            using var transaction = await _erpContext.Database.BeginTransactionAsync();
             try
             {
+                await _erpContext.Set<TEntity>().AddAsync(entity);
                 await _erpContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+                _cacheManager.ClearCache(entity.EntityTypeId);
             }
-            catch (DbUpdateException ex)
+            catch (Exception ex)
             {
-                var innerMessage = ex.InnerException?.Message ?? ex.Message;
-                Console.WriteLine(innerMessage); // or log it
-                throw;
+                await transaction.RollbackAsync();
+                throw new Exception(ex.InnerException?.Message ?? ex.Message);
             }
-            _cacheManager.ClearCache(entity.EntityTypeId);
         }
 
         public virtual async Task UpdateAsync(TEntity entity)
         {
-            entity.ModifiedOn = DateTime.Now;
-            _erpContext.Set<TEntity>().Update(entity);
+            entity.ModifiedOn = DateTime.UtcNow;
+
+            using var transaction = await _erpContext.Database.BeginTransactionAsync();
             try
             {
+                _erpContext.Set<TEntity>().Update(entity);
                 await _erpContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+                _cacheManager.ClearCache(entity.EntityTypeId);
             }
-            catch (DbUpdateException ex)
+            catch (Exception ex)
             {
-                var innerMessage = ex.InnerException?.Message ?? ex.Message;
-                Console.WriteLine(innerMessage); // or log it
-                throw;
+                await transaction.RollbackAsync();
+                throw new Exception(ex.InnerException?.Message ?? ex.Message);
             }
-            _cacheManager.ClearCache(entity.EntityTypeId);
         }
 
         public virtual async Task DeleteAsync(TEntity entity)
         {
             entity.Deleted = true;
-            entity.DeletedOn = DateTime.Now;
-            _erpContext.Set<TEntity>().Update(entity);
+            entity.DeletedOn = DateTime.UtcNow;
+            using var transaction = await _erpContext.Database.BeginTransactionAsync();
             try
             {
+                _erpContext.Set<TEntity>().Update(entity);
                 await _erpContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+                _cacheManager.ClearCache(entity.EntityTypeId);
             }
-            catch (DbUpdateException ex)
+            catch (Exception ex)
             {
-                var innerMessage = ex.InnerException?.Message ?? ex.Message;
-                Console.WriteLine(innerMessage); // or log it
-                throw;
+                await transaction.RollbackAsync();
+                throw new Exception(ex.InnerException?.Message ?? ex.Message);
             }
-            _cacheManager.ClearCache(entity.EntityTypeId);
+        }
+        #endregion
+
+        #region Methods
+        public virtual Task<List<TEntity>> ToPagedListAsync(IEnumerable<TEntity> query, int pageNumber, int pageSize)
+        {
+            // Default values
+            if (pageNumber <= 0)
+                pageNumber = 1;
+
+            if (pageSize <= 0)
+                pageSize = 10;
+
+            // Skip rows
+            var skip = (pageNumber - 1) * pageSize;
+
+            // Fetch paged data (synchronous LINQ — works for both in-memory and EF queryables)
+            var result = query.Skip(skip).Take(pageSize).ToList();
+
+            return Task.FromResult(result);
         }
         #endregion
     }

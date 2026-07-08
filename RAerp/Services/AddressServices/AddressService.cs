@@ -34,7 +34,7 @@ namespace RAerp.Services.AddressServices
 
         public async Task<Address> Insert(Address address)
         {
-            address.CreatedOn = DateTime.Now;
+            address.CreatedOn = DateTime.UtcNow;
             _erpContext.Address.Add(address);
             await _erpContext.SaveChangesAsync();
 
@@ -43,7 +43,7 @@ namespace RAerp.Services.AddressServices
 
         public async Task Update(Address address)
         {
-            address.ModifiedOn = DateTime.Now;
+            address.ModifiedOn = DateTime.UtcNow;
             _erpContext.Address.Update(address);
             await _erpContext.SaveChangesAsync();
         }

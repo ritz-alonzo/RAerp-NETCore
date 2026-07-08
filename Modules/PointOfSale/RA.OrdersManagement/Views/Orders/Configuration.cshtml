@@ -29,10 +29,10 @@
 </ul>
 <div class="tab-content" id="configTabContent">
     <div class="tab-pane fade show active" id="configMain" role="tabpanel" aria-labelledby="config-main-tab">
-        @await Html.PartialAsync("~/Plugins/RA.OrdersManagement/Views/Orders/_Configuration.Main.cshtml", Model)
+        @await Html.PartialAsync("_Configuration.Main.cshtml", Model)
     </div>
     <div class="tab-pane fade" id="configMapping" role="tabpanel" aria-labelledby="config-mapping-tab">
-        @await Html.PartialAsync("~/Plugins/RA.OrdersManagement/Views/Orders/_Configuration.Mapping.cshtml", Model)
+        @await Html.PartialAsync("_Configuration.Mapping.cshtml", Model)
     </div>
 </div>
 

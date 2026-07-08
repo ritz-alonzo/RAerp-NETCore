@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RA.BusinessEntities.App_Data;
@@ -7,7 +8,9 @@ using RA.BusinessEntities.Domain;
 using RA.BusinessEntities.Factories;
 using RA.BusinessEntities.Mapping;
 using RA.BusinessEntities.Services;
+using RA.BusinessEntities.Validators;
 using RA.Core.DataCaching.CacheManagement;
+using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.EntityTypes.Services;
 using RAerp.PluginServiceProvider;
 using System;
@@ -35,6 +38,8 @@ namespace RA.BusinessEntities.Infrastructure
             services.AddTransient<IBusinessEntityModelFactory, BusinessEntityModelFactory>();
             // automapper profile
             services.AddAutoMapper(cfg => { cfg.AddProfile<BusinessEntityMappingProfile>(); });
+            // validator
+            services.AddTransient<IValidator<BusinessEntityModel>, BusinessEntityValidator>();
         }
     }
 }

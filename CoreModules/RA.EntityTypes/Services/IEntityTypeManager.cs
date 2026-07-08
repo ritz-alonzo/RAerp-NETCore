@@ -55,6 +55,7 @@ namespace RA.EntityTypes.Services
         #region Select List
 
         Task<List<SelectListItem>> GetEntityTypesSelectListAsync();
+        Task<List<SelectListItem>> GetEntityTypesSelectListAsync(string systemName);
 
         #endregion
     }

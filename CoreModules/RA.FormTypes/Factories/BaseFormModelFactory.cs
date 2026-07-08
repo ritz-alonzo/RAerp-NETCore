@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using RA.Core.Helpers;
 using RA.Core.Models.BaseModels;
+using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.EntityTypes;
 using RA.Core.Models.PluginModels.FormTypes;
 using RA.Core.Models.PortableViewModels;
@@ -82,6 +83,8 @@ namespace RA.FormTypes.Factories
             model = await PrepareBaseModelAsync(model);
             model.FormTypeSystemName = typeof(TForm).FullName;
             model.FormTypeName = typeof(TForm).Name;
+            model.CreatedOn = form.CreatedOn.ConvertUTCToLocalDateTime();
+            model.ModifiedOn = form.ModifiedOn.HasValue ? form.ModifiedOn.ConvertUTCToLocalDateTime() : null;
             if (settings != null)
                 model.FormSettings = _mapper.Map(settings, model.FormSettings);
             // Preparation of UI Access Rights and Settings Model

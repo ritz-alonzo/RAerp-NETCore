@@ -14,5 +14,11 @@ namespace RA.Core.Domain
     public class BaseAdminEntity
     {
         public Guid Id { get; set; }
+        public Guid? CreatedById { get; set; }
+        public DateTime CreatedOn { get; set; }
+        public Guid? ModifiedById { get; set; }
+        public DateTime? ModifiedOn { get; set; }
+        public DateTime? DeletedOn { get; set; }
+        public bool Deleted { get; set; }
     }
 }

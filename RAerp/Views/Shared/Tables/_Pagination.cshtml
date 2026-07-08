@@ -1,29 +1,8 @@
 ﻿@* Old implementation using cloudscribe 
-    
-for now use 100 totalItems
-
-passing Model.TotalItems doesn't seem to work dont know why *@
-@*<cs-pager 
-          cs-paging-pagenumber=@Model.PageNumber
-          cs-paging-totalitems=@Model.TotalItems
-          cs-paging-pagesize=@Model.PageSize
-          asp-controller=@ViewData["Controller"]
-          asp-action=@ViewData["Action"]
-          cs-pagenumber-param="page"
-          cs-pager-li-current-class="page-item active"
-          cs-pager-li-other-class="page-item"
-          cs-pager-li-non-active-class="page-item disabled"
-          cs-pager-link-current-class="page-link"
-          cs-pager-link-other-class="page-link"
-          cs-pager-ul-class="pagination justify-content-end"
-          cs-show-numbered="true"
-          cs-previous-page-text="<i class='fa fa-arrow-left'></i>"
-          cs-next-page-text="<i class='fa fa-arrow-right'></i>">
-</cs-pager>*@
-
-<div class="row">
+ 
+@* <div class="table-footer">
     <div class="col-md-6">
-        <h4 class="text-muted pl-3">Total records shown: @Model.Items.Count</h4>
+        <h8 class="footer-info">Total records shown: @Model.Items.Count</h8>
     </div>
     <div class="col-md-6">
         <nav aria-label="Page navigation" class="float-right pr-3">
@@ -50,5 +29,25 @@ passing Model.TotalItems doesn't seem to work dont know why *@
                 }
             </ul>
         </nav>
+    </div>
+</div> *@
+
+<div class="table-footer">
+    <span class="footer-info" id="footerInfo">Showing: @Model.Items.Count</span>
+    <div class="page-btns">
+            @if (Model.PageNumber > 1)
+            {
+                <a class="pg" href="?page=@(Model.PageNumber - 1)&pageSize=@Model.PageSize"><i class="fas fa-chevron-left" style="font-size:10px"></i></a>
+            }
+
+            @for (int i = 1; i <= Model.TotalItems; i++)
+            {
+                <a class="pg @(i == Model.PageNumber ? "active" : "")" href="?page=@i&pageSize=@Model.PageSize">@i</a>
+            }
+
+            @if (Model.PageNumber < Model.TotalItems)
+            {
+                <a class="pg" href="?page=@(Model.PageNumber + 1)&pageSize=@Model.PageSize"><i class="fas fa-chevron-right" style="font-size:10px"></i></a>
+            }
     </div>
 </div>

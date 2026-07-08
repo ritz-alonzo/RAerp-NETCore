@@ -42,6 +42,8 @@ namespace RA.Core.Models.PluginModels.FormTypes
         public bool RedirectUsingFormNbrEnabled { get; set; }
         [DisplayName("Show Item Code in grid")]
         public bool ShowItemCodeInGrid { get; set; }
+        [DisplayName("Form API Enabled")]
+        public bool FormApiEnabled { get; set; }
         [DisplayName("Items Tab Page Size")]
         public int ItemsPageSize { get; set; }
     }

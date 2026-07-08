@@ -12,11 +12,7 @@ using RA.Core.DataCaching.CacheManagement;
 using RA.Core.PluginData.EntityTypes.Catalogs;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using RA.WebFramework.Models.Pagination;
 
 namespace RA.Catalogs.Services
 {
@@ -52,10 +48,10 @@ namespace RA.Catalogs.Services
             if (entityTypeId.IsNullOrEmpty())
                 throw new ArgumentNullException("Catalog type id is null");
 
-            var query = GetListAsync(entityTypeId).Result.AsQueryable();
+            var query = await GetListAsync(entityTypeId);
 
             if (categoryTypeIds.HasAny())
-                query = query.Where(c => categoryTypeIds.Contains(c.UOMId.Value));
+                query = query.Where(c => c.UOMId.HasValue && categoryTypeIds.Contains(c.UOMId.Value));
 
             if (!string.IsNullOrEmpty(searchQuery))
                 query = query.Where(c =>
@@ -71,7 +67,7 @@ namespace RA.Catalogs.Services
             if (!showDeleted)
                 query = query.Where(c => !c.Deleted);
 
-            return await query.ToListAsync();
+            return query.ToList();
         }
 
         public async Task<IEnumerable<Catalog>> GetCatalogListAsync(
@@ -85,10 +81,10 @@ namespace RA.Catalogs.Services
             if (!entityTypeIds.Any())
                 throw new ArgumentNullException("Catalog type id is null");
 
-            var query = GetListAsync(entityTypeIds).Result.AsQueryable();
+            var query = await GetListAsync(entityTypeIds);
 
             if (categoryTypeIds.HasAny())
-                query = query.Where(c => categoryTypeIds.Contains(c.UOMId.Value));
+                query = query.Where(c => c.UOMId.HasValue && categoryTypeIds.Contains(c.UOMId.Value));
 
             if (!string.IsNullOrEmpty(searchQuery))
                 query = query.Where(c =>
@@ -104,26 +100,28 @@ namespace RA.Catalogs.Services
             if (!showDeleted)
                 query = query.Where(c => !c.Deleted);
 
-            return await query.ToListAsync();
+            return query.ToList();
         }
+        #endregion
 
-        public async Task<IEnumerable<Catalog>> GetCatalogPagedListAsync(
-            List<Guid> entityTypeIds,
-            int pageSize,
-            int pageNumber,
+        #region Paged List
+        public async Task<PagedResult<Catalog>> GetCatalogPagedResultListAsync(
+            Guid entityTypeId,
             List<Guid> categoryTypeIds = null,
             string searchQuery = null,
             List<int> catalogTypeIds = null,
             List<int> catalogStatusIds = null,
-            bool showDeleted = false)
+            bool showDeleted = false,
+            int? pageNumber = 0,
+            int? pageSize = int.MaxValue)
         {
-            if (!entityTypeIds.Any())
+            if (entityTypeId.IsNullOrEmpty())
                 throw new ArgumentNullException("Catalog type id is null");
 
-            var query = GetListAsync(entityTypeIds).Result.AsQueryable();
+            var query = await GetListAsync(entityTypeId);
 
             if (categoryTypeIds.HasAny())
-                query = query.Where(c => categoryTypeIds.Contains(c.UOMId.Value));
+                query = query.Where(c => c.UOMId.HasValue && categoryTypeIds.Contains(c.UOMId.Value));
 
             if (!string.IsNullOrEmpty(searchQuery))
                 query = query.Where(c =>
@@ -139,15 +137,44 @@ namespace RA.Catalogs.Services
             if (!showDeleted)
                 query = query.Where(c => !c.Deleted);
 
-            if (query.Count() == 1)
-                query = query.Take(pageSize);
-            else
-                query = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            return query.ToPagedResult(pageNumber, pageSize);
+        }
 
-            return await query.ToListAsync();
+        public async Task<PagedResult<Catalog>> GetCatalogPagedResultListAsync(
+            List<Guid> entityTypeIds,
+            List<Guid> categoryTypeIds = null,
+            string searchQuery = null,
+            List<int> catalogTypeIds = null,
+            List<int> catalogStatusIds = null,
+            bool showDeleted = false,
+            int? pageNumber = 0,
+            int? pageSize = int.MaxValue)
+        {
+            if (!entityTypeIds.Any())
+                throw new ArgumentNullException("Catalog type id is null");
+
+            var query = await GetListAsync(entityTypeIds);
+
+            if (categoryTypeIds.HasAny())
+                query = query.Where(c => c.UOMId.HasValue && categoryTypeIds.Contains(c.UOMId.Value));
+
+            if (!string.IsNullOrEmpty(searchQuery))
+                query = query.Where(c =>
+                c.Code.ToLower().Contains(searchQuery.ToLower()) ||
+                c.Name.ToLower().Contains(searchQuery.ToLower()));
+
+            if (catalogTypeIds.HasAny())
+                query = query.Where(c => catalogTypeIds.Contains(c.TypeId));
+
+            if (catalogStatusIds.HasAny())
+                query = query.Where(c => catalogStatusIds.Contains(c.StatusId));
+
+            if (!showDeleted)
+                query = query.Where(c => !c.Deleted);
+
+            return query.ToPagedResult(pageNumber, pageSize);
         }
         #endregion
-
 
         #region Select List Items
         public async Task<List<SelectListItem>> GetCatalogTypesSelectListAsync(List<Guid> catalogEntityTypeIds = null, CatalogType type = CatalogType.Product)

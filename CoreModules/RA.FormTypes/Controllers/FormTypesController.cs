@@ -39,7 +39,7 @@ namespace RA.FormTypes.Controllers
 
             var model = _formTypeModelFactory.PrepareFormTypeSearchModel(new FormTypeSearchModel(), page, 10);
 
-            return View("~/Plugins/RA.FormTypes/Views/List.cshtml", model);
+            return View(model);
         }
 
         [HttpGet]
@@ -50,7 +50,7 @@ namespace RA.FormTypes.Controllers
 
             var model = _formTypeModelFactory.PrepareFormTypeListModel(searchModel);
 
-            return PartialView("~/Plugins/RA.FormTypes/Views/_FormTypeList.cshtml", model);
+            return PartialView(model);
         }
     }
 }

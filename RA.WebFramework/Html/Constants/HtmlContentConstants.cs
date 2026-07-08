@@ -12,6 +12,7 @@ namespace RA.WebFramework.Html.Constants
         public const string MainTab = "Main";
         public const string MappingsTab = "Mappings";
         public const string AddressTab = "Address";
+        public const string VisualAppearanceTab = "Visual Appearance";
         public const string InfoHeader = "Info";
         public const string SystemHeader = "System";
         public const string DetailsHeader = "Details";

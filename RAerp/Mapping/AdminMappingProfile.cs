@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
+using RA.Data.Domain.Application;
 using RA.Data.Domain.Users;
 using RAerp.Models.AccessRightsControlModel;
+using RAerp.Models.ApplicationSettingsModel;
 using RAerp.Models.UsersModel;
 using RAerp.Security.AccessRights;
 
@@ -23,6 +25,13 @@ namespace RAerp.Mapping
             #region AccessRights
             CreateMap<AccessRecord, AccessRightsModel>();
             CreateMap<AccessRightsModel, AccessRecord>();
+            #endregion
+
+            #region ApplicationSetting
+
+            CreateMap<ApplicationSetting, ApplicationSettingModel>()
+                .ReverseMap();
+
             #endregion
 
         }

@@ -16,6 +16,7 @@ namespace RA.Core.Models.PluginModels.BusinessEntities
         public BusinessEntityModel()
         {
             AvailableCategories = new List<SelectListItem>();
+            AvailableUsers = new List<SelectListItem>();
             Address = new AddressOverviewModel();
         }
         [DisplayName("Status")]
@@ -30,5 +31,8 @@ namespace RA.Core.Models.PluginModels.BusinessEntities
         public List<SelectListItem> AvailableCategories { get; set; }
         // Address
         public AddressOverviewModel Address { get; set; }
+        public Guid? UserId { get; set; }
+        public List<SelectListItem> AvailableUsers { get; set; }
+        public bool IsUserMappingEnabled { get; set; }
     }
 }

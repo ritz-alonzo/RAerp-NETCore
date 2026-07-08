@@ -47,9 +47,11 @@ namespace RA.OrdersManagement.Services.Payments
             DateTime? searchCreatedDate = null,
             List<int> paymentStatusIds = null,
             List<int> formStatusIds = null,
-            bool showDeleted = false)
+            bool showDeleted = false,
+            int? pageNumber = 0,
+            int? pageSize = int.MaxValue)
         {
-            var query = GetFormListAsync().Result.AsQueryable();
+            var query = await GetFormListAsync();
 
             if (!string.IsNullOrEmpty(searchQuery))
                 query = query.Where(c =>
@@ -85,7 +87,7 @@ namespace RA.OrdersManagement.Services.Payments
             if (showDeleted)
                 query = query.Where(c => !c.Deleted);
 
-            return await query.ToListAsync();
+            return await ToPagedListAsync(query, pageNumber ?? 0, pageSize ?? 0);
         }
 
         public override Payment CreateTempForm()

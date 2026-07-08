@@ -1,0 +1,56 @@
+﻿@model WebServiceEndpointModel
+
+<div class="col-md-12">
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs" id="formTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="general-form-tab" data-bs-toggle="tab" data-bs-target="#generalForm" type="button" role="tab" aria-controls="generalForm" aria-selected="true">
+                @HtmlContentConstants.GeneralTab
+            </button>
+        </li>
+        @{
+            if (Model.IsMappingVisible)
+            {
+                var componentView = Model.PluginComponents.FirstOrDefault();
+                if (componentView != null)
+                {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="endpoint-mapping-tab" data-bs-toggle="tab" data-bs-target="#endpointMapping" type="button" role="tab" aria-controls="endpointMapping" aria-selected="false">
+                            @componentView.TabName
+                        </button>
+                    </li>
+                }
+            }
+        }
+    </ul>
+    <div class="tab-content" id="formTabContent">
+        <div class="tab-pane fade show active" id="generalForm" role="tabpanel" aria-labelledby="general-form-tab">
+            <div class="card">
+                <div class="card-body">
+                    @await Html.PartialAsync("_CreateAndEdit.General.cshtml", Model)
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    @await Html.PartialAsync("_CreateAndEdit.System.cshtml", Model)
+                </div>
+            </div>
+        </div>
+        @{
+            if (Model.IsMappingVisible)
+            {
+                var componentView = Model.PluginComponents.FirstOrDefault();
+                if (componentView != null)
+                {
+                    <div class="tab-pane fade" id="endpointMapping" role="tabpanel" aria-labelledby="endpoint-mapping-tab">
+                        <div class="card">
+                            <div class="card-body">
+                                @await Component.InvokeAsync(componentView.ComponentName, Model)
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        }
+    </div>
+</div>

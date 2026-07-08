@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using RA.Core.Helpers;
+using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Data.Data;
 using RA.Data.Domain.Users;
 using RA.WebFramework.Extensions;
 using RAerp.Factories.CoreFactories;
 using RAerp.Helpers.Constants;
+using RAerp.Helpers.Security;
 using RAerp.Helpers.UserHelper;
 using RAerp.Models.UsersModel;
 using RAerp.Services.UserServices;
@@ -72,7 +74,8 @@ namespace RAerp.Factories.UserFactory
                 // source : user destination : userModel
                 // needed to create new UserModel() first
                 userModel = _mapper.Map(user, userModel);
-
+                userModel.CreatedOn = userModel.CreatedOn.ConvertUTCToLocalDateTime();
+                userModel.ModifiedOn = userModel.ModifiedOn.HasValue ? userModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
                 return userModel;
 
             }).ToList();
@@ -92,17 +95,18 @@ namespace RAerp.Factories.UserFactory
                 entity = new User();
 
                 entity.AccountStatus = UserAccountStatus.Pending;
-                entity.CreatedOn = DateTime.Now;
+                entity.CreatedOn = DateTime.UtcNow;
                 // but for now disable
                 //entity.CreatedById = _userIdentity.GetCurrentUser(_httpContextAccessor.HttpContext)?.Id;
             }
 
             model = _mapper.Map(entity, model);
 
+            if (model.CreatedOn != DateTime.MinValue)
+                model.CreatedOn = model.CreatedOn.ConvertUTCToLocalDateTime();
+
             if (entity.ModifiedOn.HasValue)
-            {
-                model.ModifiedOn = entity.ModifiedOn;
-            }
+                model.ModifiedOn = entity.ModifiedOn.ConvertUTCToLocalDateTime();
 
             model.AccountStatus = entity.AccountStatus;
             // will fix this so that when there's still no user role available will
@@ -117,13 +121,20 @@ namespace RAerp.Factories.UserFactory
                 if (userIsMapped != null)
                 {
                     var userRole = await _userService.GetUserRoleById(userIsMapped.UserRoleId);
-                    var selectedUserRole = model.AvailableUserRoles.Where(c => c.Value == userRole.Id.ToString()).FirstOrDefault();
-                    selectedUserRole.Selected = true;
-                    model.UserRoleId = userRole.Id;
+                    var selectedUserRole = model.AvailableUserRoles.Where(c => c.Value == userRole?.Id.ToString()).FirstOrDefault();
+                    if (selectedUserRole != null)
+                    {
+                        selectedUserRole.Selected = true;
+                        model.UserRoleId = userRole.Id;
+                    }
                 }
 
                 // change mapped password to any password
                 model.Password = AdminMessages.HiddenPasswordDisplay;
+                model.Username = !string.IsNullOrEmpty(model.Username) ? await EncryptionHelper.DecryptData(model.Username, entity.Salt) : null;
+                model.Email = !string.IsNullOrEmpty(model.Email) ? await EncryptionHelper.DecryptData(model.Email, entity.Salt) : null;
+                model.ContactNo = !string.IsNullOrEmpty(model.ContactNo) ? await EncryptionHelper.DecryptData(model.ContactNo, entity.Salt) : null;
+                model.OneTimePIN = null;
             }
 
             await _baseAdminModelFactory.PrepareBaseAdminModelAsync(model, entity);
@@ -168,7 +179,8 @@ namespace RAerp.Factories.UserFactory
                 // source : user destination : userModel
                 // needed to create new UserModel() first
                 userRoleModel = _mapper.Map(userRole, userRoleModel);
-
+                userRoleModel.CreatedOn = userRoleModel.CreatedOn.ConvertUTCToLocalDateTime();
+                userRoleModel.ModifiedOn = userRoleModel.ModifiedOn.HasValue ? userRoleModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
                 return userRoleModel;
 
             }).ToList();
@@ -187,15 +199,16 @@ namespace RAerp.Factories.UserFactory
             {
                 entity = new UserRole();
 
-                entity.CreatedOn = DateTime.Now;
+                entity.CreatedOn = DateTime.UtcNow;
             }
 
             model = _mapper.Map(entity, model);
 
+            if (model.CreatedOn != DateTime.MinValue)
+                model.CreatedOn = model.CreatedOn.ConvertUTCToLocalDateTime();
+
             if (entity.ModifiedOn.HasValue)
-            {
-                model.ModifiedOn = entity.ModifiedOn;
-            }
+                model.ModifiedOn = entity.ModifiedOn.ConvertUTCToLocalDateTime();
 
             await _baseAdminModelFactory.PrepareBaseAdminModelAsync(model, entity);
 
@@ -250,8 +263,8 @@ namespace RAerp.Factories.UserFactory
                 foreach (var userRole in availableUserRoles)
                 {
                     // do not add super admin role
-                    if (userRole.Rolename == AdminMessages.SuperAdminRole)
-                        continue;
+                    //if (userRole.Rolename == AdminMessages.SuperAdminRole)
+                    //    continue;
 
                     userRoleSelectList.Add(new SelectListItem
                     {

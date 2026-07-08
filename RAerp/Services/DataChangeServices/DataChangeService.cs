@@ -42,7 +42,7 @@ namespace RAerp.Services.DataChangeServices
 
         public async Task InsertAsync(DataChange data)
         {
-            data.CreatedOn = DateTime.Now;
+            data.CreatedOn = DateTime.UtcNow;
             await _dataChange.AddAsync(data);
             await _erpContext.SaveChangesAsync();
         }

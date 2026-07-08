@@ -56,7 +56,7 @@ namespace RA.FormTypes.Services
                 Name = typeof(TForm).Name,
                 SystemName = typeof(TForm).FullName,
                 Data = "{}",
-                CreatedOn = DateTime.Now,
+                CreatedOn = DateTime.UtcNow,
             };
             await _erpContext.Setting.AddAsync(setting);
             await _erpContext.SaveChangesAsync();
@@ -78,7 +78,7 @@ namespace RA.FormTypes.Services
             if (setting != null)
             {
                 setting.Data = settingData;
-                setting.ModifiedOn = DateTime.Now;
+                setting.ModifiedOn = DateTime.UtcNow;
             }
             else
             {

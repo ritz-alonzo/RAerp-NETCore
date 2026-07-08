@@ -55,7 +55,7 @@ namespace RA.WebServiceEndpoints.Controllers
             int pageSize = 10;
             var model = await _webServiceEndpointModelFactory.PrepareWebServiceEndpointSearchModelAsync(new WebServiceEndpointSearchModel(), page, pageSize);
 
-            return View("~/Plugins/RA.WebServiceEndpoints/Views/List.cshtml", model);
+            return View(model);
         }
 
         // working table filter
@@ -65,7 +65,7 @@ namespace RA.WebServiceEndpoints.Controllers
         {
             var model = await _webServiceEndpointModelFactory.PrepareWebServiceEndpointListModelAsync(searchModel);
 
-            return PartialView("~/Plugins/RA.WebServiceEndpoints/Views/_WebServiceEndpointList.cshtml", model);
+            return PartialView(model);
         }
 
         public async Task<IActionResult> Index(Guid id)
@@ -79,7 +79,7 @@ namespace RA.WebServiceEndpoints.Controllers
 
             var model = await _webServiceEndpointModelFactory.PrepareWebServiceEndpointModelAsync(new WebServiceEndpointModel(), entity);
 
-            return View("~/Plugins/RA.WebServiceEndpoints/Views/Index.cshtml", model);
+            return View(model);
         }
 
         public async Task<IActionResult> Create()
@@ -96,7 +96,7 @@ namespace RA.WebServiceEndpoints.Controllers
 
             var model = await _webServiceEndpointModelFactory.PrepareWebServiceEndpointModelAsync(new WebServiceEndpointModel(), null);
 
-            return View("~/Plugins/RA.WebServiceEndpoints/Views/Create.cshtml", model);
+            return View(model);
         }
 
         [HttpPost]

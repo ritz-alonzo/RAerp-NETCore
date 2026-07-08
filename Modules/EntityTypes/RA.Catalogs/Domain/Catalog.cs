@@ -29,6 +29,8 @@ namespace RA.Catalogs.Domain
             get { return (CatalogStatus)StatusId; }
             set { StatusId = (int)value; }
         }
+        public string SKU { get; set; }
+        public string ImagePath { get; set; }
         public decimal Price { get; set; }
     }
 }

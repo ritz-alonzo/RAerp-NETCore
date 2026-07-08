@@ -22,6 +22,12 @@ namespace RAerp.Models.UsersModel
         public string Username { get; set; }
         [DisplayName("Password")]
         public string Password { get; set; }
+        [DisplayName("Current Password")]
+        public string CurrentPassword { get; set; }
+        [DisplayName("New Password")]
+        public string NewPassword { get; set; }
+        [DisplayName("Confirm New Password")]
+        public string ConfirmNewPassword { get; set; }
         [DisplayName("Contact Number")]
         public string ContactNo { get; set; }
         [DisplayName("One Time PIN")]

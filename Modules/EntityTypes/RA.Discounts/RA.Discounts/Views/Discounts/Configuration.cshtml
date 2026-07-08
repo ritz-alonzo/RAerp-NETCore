@@ -1,0 +1,65 @@
+﻿@model DiscountConfigureModel
+
+@Html.HiddenFor(c => c.EntityTypeId)
+@Html.HiddenFor(c => c.SystemName)
+
+<ul class="nav nav-tabs" id="configTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active"
+                id="config-main-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#configMain"
+                type="button" role="tab"
+                aria-controls="configMain"
+                aria-selected="true">
+            Main
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link"
+                id="config-mapping-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#configMapping"
+                type="button"
+                role="tab"
+                aria-controls="configMapping"
+                aria-selected="false">
+            Mappings
+        </button>
+    </li>
+</ul>
+<div class="tab-content" id="configTabContent">
+    <div class="tab-pane fade show active" id="configMain" role="tabpanel" aria-labelledby="config-main-tab">
+        @await Html.PartialAsync("_Configuration.Main.cshtml", Model)
+    </div>
+    <div class="tab-pane fade" id="configMapping" role="tabpanel" aria-labelledby="config-mapping-tab">
+        @await Html.PartialAsync("_Configuration.Mapping.cshtml", Model)
+    </div>
+</div>
+
+<script>
+    $(document).ready(() => {
+        $('#config-mapping-tab').on('click', (e) => {
+            $('#MappedCatalogTypeIds').multiselect({
+                includeSelectAllOption: true,
+                templates: {
+                    button: '<button type="button" class="multiselect dropdown-toggle btn btn-primary" data-toggle="dropdown" aria-expanded="false" id="selectCatalogTypeIdsBtn"><span class="multiselect-selected-text"></span></button>',
+                },
+            });
+            $('#selectCatalogTypeIdsBtn').on('click', (e) => {
+                console.log('multi select button clicked');
+                var multiSelectContainer = $('ul.multiselect-container');
+                if (multiSelectContainer != undefined || multiSelectContainer != null) {
+                    if (multiSelectContainer.css('display') == 'flex') {
+                        multiSelectContainer.css('display', 'none');
+                    }
+                    else {
+                        multiSelectContainer.css('display', 'flex');
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+

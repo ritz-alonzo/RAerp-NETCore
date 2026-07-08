@@ -49,7 +49,7 @@ namespace RA.Categories.Controllers
 
             var categoryConfigureModel = await _categoryModelFactory.PrepareCategoryConfigureModelAsync(entityTypeId, systemName);
 
-            return View("~/Plugins/RA.Categories/Views/Configuration.cshtml", categoryConfigureModel);
+            return View(categoryConfigureModel);
         }
 
         [HttpPost]
@@ -97,7 +97,7 @@ namespace RA.Categories.Controllers
 
             var model = await _categoryModelFactory.PrepareCategorySearchModelAsync(new CategorySearchModel() { SearchEntityTypeId = entityTypeId }, 10, page);
 
-            return View("~/Plugins/RA.Categories/Views/List.cshtml", model);
+            return View(model);
         }
 
         [HttpGet]
@@ -122,7 +122,7 @@ namespace RA.Categories.Controllers
 
             var model = await _categoryModelFactory.PrepareCategoryModelAsync(new CategoryModel(), entity, entity.EntityTypeId);
 
-            return View("~/Plugins/RA.Categories/Views/Index.cshtml", model);
+            return View(model);
         }
 
         public async Task<IActionResult> Create(Guid entityTypeId)
@@ -139,7 +139,7 @@ namespace RA.Categories.Controllers
 
             var model = await _categoryModelFactory.PrepareCategoryModelAsync(new CategoryModel(), null, entityTypeId);
 
-            return View("~/Plugins/RA.Categories/Views/Create.cshtml", model);
+            return View(model);
         }
 
         [HttpPost]

@@ -61,25 +61,36 @@ namespace RAerp.Helpers.Security
 
         public static async Task<string>DecryptData(string encryptedData, string saltData)
         {
-            byte[] iv = new byte[16];
-            byte[] buffer = Convert.FromBase64String(encryptedData);
-
-            using (Aes aes = Aes.Create())
+            if (IsBase64String(encryptedData))
             {
-                aes.Key = Encoding.UTF8.GetBytes(saltData);
-                aes.IV = iv;
-                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-                using (MemoryStream memoryStream = new MemoryStream(buffer))
+                byte[] iv = new byte[16];
+                byte[] buffer = Convert.FromBase64String(encryptedData);
+
+                using (Aes aes = Aes.Create())
                 {
-                    using (CryptoStream cryptoStream = new CryptoStream((Stream)memoryStream, decryptor, CryptoStreamMode.Read))
+                    aes.Key = Encoding.UTF8.GetBytes(saltData);
+                    aes.IV = iv;
+                    ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+                    using (MemoryStream memoryStream = new MemoryStream(buffer))
                     {
-                        using (StreamReader streamReader = new StreamReader((Stream)cryptoStream))
+                        using (CryptoStream cryptoStream = new CryptoStream((Stream)memoryStream, decryptor, CryptoStreamMode.Read))
                         {
-                            return await streamReader.ReadToEndAsync();
+                            using (StreamReader streamReader = new StreamReader((Stream)cryptoStream))
+                            {
+                                return await streamReader.ReadToEndAsync();
+                            }
                         }
                     }
                 }
             }
+            else
+                return encryptedData;
+        }
+
+        public static bool IsBase64String(string value)
+        {
+            Span<byte> buffer = new Span<byte>(new byte[value.Length]);
+            return Convert.TryFromBase64String(value, buffer, out _);
         }
     }
 }

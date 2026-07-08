@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RA.Data.Domain.AccessRightControl;
 using RA.Data.Domain.Addresses;
+using RA.Data.Domain.Application;
 using RA.Data.Domain.DataChanges;
 using RA.Data.Domain.EntityTypes;
 using RA.Data.Domain.Settings;
@@ -31,6 +32,7 @@ namespace RA.Data.App_Data
         public DbSet<AccessRights> AccessRights { get; set; }
         public DbSet<DataChange> DataChange { get; set; }
         public DbSet<Address> Address { get; set; }
+        public DbSet<ApplicationSetting> ApplicationSetting { get; set; }
         #endregion
 
         #region Overrides

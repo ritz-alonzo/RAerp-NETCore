@@ -1,63 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
 	    <TargetFramework>net8.0</TargetFramework>
 	    <ImplicitUsings>enable</ImplicitUsings>
 	    <OutputPath>..\..\..\RAerp\Plugins\RA.Categories</OutputPath>
 	    <OutDir>$(OutputPath)</OutDir>
-	    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+		<!-- Compile views into the plugin's own assembly -->
+		<RazorCompileOnBuild>true</RazorCompileOnBuild>
+		<RazorCompileOnPublish>true</RazorCompileOnPublish>
+		<!-- Prevent duplicate/leaking of shared static-web-asset manifests across plugins -->
+		<GenerateStaticWebAssetsManifest>false</GenerateStaticWebAssetsManifest>
+		<EnableDefaultCompileItems>true</EnableDefaultCompileItems>
     </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="Views\Configuration.cshtml" />
-    <None Remove="Views\Create.cshtml" />
-    <None Remove="Views\Index.cshtml" />
-    <None Remove="Views\List.cshtml" />
-    <None Remove="Views\_CategoryList.cshtml" />
-    <None Remove="Views\_Configuration.Main.cshtml" />
-    <None Remove="Views\_Configuration.Mapping.cshtml" />
-    <None Remove="Views\_CreateAndEdit.cshtml" />
-    <None Remove="Views\_CreateAndEdit.General.cshtml" />
-    <None Remove="Views\_CreateAndEdit.System.cshtml" />
-    <None Remove="Views\_ViewImports.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Views\Configuration.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Create.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Index.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\List.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\_CategoryList.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\_Configuration.Main.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\_Configuration.Mapping.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\_CreateAndEdit.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\_CreateAndEdit.General.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\_CreateAndEdit.System.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\_ViewImports.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\CoreModules\RA.EntityTypes\RA.EntityTypes.csproj">
 			<Private>False</Private>

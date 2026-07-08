@@ -1,20 +1,21 @@
 ﻿using AutoMapper;
+using RA.Core.Models.PluginModels.BusinessEntities;
+using RA.Core.Models.PluginModels.WebServiceEndpoints;
+using RA.Core.Models.PortableViewModels;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
 using RA.WebServiceEndpoints.Domain;
 using RA.WebServiceEndpoints.Helpers;
-using RA.Core.Models.PluginModels.WebServiceEndpoints;
 using RA.WebServiceEndpoints.Services;
 using RAerp.Factories.CoreFactories;
+using RAerp.Helpers.PluginHelper;
+using RAerp.Helpers.UserHelper;
+using RAerp.PluginServiceProvider;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using RA.Core.Models.PortableViewModels;
-using RAerp.Helpers.PluginHelper;
-using RAerp.PluginServiceProvider;
-using RAerp.Helpers.UserHelper;
 
 namespace RA.WebServiceEndpoints.Factories
 {
@@ -84,7 +85,9 @@ namespace RA.WebServiceEndpoints.Factories
                     webServiceEndpointModel.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(createdByUser);
                 // END
                 webServiceEndpointModel.EndpointEntityTypeName = _entityTypeManager.GetByIdAsync(webServiceEndpoint.EndpointEntityTypeId.Value).Result.EntityName;
-
+                webServiceEndpointModel.CreatedOn = webServiceEndpointModel.CreatedOn.ConvertUTCToLocalDateTime();
+                webServiceEndpointModel.ModifiedOn = webServiceEndpointModel.ModifiedOn.HasValue ? webServiceEndpointModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+                
                 return webServiceEndpointModel;
 
             }).ToList();
@@ -102,7 +105,7 @@ namespace RA.WebServiceEndpoints.Factories
             if (webServiceEndpoint == null)
             {
                 webServiceEndpoint = new WebServiceEndpoint();
-                model.CreatedOn = DateTime.Now;
+                model.CreatedOn = DateTime.UtcNow;
                 model.IsMappingVisible = false;
             }
             else
@@ -142,6 +145,12 @@ namespace RA.WebServiceEndpoints.Factories
             }
 
             model.WebServiceEndpointSystemName = typeof(WebServiceEndpoint).FullName;
+
+            if (model.CreatedOn != DateTime.MinValue)
+                model.CreatedOn = model.CreatedOn.ConvertUTCToLocalDateTime();
+
+            if (model.ModifiedOn.HasValue)
+                model.ModifiedOn = model.ModifiedOn.ConvertUTCToLocalDateTime();
 
             await _baseModelFactory.PrepareBaseModelAsync<WebServiceEndpointModel>(model);
 

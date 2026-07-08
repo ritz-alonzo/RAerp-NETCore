@@ -26,7 +26,7 @@ namespace RA.BusinessEntities.Components
         public IViewComponentResult Invoke(CategoryModel categoryModel)
         {
             var model = new BusinessEntityModel();
-            return View("~/Plugins/RA.BusinessEntities/Views/Components/_BusinessEntityTest.cshtml", model);
+            return View("/Views/Components/_BusinessEntityTest.cshtml", model);
         }
     }
 }

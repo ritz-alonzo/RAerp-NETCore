@@ -30,7 +30,14 @@ namespace RAerp.Domain.Migrations.Users
                 .WithColumn(nameof(User.LastLoginDate)).AsDateTime2().Nullable()
                 .WithColumn(nameof(User.LastPasswordChangedDate)).AsDateTime2().Nullable()
                 .WithColumn(nameof(User.Deleted)).AsBoolean()
-                .WithColumn(nameof(User.AccountStatusId)).AsInt32();
+                .WithColumn(nameof(User.AccountStatusId)).AsInt32()
+                .WithColumn(nameof(User.OneTimePIN)).AsString(6).Nullable()
+                .WithColumn(nameof(User.OneTimePINAttempt)).AsInt32().Nullable()
+                .WithColumn(nameof(User.OneTimePINValidUntil)).AsDateTime2().Nullable()
+                .WithColumn(nameof(User.FailedLoginAttempt)).AsInt32().Nullable()
+                .WithColumn(nameof(User.EmailResendAttempt)).AsInt32().Nullable()
+                .WithColumn(nameof(User.IsLoggedOn)).AsBoolean().Nullable()
+                .WithColumn(nameof(User.IsVerified)).AsBoolean().Nullable();
 
             Create.Table(nameof(UserRole))
                 .WithColumn(nameof(UserRole.Id)).AsGuid().PrimaryKey()

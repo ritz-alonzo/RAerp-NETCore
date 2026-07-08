@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#09090B"></stop>
+      <stop offset="100%" stop-color="#000000"></stop>
+    </linearGradient>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"></feGaussianBlur>
+      <feMerge>
+        <feMergeNode in="blur"></feMergeNode>
+        <feMergeNode in="SourceGraphic"></feMergeNode>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect x="32" y="32" width="448" height="448" rx="96" fill="url(#bg)"></rect>
+
+  <!-- Neon border -->
+  <rect x="36" y="36" width="440" height="440" rx="92" fill="none" stroke="#8B5CF6" stroke-width="4" opacity="0.75"></rect>
+
+  <!-- Glow -->
+  <path d="M170 120H280
+       C355 120 400 165 400 230
+       C400 285 370 320 320 340
+       L390 392H315
+       L260 350H230V392H170V120ZM230 175V295H280
+       C325 295 340 265 340 232
+       C340 195 315 175 280 175H230Z" fill="#8B5CF6" opacity="0.55" filter="url(#glow)"></path>
+
+  <!-- Main R -->
+  <path d="M170 120H280
+       C355 120 400 165 400 230
+       C400 285 370 320 320 340
+       L390 392H315
+       L260 350H230V392H170V120ZM230 175V295H280
+       C325 295 340 265 340 232
+       C340 195 315 175 280 175H230Z" fill="#FFFFFF"></path>
+</svg>

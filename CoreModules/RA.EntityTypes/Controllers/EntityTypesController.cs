@@ -35,7 +35,7 @@ namespace RA.EntityTypes.Controllers
             int pageSize = 1;
             var model = await _entityTypeModelFactory.PrepareEntityTypeSearchModelAsync(new EntityTypeSearchModel(), page, pageSize);
 
-            return View("~/Plugins/RA.EntityTypes/Views/List.cshtml", model);
+            return View(model);
         }
 
         // working table filter
@@ -45,7 +45,7 @@ namespace RA.EntityTypes.Controllers
         {
             var model = await _entityTypeModelFactory.PrepareEntityTypeListModelAsync(searchModel);
 
-            return PartialView("~/Plugins/RA.EntityTypes/Views/_EntityTypeList.cshtml", model);
+            return PartialView(model);
         }
 
         [HttpGet]
@@ -63,7 +63,7 @@ namespace RA.EntityTypes.Controllers
 
             var model = await _entityTypeModelFactory.PrepareEntityTypeSearchModelAsync(entityTypeSearchModel, page, pageSize);
 
-            return View("~/Plugins/RA.EntityTypes/Views/ChildEntityTypeList.cshtml", model);
+            return View(model);
         }
 
         // working table filter
@@ -73,7 +73,7 @@ namespace RA.EntityTypes.Controllers
         {
             var model = await _entityTypeModelFactory.PrepareChildEntityTypeListModelAsync(searchModel);
 
-            return PartialView("~/Plugins/RA.EntityTypes/Views/_ChildEntityTypeListSearch.cshtml", model);
+            return PartialView(model);
         }
 
         // Modal creation for Adding child entity
@@ -85,7 +85,7 @@ namespace RA.EntityTypes.Controllers
 
             var model = await _entityTypeModelFactory.PrepareEntityTypeModelAsync(new EntityTypeModel(), parentEntityTypeId, true);
 
-            return View("~/Plugins/RA.EntityTypes/Views/CreateChildEntity.cshtml", model);
+            return View(model);
         }
 
 

@@ -15,7 +15,7 @@ namespace RAerp.Controllers.Admin
         public async Task<IActionResult> GetRegions()
         {
             var regions = await _addressService.GetRegionsSelectList();
-            return Json(null);
+            return Json(regions);
         }
 
         public async Task<IActionResult> GetCitiesByRegionCode(string regionCode)

@@ -78,18 +78,17 @@ namespace RAerp.Factories.CoreFactories
             where TModel : BaseModel
             where TSearch : BaseSearchModel
         {
-            if (listModel.Count == 1)
-                list.Items = listModel.Take(searchModel.PageSize).ToList();
-            else
-                list.Items = listModel.Skip((searchModel.PageNumber - 1) * searchModel.PageSize).Take(searchModel.PageSize).ToList();
+            //if (listModel.Count == 1)
+            //    list.Items = listModel.Take(searchModel.PageSize).ToList();
+            //else
+            //    list.Items = listModel.Skip((searchModel.PageNumber - 1) * searchModel.PageSize).Take(searchModel.PageSize).ToList();
 
             var totalPages = (int)Math.Ceiling(totalItems / (double)searchModel.PageSize);
-
             if (searchModel.PageNumber > 2)
                 list.TotalItems = searchModel.PageNumber;
             else
                 list.TotalItems = totalPages;
-
+            list.Items = listModel;
             list.PageSize = searchModel.PageSize;
             list.PageNumber = searchModel.PageNumber;
             searchModel.CurrentItemsShown = list.Items.Count;

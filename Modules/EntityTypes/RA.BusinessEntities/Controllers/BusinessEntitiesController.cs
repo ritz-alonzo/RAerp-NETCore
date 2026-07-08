@@ -5,6 +5,7 @@ using RA.BusinessEntities.Domain;
 using RA.BusinessEntities.Factories;
 using RA.BusinessEntities.Helpers;
 using RA.BusinessEntities.Services;
+using RA.BusinessEntities.Validators;
 using RA.Core.Models.OverviewModels;
 using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.Categories;
@@ -64,7 +65,7 @@ namespace RA.BusinessEntities.Controllers
 
             var businessEntityConfigureModel = await _businessEntityModelFactory.PrepareBusinessEntityConfigureModelAsync(entityTypeId, systemName);
 
-            return View("~/Plugins/RA.BusinessEntities/Views/Configuration.cshtml", businessEntityConfigureModel);
+            return View(businessEntityConfigureModel);
         }
 
         [HttpPost]
@@ -114,7 +115,7 @@ namespace RA.BusinessEntities.Controllers
 
             var model = await _businessEntityModelFactory.PrepareBusinessEntitySearchModelAsync(new BusinessEntitySearchModel() { SearchEntityTypeId = entityTypeId }, 10, page);
 
-            return View("~/Plugins/RA.BusinessEntities/Views/List.cshtml", model);
+            return View(model);
         }
 
         [HttpGet]
@@ -122,7 +123,7 @@ namespace RA.BusinessEntities.Controllers
         {
             var model = await _businessEntityModelFactory.PrepareBusinessEntityListModelAsync(searchModel);
 
-            return PartialView("~/Plugins/RA.BusinessEntities/Views/_BusinessEntityList.cshtml", model);
+            return PartialView(model);
         }
 
         public async Task<IActionResult> Index(Guid id)
@@ -139,7 +140,7 @@ namespace RA.BusinessEntities.Controllers
 
             var model = await _businessEntityModelFactory.PrepareBusinessEntityModelAsync(new BusinessEntityModel(), entity, entity.EntityTypeId);
 
-            return View("~/Plugins/RA.BusinessEntities/Views/Index.cshtml", model);
+            return View(model);
         }
 
         public async Task<IActionResult> Create(Guid entityTypeId)
@@ -156,7 +157,7 @@ namespace RA.BusinessEntities.Controllers
 
             var model = await _businessEntityModelFactory.PrepareBusinessEntityModelAsync(new BusinessEntityModel(), null, entityTypeId);
 
-            return View("~/Plugins/RA.BusinessEntities/Views/Create.cshtml", model);
+            return View(model);
         }
 
         [HttpPost]
@@ -196,7 +197,7 @@ namespace RA.BusinessEntities.Controllers
             else
             {
                 ErrorNotification(model, "Failed to create Business Entity");
-                return View("Create", new { entityTypeId = model.EntityTypeId });
+                return RedirectToAction("Create", new { entityTypeId = model.EntityTypeId });
             }
 
             return RedirectToAction("Index", new { id = model.Id });
@@ -241,11 +242,12 @@ namespace RA.BusinessEntities.Controllers
             }
             else
             {
-                ErrorNotification(model, "Failed to update Business Entity");
-                return View("Index", new { id = model.Id });
+                //ErrorNotification(model, $"Failed to update Business Entity: {ModelState}");
+                ErrorNotification<BusinessEntityModel, BusinessEntityValidator>(model, "Failed to update Business Entity");
+                return RedirectToAction("Index", model);
             }
 
-            return RedirectToAction("Index", new { id = model.Id });
+            return RedirectToAction("Index", model);
         }
 
         [HttpPost]

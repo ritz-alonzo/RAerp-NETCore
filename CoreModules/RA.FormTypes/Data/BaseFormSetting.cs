@@ -29,6 +29,7 @@ namespace RA.FormTypes.Data
         public bool InventoryEnabled { get; set; }
         public bool RedirectUsingFormNbrEnabled { get; set; }
         public bool ShowItemCodeInGrid { get; set; }
+        public bool FormApiEnabled { get; set; }
         public int ItemsPageSize { get; set; } // default 10
     }
 }

@@ -5,40 +5,68 @@
 @{
     var selectedMenuSystemName = HtmlActiveNodeMenu.GetActivePluginMenu(Context);
     var selectedMenuController = HtmlActiveNodeMenu.GetActivePluginMenuController(Context);
+    var selectedMenuModuleName = HtmlActiveNodeMenu.GetActivePluginMenuModuleName(Context);
 
     var pluginNodes = await navigationService.GetPluginNodesMenu();
 
     foreach (var node in pluginNodes.OrderBy(c => c.DisplayOrder))
     {
-        var mainNodeHasRelatedNodes = node.RelatedNodes.Any() ? node.RelatedNodes.Any(c => c.MenuTitle == selectedMenuController) : false;
+        var mainNodeHasRelatedNodes = node.RelatedNodes.Count > 0;
         if (node.Visible)
         {
-            /// Main node
-            <li class="sidebar-item @if (selectedMenuController == node.MenuTitle.Replace(" ", "") || mainNodeHasRelatedNodes) { <text>selected</text> }">
-                <a class="sidebar-link has-arrow waves-effect waves-dark sidebar-link @if (selectedMenuController == node.MenuTitle.Replace(" ", "") || mainNodeHasRelatedNodes) {<text>active</text> }"
-                   href="#" aria-expanded="false">
-                    <i class="@node.IconClass"></i>
-                    <span class="hide-menu">@node.MenuTitle</span>
-                </a>
-                <ul aria-expanded="false" class="collapse first-level @if (selectedMenuController == node.MenuTitle.Replace(" ", "") || mainNodeHasRelatedNodes) { <text>in</text> }">
-                    @if (node.RelatedNodes.Count > 0)
-                    {
-                        // Child node
-                        foreach (var relatedNode in node.RelatedNodes.OrderBy(c => c.DisplayOrder))
+            if (mainNodeHasRelatedNodes)
+            {
+                <div class="nav-group">
+                    <button class="nav-dropdown-toggle @if(selectedMenuController == node.MenuTitle.Replace(" ", "") || selectedMenuModuleName == node.SystemName) { <text>open</text>}
+                    " data-label="@node.MenuTitle">
+                        <i class="@node.IconClass nav-icon"></i>
+                        <span class="nav-label">@node.MenuTitle</span>
+                        <i class="fas fa-chevron-down nav-chevron"></i>
+                    </button>
+                    <div class="nav-dropdown-menu @if(selectedMenuController == node.MenuTitle.Replace(" ", "") || selectedMenuModuleName == node.SystemName) {<text>open</text>}">
+                        @foreach (var relatedNode in node.RelatedNodes.OrderBy(c => c.DisplayOrder))
                         {
                             @if (!string.IsNullOrEmpty(relatedNode.Url) && relatedNode.Visible)
                             {
-                                <li class="sidebar-item @if (relatedNode.SystemName == selectedMenuSystemName) { <text>active</text> } ">
-                                    <a href="@relatedNode.Url" class="sidebar-link @if (relatedNode.SystemName == selectedMenuSystemName) { <text>active</text> } ">
-                                        <i class="@relatedNode.IconClass"></i>
-                                        <span class="hide-menu">@relatedNode.MenuTitle</span>
-                                    </a>
-                                </li>
+                                <a href="@relatedNode.Url" class="nav-sub-item @if (relatedNode.SystemName == selectedMenuSystemName) { <text>active</text> }"><i class="@relatedNode.IconClass" nav-icon></i> @relatedNode.MenuTitle</a>
                             }
                         }
-                    }
-                </ul>
-            </li>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <a href="@node.Url" class="nav-item-link @if (selectedMenuSystemName == node.SystemName.Replace(" ", "")) { <text>active</text> }" data-label="@node.MenuTitle">
+                    <i class="@node.IconClass nav-icon"></i>
+                    <span class="nav-label">@node.MenuTitle</span>
+                </a>
+            }
+            // /// Main node
+            // <li class="sidebar-item @if (selectedMenuController == node.MenuTitle.Replace(" ", "") || mainNodeHasRelatedNodes) { <text>selected</text> }">
+            //     <a class="sidebar-link has-arrow waves-effect waves-dark sidebar-link @if (selectedMenuController == node.MenuTitle.Replace(" ", "") || mainNodeHasRelatedNodes) {<text>active</text> }"
+            //        href="#" aria-expanded="false">
+            //         <i class="@node.IconClass"></i>
+            //         <span class="hide-menu">@node.MenuTitle</span>
+            //     </a>
+            //     <ul aria-expanded="false" class="collapse first-level @if (selectedMenuController == node.MenuTitle.Replace(" ", "") || mainNodeHasRelatedNodes) { <text>in</text> }">
+            //         @if (node.RelatedNodes.Count > 0)
+            //         {
+            //             // Child node
+            //             foreach (var relatedNode in node.RelatedNodes.OrderBy(c => c.DisplayOrder))
+            //             {
+            //                 @if (!string.IsNullOrEmpty(relatedNode.Url) && relatedNode.Visible)
+            //                 {
+            //                     <li class="sidebar-item @if (relatedNode.SystemName == selectedMenuSystemName) { <text>active</text> } ">
+            //                         <a href="@relatedNode.Url" class="sidebar-link @if (relatedNode.SystemName == selectedMenuSystemName) { <text>active</text> } ">
+            //                             <i class="@relatedNode.IconClass"></i>
+            //                             <span class="hide-menu">@relatedNode.MenuTitle</span>
+            //                         </a>
+            //                     </li>
+            //                 }
+            //             }
+            //         }
+            //     </ul>
+            // </li>
         }
     }
 }

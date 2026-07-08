@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using RA.Data.Domain.Users;
+using System.Security.Claims;
 
 namespace RAerp.Helpers.UserHelper
 {
@@ -7,5 +8,6 @@ namespace RAerp.Helpers.UserHelper
     {
         Task<User> GetCurrentUserAsync(HttpContext httpContext);
         Task<User> GetUserDetailsAsync(Guid userId);
+        Task<User> GetCurrentApiUserAsync(ClaimsPrincipal user);
     }
 }

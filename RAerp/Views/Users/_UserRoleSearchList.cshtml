@@ -124,9 +124,37 @@
         var createPostAction = $('#userRoleCreationData').attr('data-config-post-action');
         if (createPostAction == null || createPostAction == '') {
             alert('Save Action not found.');
+            return;
         }
         var createEntityDataId = 'userRoleCreationData';
+        var createUserRoleForm = $('form-ajax').find('input');
+        if (createUserRoleForm.length == 0 || createUserRoleForm == null || createUserRoleForm == undefined) {
+            alert('Failed to Save User Role');
+            return;
+        }
+        var formData = $(createUserRoleForm).serialize();
 
+        $.ajax({
+            url: createPostAction,
+            type: 'POST',
+            data: formData
+        })
+            .done((data) => {
+                console.log('Successfully created User role');
+                $('#userRoleCreationModal').modal('hide');
+                $('.modal-backdrop').addClass("modal").removeClass("modal-backdrop fade show");
+                $('.modal-open').attr("style", "");
+                $('.modal-open').removeClass("modal-open");
+                toastr.success('Successfully created User role');
+            })
+            .fail((data) => { 
+                console.log('Failed to create User role');
+                $('#userRoleCreationModal').modal('hide');
+                $('.modal-backdrop').addClass("modal").removeClass("modal-backdrop fade show");
+                $('.modal-open').attr("style", "");
+                $('.modal-open').removeClass("modal-open");
+                toastr.error(data.responseJSON.error);
+            });
         // CreateuserRolePost(createEntityDataId, createPostAction);
     });
 

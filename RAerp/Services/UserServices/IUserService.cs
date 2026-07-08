@@ -1,4 +1,5 @@
-﻿using RA.Data.Domain.Users;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using RA.Data.Domain.Users;
 using System;
 using System.Collections.Generic;
 
@@ -22,7 +23,9 @@ namespace RAerp.Services.UserServices
             string searchQuery = null,
             DateTime? createdOn = null,
             bool includeDeleted = false);
-        Task<UserRole> GetUserRoleById(Guid id);
+        Task<UserRole> GetUserRoleById(Guid id); 
+        Task<UserRole> GetUserRoleByUserId(Guid id);
+        Task<UserRole> GetUserRoleByRoleNameAsync(string roleName);
         Task InsertRole(UserRole entity);
         Task UpdateRole(UserRole entity);
 
@@ -35,6 +38,10 @@ namespace RAerp.Services.UserServices
         Task InsertMapping(Guid userId, Guid userRoleId);
         Task UpdateMapping(UserUserRoleMapping mapping);
 
+        #endregion
+
+        #region User SelectList
+        Task<List<SelectListItem>> GetAvailableUsers();
         #endregion
     }
 }

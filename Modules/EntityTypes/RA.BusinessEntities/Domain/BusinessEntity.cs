@@ -25,5 +25,7 @@ namespace RA.BusinessEntities.Domain
         public Guid? CategoryId { get ; set; }
         // Address
         public Guid? AddressId { get; set; }
+        // Mapped User Id
+        public Guid? UserId { get; set; }
     }
 }

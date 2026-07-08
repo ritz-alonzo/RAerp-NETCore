@@ -15,6 +15,7 @@ using RA.WebFramework.Extensions;
 using RAerp.Helpers.AddressHelper;
 using RAerp.Helpers.UserHelper;
 using RAerp.Services.AddressServices;
+using RAerp.Services.UserServices;
 
 namespace RA.BusinessEntities.Factories
 {
@@ -29,6 +30,7 @@ namespace RA.BusinessEntities.Factories
         private readonly ICategoryService _categoryService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IAddressService _addressService;
+        private readonly IUserService _userService;
         #endregion
 
         #region Ctor
@@ -39,7 +41,8 @@ namespace RA.BusinessEntities.Factories
             IUserIdentity userIdentity,
             ICategoryService categoryService,
             IHttpContextAccessor httpContextAccessor,
-            IAddressService addressService)
+            IAddressService addressService,
+            IUserService userService)
         {
             _baseEntityModelFactory = entityModelFactory;
             _mapper = mapper;
@@ -49,6 +52,7 @@ namespace RA.BusinessEntities.Factories
             _categoryService = categoryService;
             _httpContextAccessor = httpContextAccessor;
             _addressService = addressService;
+            _userService = userService;
         }
         #endregion
 
@@ -99,6 +103,8 @@ namespace RA.BusinessEntities.Factories
                 //if (createdByUser != null)
                 //    businessEntityModel.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(createdByUser);
                 businessEntityModel.AvailableCategories = availableCategories;
+                businessEntityModel.CreatedOn = businessEntityModel.CreatedOn.ConvertUTCToLocalDateTime();
+                businessEntityModel.ModifiedOn = businessEntityModel.ModifiedOn.HasValue ? businessEntityModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
 
                 return businessEntityModel;
 
@@ -132,7 +138,7 @@ namespace RA.BusinessEntities.Factories
                 businessEntity = new BusinessEntity();
 
                 businessEntityModel.Status = BusinessEntityStatus.Active;
-                businessEntityModel.CreatedOn = DateTime.Now;
+                businessEntityModel.CreatedOn = DateTime.UtcNow.ConvertUTCToLocalDateTime();
                 businessEntityModel.Code = "NEW";
             }
             else
@@ -151,7 +157,7 @@ namespace RA.BusinessEntities.Factories
             var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<BusinessEntity, BusinessEntitySetting>(entityTypeId);
             if (settings != null)
             {
-                if (settings.MappedCategoryIds.Any())
+                if (settings.MappedCategoryIds.HasAny())
                 {
                     // Model binding of Category, will create service for this (from Categories)
                     businessEntityModel.AvailableCategories = await _categoryService.GetCategoriesSelectListAsync(settings.MappedCategoryIds);
@@ -174,8 +180,24 @@ namespace RA.BusinessEntities.Factories
                         businessEntityModel.Address.Barangays = await _addressService.GetBarangaysSelectList();
                     }
                 }
+
+                if (settings.IsUserMappingEnabled)
+                {
+                    if (businessEntity.UserId.IsNotNullOrEmpty())
+                    {
+                        businessEntityModel.UserId = businessEntity.UserId.Value;
+                    }
+
+                    businessEntityModel.IsUserMappingEnabled = settings.IsUserMappingEnabled;
+                    businessEntityModel.AvailableUsers = await _userService.GetAvailableUsers();
+                }
             }
 
+            if (businessEntityModel.CreatedOn != DateTime.MinValue)
+                businessEntityModel.CreatedOn = businessEntityModel.CreatedOn.ConvertUTCToLocalDateTime();
+
+            if (businessEntityModel.ModifiedOn.HasValue)
+                businessEntityModel.ModifiedOn = businessEntityModel.ModifiedOn.ConvertUTCToLocalDateTime();
             // base model mapping
             businessEntityModel = await _baseEntityModelFactory.PrepareBaseEntityModelAsync<BusinessEntityModel, BusinessEntity, BusinessEntitySetting>(businessEntityModel, businessEntity, settings);
 

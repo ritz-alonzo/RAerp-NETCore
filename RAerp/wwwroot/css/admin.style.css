@@ -1,5 +1,54 @@
 ﻿/* Custom style for RAerp */
 
+small {
+    font-size: 11px !important;
+}
+
+.close {
+    float: right;
+    font-size: 1.3125rem;
+    font-weight: 800;
+    line-height: 1;
+    color: black;
+    text-shadow: 0 1px 0 #fff;
+    opacity: .5;
+    background-color: transparent;
+    border: none;
+}
+
+    .close:hover {
+        color: #000;
+        text-decoration: none
+    }
+
+    .close:not(:disabled):not(.disabled):focus, .close:not(:disabled):not(.disabled):hover {
+        opacity: .75
+    }
+
+.nav-avatar {
+    width: 5px;
+    height: 30px;
+    padding-right: 20px;
+    background: rgb(21, 181, 242);
+    margin-top: 15px;
+    padding-left: 20px;
+    border-radius: 10%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: bold;
+    color: floralwhite;
+}
+
+.float-right {
+    float: right;
+}
+
+.card {
+    margin-bottom: 15px;
+}
+
 .card-title h4 {
     margin-top: 15px;
     margin-left: 20px;
@@ -59,9 +108,9 @@
     }
 }
 
-.modal-backdrop {
+/*.modal-backdrop {
     background-color: transparent;
-}
+}*/
 
 /* Configuration Tab CSS */
 #configTab .nav-link.active {
@@ -104,7 +153,7 @@ label[data-required=true]:after {
 .custom-input-set {
     display: flex;
     flex-direction: column;
-    width: auto;
+    /*width: auto;*/
     position: static;
     margin-bottom: 10px;
 }
@@ -136,6 +185,7 @@ label[data-required=true]:after {
         border-right-style: hidden;
         height: 40px;
         font-size: 14px;
+        border-radius: 0px;
     }
         .custom-input-set input[type=text].form-control:focus,
         .custom-input-set input[type=number].form-control:focus,
@@ -243,11 +293,17 @@ label[data-required=true]:after {
 
     .form-content-header-control .form-content-back-redirection-control {
         padding-top: 5px;
+        font-size: 12px;
+    }
+
+    .form-content-header-control div input, .form-content-header-control div a {
+        padding-top: 5px;
+        font-size: 12px;
     }
 
 .form-content-header-group {
     display: flex;
-    width: fit-content;
+    /*width: fit-content;*/
     /*color: rgb(96, 95, 95);*/
     color: white;
     font-size: 17px;
@@ -297,6 +353,7 @@ form .col-12 .float-left {
 .common-content-header-title a, .common-content-header-title button {
     height: 32px;
     margin-top: 5px;
+    font-size: 12px;
 }
 
 
@@ -307,8 +364,142 @@ form .col-12 .float-left {
 }
 
 
+/* Table CSS */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead tr {
+    background: #f8f9fc;
+}
+
+th {
+    padding: 10px 16px !important;
+    font-family: 'DM Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #9198ab;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid #eaecf0;
+    cursor: pointer;
+    user-select: none;
+    vertical-align: middle;
+}
+
+td {
+    vertical-align: middle;
+    padding: 12px 16px !important;
+    font-size: 12px;
+    color: #1a1d2e;
+    border-bottom: 1px solid #eaecf0 !important;
+}
+
+.table-footer {
+    display: flex;
+    align-items: center;
+    padding: 12px 5px;
+    border-top: 1px solid #eaecf0;
+    gap: 10px;
+}
+
+.footer-info {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: #9198ab;
+    margin-right: auto;
+}
+
+.page-btns {
+    display: flex;
+    gap: 5px;
+}
+
+.pg {
+    width: 35px;
+    height: 28px;
+    border-radius: 7px;
+    border: 1px solid #eaecf0;
+    background: transparent;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: #9198ab;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s;
+}
+
+.pg {
+    color: #9198ab;
+    outline: none;
+    text-decoration: none !important;
+}
+
+.pg:hover {
+    background: #f8f9fc;
+    color: #1a1d2e;
+}
+
+.pg.active {
+    background: #6798d7;
+    color: #fff;
+    border-color: #6798d7;
+}
+
 .table-responsive table tbody td input[type=checkbox] {
     position: inherit !important;
+}
+
+/* ── BADGES ── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px !important;
+    /*font-weight: 500;*/
+    padding: 0px;
+    border-radius: 20px;
+    white-space: nowrap;
+    font-family: 'Sora', sans-serif;
+}
+
+    .badge::before {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: currentColor;
+        flex-shrink: 0;
+    }
+
+.b-active {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.b-review {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.b-hold {
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.b-done {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.b-danger {
+    background: #fef2f2;
+    color: #dc2626;
 }
 
 
@@ -338,4 +529,32 @@ form .col-12 .float-left {
     overflow-y: auto;
     scroll-behavior: smooth;
     scrollbar-width: none;
+}
+
+td[class=text-center] {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+}
+
+td[class=text-center] button, td[class=text-center] a {
+    width: 28px;
+    height: 30px;
+    border-radius: 7px;
+    border: 1px solid #eaecf0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #9198ab;
+    transition: background .15s, color .15s, border-color .15s;
+}
+
+.multiselect-container {
+    display: none;
+    justify-content: start;
+    flex-direction: column;
+    width: 300px;
+    margin-left: 200px !important;
 }

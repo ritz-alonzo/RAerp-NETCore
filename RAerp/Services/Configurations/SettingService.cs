@@ -32,14 +32,14 @@ namespace RAerp.Services.Configurations
 
         public async Task InsertSetting(Setting setting)
         {
-            setting.CreatedOn = DateTime.Now;
+            setting.CreatedOn = DateTime.UtcNow;
             await _erpContext.Setting.AddAsync(setting);
             await _erpContext.SaveChangesAsync();
         }
 
         public async Task UpdateSetting(Setting setting)
         {
-            setting.ModifiedOn = DateTime.Now;
+            setting.ModifiedOn = DateTime.UtcNow;
             _erpContext.Setting.Update(setting);
             await _erpContext.SaveChangesAsync();
         }

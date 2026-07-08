@@ -78,7 +78,7 @@ namespace RA.OrdersManagement.Controllers.Payments
 
             var paymentConfigureModel = await _paymentModelFactory.PreparePaymentConfigureModelAsync(systemName);
 
-            return View("~/Plugins/RA.OrdersManagement/Views/Payments/Configuration.cshtml", paymentConfigureModel);
+            return View(paymentConfigureModel);
         }
 
         [HttpPost]
@@ -115,7 +115,7 @@ namespace RA.OrdersManagement.Controllers.Payments
 
             var model = await _paymentModelFactory.PreparePaymentSearchModelAsync(new PaymentSearchModel(), _paymentSettings.ItemsPageSize, page);
 
-            return View("~/Plugins/RA.OrdersManagement/Views/Payments/List.cshtml", model);
+            return View(model);
         }
 
         [HttpGet]
@@ -132,7 +132,7 @@ namespace RA.OrdersManagement.Controllers.Payments
 
             var model = await _paymentModelFactory.PreparePaymentListModelAsync(searchModel);
 
-            return PartialView("~/Plugins/RA.OrdersManagement/Views/Payments/_PaymentListSearch.cshtml", model);
+            return PartialView(model);
         }
 
         public async Task<IActionResult> Index(Guid formId)
@@ -155,7 +155,7 @@ namespace RA.OrdersManagement.Controllers.Payments
 
             var model = await _paymentModelFactory.PreparePaymentModelAsync(new PaymentModel(), paymentForm);
 
-            return View("~/Plugins/RA.OrdersManagement/Views/Payments/Index.cshtml", model);
+            return View(model);
         }
 
         public async Task<IActionResult> Create()
@@ -171,7 +171,7 @@ namespace RA.OrdersManagement.Controllers.Payments
 
             var model = await _paymentModelFactory.PreparePaymentModelAsync(new PaymentModel(), null);
 
-            return View("~/Plugins/RA.OrdersManagement/Views/Payments/Create.cshtml", model);
+            return View(model);
         }
 
         [HttpPost]
@@ -325,7 +325,7 @@ namespace RA.OrdersManagement.Controllers.Payments
 
             var itemModel = await _paymentModelFactory.PreparePaymentItemListModelAsync(paymentModel, page);
 
-            return PartialView("~/Plugins/RA.OrdersManagement/Views/Payments/_CreateAndEdit.Items.cshtml", itemModel);
+            return PartialView("Views/Payments/_CreateAndEdit.Items.cshtml", itemModel);
         }
 
         public async Task<IActionResult> LoadOrderItems(PaymentModel model)
@@ -359,7 +359,7 @@ namespace RA.OrdersManagement.Controllers.Payments
                 paymentItem.SubTotal = orderItem.SubTotal;
                 paymentItem.DiscountAmount = orderItem.DiscountAmount;
                 paymentItem.CreatedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
-                paymentItem.CreatedOn = DateTime.Now;
+                paymentItem.CreatedOn = DateTime.UtcNow;
                 await _paymentService.InsertTempItemAsync(paymentItem, DataChangeStatus.Insert);
             }
 
@@ -405,7 +405,7 @@ namespace RA.OrdersManagement.Controllers.Payments
                 paymentItem.SubTotal = orderItem.SubTotal;
                 paymentItem.DiscountAmount = orderItem.DiscountAmount;
                 paymentItem.CreatedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
-                paymentItem.CreatedOn = DateTime.Now;
+                paymentItem.CreatedOn = DateTime.UtcNow;
                 await _paymentService.InsertTempItemAsync(paymentItem, DataChangeStatus.Insert);
             }
 

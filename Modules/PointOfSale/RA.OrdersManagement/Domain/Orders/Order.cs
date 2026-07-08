@@ -9,6 +9,7 @@ namespace RA.OrdersManagement.Domain.Orders
 {
     public class Order : BaseForm
     {
+        public Guid? CartId { get; set; }
         public Guid? ServiceId { get; set; }
         public string CustomerName { get; set; }
         public DateTime OrderDate { get; set; }

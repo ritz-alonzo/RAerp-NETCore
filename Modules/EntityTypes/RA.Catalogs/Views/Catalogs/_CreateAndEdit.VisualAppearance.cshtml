@@ -1,0 +1,112 @@
+﻿@model CatalogModel
+
+<style>
+    /* Container/Text styles */
+    .custom-file-input {
+      color: #4a5568;
+      font-size: 0.9rem;
+      font-family: sans-serif;
+    }
+
+    /* Target the actual button inside the input */
+    .custom-file-input::file-selector-button {
+      background-color: #4f46e5;
+      color: #ffffff;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 1rem;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    /* Hover state for the button */
+    .custom-file-input::file-selector-button:hover {
+      background-color: #4338ca;
+      color: black;
+    }
+
+    .image-preview-container {
+        display: flex;
+        justify-content: center;
+        flex-direction: row;
+        gap: 20px;
+    }
+
+    .custom-image-control {
+        margin-top: 100px;
+    }
+</style>
+
+<div class="row">
+    <div class="form-content-header-group">
+        @HtmlContentConstants.InfoHeader
+    </div>
+    <div class="custom-input-set col-md-6">
+        <label asp-for="@Model.ImageFile" class="form-label"></label>
+        <input asp-for="@Model.ImageFile" type="file" class="form-control custom-file-input" onchange="previewImage(this)" />
+        <span asp-validation-for="@Model.ImageFile" class="text-danger"></span>
+    </div>
+    <div class="custom-input-set col-md-6">
+        <label asp-for="@Model.ImageUrl" class="form-label"></label>
+        <input asp-for="@Model.ImageUrl" type="text" class="form-control" autocomplete="off" />
+        <span asp-validation-for="@Model.ImageUrl" class="text-danger"></span>
+    </div>
+    <div class="custom-input-set col-md-6">
+        <div class="image-preview-container" style="@if(string.IsNullOrEmpty(Model.ImagePath)) { <text>display:none</text> } else { <text>display:flex</text> }">
+            <img id="imagePreview" src="@Model.ImagePath" alt="@Model.Name" style="width: 450px; height: 250px" />
+            <div class="custom-image-control">
+                <a id="viewImageLink" class="btn btn-outline-secondary" href="@Model.ImagePath" target="_blank">
+                    <i class="fas fa-eye"></i>    
+                </a>
+                <a id="downloadImage" class="btn btn-outline-secondary" href="@Url.Action("DownloadFile", "Admin", new { fileName = Model.ImagePath })">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function previewImage(input) {
+        if (!input.files || !input.files[0])
+            return;
+
+        const file = input.files[0];
+
+        // Validate image type
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            input.value = '';
+            return;
+        }
+
+        if (!input.files || !input.files[0])
+        return;
+
+        const objectUrl = URL.createObjectURL(file);
+
+        const preview = document.getElementById('imagePreview');
+        const viewLink = document.getElementById('viewImageLink');
+        const downloadLink = document.getElementById('downloadImage');
+
+        preview.src = objectUrl;
+        viewLink.setAttribute('href', objectUrl);
+        downloadLink.setAttribute('href', objectUrl);
+        downloadLink.setAttribute('download', file.name);
+        document.getElementsByClassName('image-preview-container')[0].style.display = 'flex';
+
+        // const reader = new FileReader();
+        // reader.onload = function (e) {
+        //     document.getElementById('imagePreview').src = e.target.result;
+        //     document.getElementById('viewImageLink').href = e.target.result;
+        //     // document.getElementById('downloadImage').href = '/Admin/DownloadFile?fileName=' + encodeURIComponent(file.name);
+        //     document.getElementById('downloadImage').href = e.target.result;
+        //     document.getElementsByClassName('image-preview-container')[0].style.display = 'flex';
+        // };
+
+        // reader.readAsDataURL(file);
+    }
+
+</script>

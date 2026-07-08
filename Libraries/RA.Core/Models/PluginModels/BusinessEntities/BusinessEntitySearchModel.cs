@@ -12,9 +12,10 @@ namespace RA.Core.Models.PluginModels.BusinessEntities
         public BusinessEntitySearchModel()
         {
             BusinessEntities = new BusinessEntityListModel();
+            SearchStatusIds = new List<int>();
         }
         // will add more search parameters/fields for the List
-
+        public List<int> SearchStatusIds { get; set; }
         public BusinessEntityListModel BusinessEntities { get; set; }
     }
 }

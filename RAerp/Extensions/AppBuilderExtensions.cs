@@ -133,6 +133,7 @@ namespace RAerp.Extensions
                     Password = EncryptionHelper.EncryptData("@dm!n123", superAdminKey).Result,
                     CreatedOn = DateTime.Now,
                     AccountStatus = UserAccountStatus.Active,
+                    IsVerified = true,
                     Salt = superAdminKey
                 };
                 erpContext.User.Add(superAdmin);

@@ -14,10 +14,6 @@ namespace RA.Data.Domain.Users
         public string Username { get; set; }
         public string Password { get; set; }
         public string OneTimePIN { get; set; }
-        public Guid? CreatedById { get; set; }
-        public DateTime CreatedOn { get; set; }
-        public DateTime? ModifiedOn { get; set; }
-        public DateTime? DeletedOn { get; set; }
         public DateTime? LastLoginDate { get; set; }
         public DateTime? LastActivityDate { get; set; }
         public DateTime? LastPasswordChangedDate { get; set; }
@@ -29,8 +25,12 @@ namespace RA.Data.Domain.Users
             get { return (UserAccountStatus)AccountStatusId; }
             set { AccountStatusId = (int)value; }
         }
-        public bool Deleted { get; set; }
-        public bool IsVerified { get; set; }
+        public bool? IsVerified { get; set; }
+        public DateTime? OneTimePINValidUntil { get; set; }
+        public int? OneTimePINAttempt { get; set;  }
+        public int? FailedLoginAttempt { get; set; }
+        public int? EmailResendAttempt { get; set; }
+        public bool? IsLoggedOn { get; set; }
         public string Salt { get; set; }
     }
 }

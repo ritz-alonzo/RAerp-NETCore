@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using RA.Data.App_Data;
 using RA.Data.Data;
+using RA.Data.Domain.Application;
 using RA.Data.Domain.Users;
+using RA.WebFramework.Extensions;
 using RAerp.Attributes;
 using RAerp.Controllers.Admin;
 using RAerp.Data.Security;
@@ -17,6 +19,8 @@ using RAerp.Models.UsersModel;
 using RAerp.Security.AccessRights;
 using RAerp.Security.AccessRightsControl;
 using RAerp.Services.AddressServices;
+using RAerp.Services.ApplicationSettingServices;
+using RAerp.Services.EmailServices;
 using RAerp.Services.UserServices;
 using System.Reflection;
 #endregion
@@ -26,6 +30,7 @@ namespace RAErp.Controllers.Users
     [AutoValidateAntiforgeryToken]
     public class UsersController : AdminController
     {
+        #region Constants
         private readonly RAerpContext _erpContext;
         private readonly IUserService _userService;
         private readonly IUserModelFactory _userModelFactory;
@@ -33,14 +38,21 @@ namespace RAErp.Controllers.Users
         private readonly IAccessControl _accessControl;
         private readonly IAddressService _addressService;
         private readonly string _smsAPIKey;
+        private readonly IEmailService _emailService;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _currentApplicationSetting;
+        #endregion
 
+        #region Ctor
         public UsersController(RAerpContext erpContext,
             IUserService userService,
             IUserModelFactory userModelFactory,
             IMapper mapper,
             IAccessControl accessControl,
             IAddressService addressService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IEmailService emailService,
+            IApplicationSettingService applicationSettingService)
         {
             _erpContext = erpContext;
             _userService = userService;
@@ -49,7 +61,11 @@ namespace RAErp.Controllers.Users
             _accessControl = accessControl;
             _addressService = addressService;
             _smsAPIKey = configuration.GetValue<string>("ApiSettings:SMSApiKey");
+            _emailService = emailService;
+            _applicationSettingService = applicationSettingService;
+            _currentApplicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync().Result;
         }
+        #endregion
 
         #region Users CRUD
         //[AccountLoggedOnAuthentication]
@@ -96,6 +112,9 @@ namespace RAErp.Controllers.Users
                 var userSalt = EncryptionHelper.GenerateSalt();
                 // convert model to entity using auto mapper
                 var entity = _mapper.Map<User>(model);
+                entity.Username = await EncryptionHelper.EncryptData(model.Username, userSalt);
+                entity.Email = model.Email != null ? await EncryptionHelper.EncryptData(model.Email, userSalt) : "";
+                entity.ContactNo = model.ContactNo != null ? await EncryptionHelper.EncryptData(model.ContactNo, userSalt) : "";
                 entity.Password = await EncryptionHelper.EncryptData(model.Password, userSalt);
                 entity.Salt = userSalt;
                 entity.AccountStatus = UserAccountStatus.Active;
@@ -145,12 +164,16 @@ namespace RAErp.Controllers.Users
                 else
                 {
                     AdminErrorNotification(model, "Incorrect credentials entered. Please try again");
-                    return View(model);
+                    model.Username = null;
+                    model.Password = null;
+                    return RedirectToAction("Login", model);
                 }
             }
             else
             {
-                return View(model);
+                model.Username = null;
+                model.Password = null;
+                return RedirectToAction("Login", model);
             }
 
         }
@@ -178,21 +201,58 @@ namespace RAErp.Controllers.Users
                 var entity = _mapper.Map(model, new User());
 
                 // Send SMS One Time PIN for verification
-                entity = await SendSMSHelper.SendSMSOTPRequest(entity, _smsAPIKey);
+                //entity = await SendSMSHelper.SendSMSOTPRequest(entity, _smsAPIKey);
+                if (_currentApplicationSetting != null)
+                {
+                    if (_currentApplicationSetting.IsEmailVerificationEnabled)
+                    {
+                        var generatedOTP = SendSMSHelper.GenerateOTP();
+                        // Send One Time PIN in Email
+                        await _emailService.SendEmailAsync(model.Email, "Email Verification",
+                            $"""
+                                <h2>Email Verification</h2>
+                                <p>Please verify your account.</p>
+                                <p>Your Generated OTP is: <b>{generatedOTP}</b></p>
+                                </br>
+                                <p>This OTP will be valid until: <b>{DateTime.UtcNow.AddHours(1).ConvertUTCToLocalDateTime()}</b></p>
+                                </br>
+                                </br>
+                                <p>Please Enter the generated OTP before the expiry, to verify your account.</p>
+                                </br>
+                                <p>Thank You.</p>
+                            """);
+                        entity.OneTimePIN = generatedOTP;
+                        entity.IsVerified = false;
+                        entity.OneTimePINValidUntil = DateTime.UtcNow.AddHours(1);
+                        entity.IsLoggedOn = false;
+                    }
+                    else
+                    {
+                        entity.IsVerified = true; 
+                        entity.IsLoggedOn = true;
+                    }
+                }
 
                 entity.Salt = EncryptionHelper.GenerateSalt();
                 entity.Password = await EncryptionHelper.EncryptData(entity.Password, entity.Salt);
-                entity.Email = await EncryptionHelper.EncryptData(entity.Email, entity.Salt);
-                entity.ContactNo = await EncryptionHelper.EncryptData(entity.ContactNo, entity.Salt);
+                entity.Username = await EncryptionHelper.EncryptData(entity.Username, entity.Salt);
+                entity.Email = model.Email != null ? await EncryptionHelper.EncryptData(model.Email, entity.Salt) : "";
+                entity.ContactNo = model.ContactNo != null ? await EncryptionHelper.EncryptData(model.ContactNo, entity.Salt) : "";
 
                 await _userService.Insert(entity);
 
-                return RedirectToAction("VerifyAccount", new { id = entity.Id });
+                // map to user role
+                await _userService.InsertMapping(entity.Id, model.UserRoleId);
+
+                if (_currentApplicationSetting.IsEmailVerificationEnabled)
+                    return RedirectToAction("VerifyAccount", new { id = entity.Id });
+                else
+                    return RedirectToAction("Profile", new { id = entity.Id });
             }
             else
             {
                 AdminErrorNotification(model, "Failed to create user");
-                return View(model);
+                return RedirectToAction("Create", model);
             }
         }
 
@@ -222,6 +282,12 @@ namespace RAErp.Controllers.Users
                     return NotFound();
                 }
 
+                if (entity.AccountStatus != UserAccountStatus.Pending && entity.IsVerified == true)
+                {
+                    AdminErrorNotification(model, "User already been verified.");
+                    return RedirectToAction("Profile", model);
+                }
+
                 if (string.IsNullOrEmpty(model.OneTimePIN))
                 {
                     AdminErrorNotification(model, "One Time PIN is required");
@@ -230,6 +296,27 @@ namespace RAErp.Controllers.Users
 
                 if (model.OneTimePIN != entity.OneTimePIN)
                 {
+                    // Add configuration settings for allowable attempts for checking here
+                    if (_currentApplicationSetting != null)
+                    {
+                        if (entity.OneTimePINAttempt.GetValueOrDefault() > _currentApplicationSetting.OneTimePINAttemptLimit)
+                        {
+                            AdminErrorNotification(model, "OTP Attempts exceeds limit");
+                            return View(model);
+                        }
+                        else if (entity.EmailResendAttempt > _currentApplicationSetting.EmailVerificationAttemptLimit)
+                        {
+                            AdminErrorNotification(model, "Email verification attempt exceeds limit");
+                            return View(model);
+                        }
+                        else
+                        {
+                            entity.OneTimePINAttempt = entity.OneTimePINAttempt == null ? 1 : entity.OneTimePINAttempt += 1;
+                            AdminErrorNotification(model, "Invalid One Time PIN");
+                            return View(model);
+                        }
+                    }
+                    entity.OneTimePINAttempt = entity.OneTimePINAttempt == null ? 1 : entity.OneTimePINAttempt += 1;
                     AdminErrorNotification(model, "Invalid One Time PIN");
                     return View(model);
                 }
@@ -237,6 +324,9 @@ namespace RAErp.Controllers.Users
                 entity.IsVerified = true;
                 entity.OneTimePIN = null;
                 entity.AccountStatus = UserAccountStatus.Active;
+                entity.OneTimePINValidUntil = null;
+                entity.OneTimePINAttempt = null;
+                entity.EmailResendAttempt = null;
 
                 await _userService.Update(entity);
 
@@ -248,6 +338,55 @@ namespace RAErp.Controllers.Users
                 AdminErrorNotification(model, "Failed to validate user");
                 return View(model);
             }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResendOTPEmail(Guid id)
+        {
+            if (id.IsNullOrEmpty())
+                return NotFound();
+
+            var entity = await _userService.GetById(id);
+            if (entity == null)
+            {
+                // notifies error message
+                return JsonError("User doesn't exists");
+            }
+
+            if (entity.AccountStatus != UserAccountStatus.Pending && entity.IsVerified == true)
+            {
+                return RedirectToAction("Profile", new { id = id });
+            }
+
+            if (_currentApplicationSetting == null)
+                return JsonError("Application Settings not yet configured");
+
+            if (entity.EmailResendAttempt > _currentApplicationSetting.EmailVerificationAttemptLimit)
+            {
+                return RedirectToAction("Verify Account", new { id = id });
+            }
+
+            var generatedOTP = SendSMSHelper.GenerateOTP();
+            entity.OneTimePINValidUntil = DateTime.UtcNow.AddHours(1); 
+            entity.OneTimePIN = generatedOTP;
+            entity.EmailResendAttempt = entity.EmailResendAttempt.GetValueOrDefault() + 1;
+            // Send One Time PIN in Email
+            await _emailService.SendEmailAsync(await EncryptionHelper.DecryptData(entity.Email, entity.Salt), "Email Verification", 
+                $"""
+                <h2>Email Verification</h2>
+                <p>Please verify your account.</p>
+                <p>Your Generated OTP is: <b>{generatedOTP}</b></p>
+                </br>
+                <p>This OTP will be valid until: <b>{entity.OneTimePINValidUntil.GetValueOrDefault().ConvertUTCToLocalDateTime()}</b></p>
+                </br>
+                </br>
+                <p>Please Enter the generated OTP before the expiry, to verify your account.</p>
+                </br>
+                <p>Thank You.</p>
+                """);
+
+            await _userService.Update(entity);
+            return RedirectToAction("VerifyAccount", new { id = id });
         }
 
         public async Task<IActionResult> Profile(Guid id)
@@ -284,7 +423,7 @@ namespace RAErp.Controllers.Users
 
                 entity = _mapper.Map(model, entity);
 
-                entity.ModifiedOn = DateTime.Now;
+                entity.ModifiedOn = DateTime.UtcNow;
                 entity.Password = password;
                 entity.AccountStatus = accountStatus;
                 // need to check if user change role
@@ -315,13 +454,85 @@ namespace RAErp.Controllers.Users
                 AdminErrorNotification(model, "Failed to update User");
             }
 
+            return RedirectToAction("Profile", model);
+        }
+
+        public async Task<IActionResult> ChangePassword(Guid id)
+        {
+            if (id.IsNullOrEmpty())
+                return NotFound();
+
+            var entity = await _userService.GetById(id);
+            if (entity == null)
+                return NotFound();
+
+            var model = await _userModelFactory.PrepareUserModel(new UserModel(), entity);
+
             return View(model);
         }
 
-        // will add functionality here
-        public IActionResult ChangePassword()
+        [HttpPost]
+        public async Task<IActionResult> ChangePassword(UserModel model)
         {
-            return View();
+            if (model.Id.IsNullOrEmpty())
+                return NotFound();
+
+            var entity = await _userService.GetById(model.Id);
+            if (entity == null)
+                return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                bool hasError = false;
+                if (string.IsNullOrEmpty(model.CurrentPassword))
+                {
+                    hasError = true;
+                    AdminErrorNotification(model, "Current password is required");
+                }
+                else if (string.IsNullOrEmpty(model.NewPassword))
+                {
+                    hasError = true;
+                    AdminErrorNotification(model, "New password is required");
+                }
+                else if (string.IsNullOrEmpty(model.ConfirmNewPassword))
+                {
+                    hasError = true;
+                    AdminErrorNotification(model, "Confirm new password is required");
+                }
+                else if (entity.Password != model.CurrentPassword)
+                {
+                    hasError = true;
+                    AdminErrorNotification(model, "Current password is incorrect");
+                }
+                else if (entity.Password == model.NewPassword)
+                {
+                    hasError = true;
+                    AdminErrorNotification(model, "New password must be different from current password");
+                }
+                else if (model.NewPassword != model.ConfirmNewPassword)
+                {
+                    hasError = true;
+                    AdminErrorNotification(model, "New password and confirm new password do not match");
+                }
+
+                if (!hasError)
+                {
+                    entity.Password = await EncryptionHelper.EncryptData(model.NewPassword, entity.Salt);
+                    entity.ModifiedOn = DateTime.UtcNow;
+                    entity.LastPasswordChangedDate = DateTime.UtcNow;
+                    await _userService.Update(entity);
+                    AdminSuccessNotification(model, "Successfully updated password");
+
+                    return RedirectToAction("Profile", model);
+                }
+
+                return RedirectToAction("ChangePassword", model);
+            }
+            else
+            {
+                AdminErrorNotification(model, "Failed to update password");
+                return RedirectToAction("ChangePassword", model);
+            }
         }
 
         #endregion

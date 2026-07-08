@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using RA.Catalogs.Services;
 using RA.Core.Helpers;
+using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.OrdersManagement.Carts;
 using RA.Core.Models.PluginModels.OrdersManagement.Payments;
 using RA.Core.PluginData.EntityTypes.Catalogs;
@@ -10,6 +11,7 @@ using RA.FormTypes.Services;
 using RA.OrdersManagement.Data;
 using RA.OrdersManagement.Domain.Payments;
 using RA.OrdersManagement.Services.Payments;
+using RA.WebFramework.Extensions;
 using RAerp.Helpers.UserHelper;
 using RAerp.Security.AccessRightsControl;
 using System;
@@ -85,7 +87,10 @@ namespace RA.OrdersManagement.Factories.Payments
                 searchPaymentDate: searchModel.SearchPaymentDate,
                 paymentStatusIds: searchModel.SearchPaymentStatusId > 0 ? new List<int> { searchModel.SearchStatusId } : null,
                 searchCreatedDate: searchModel.SearchCreatedOn,
-                formStatusIds: searchModel.SearchStatusId > 0 ? new List<int> { searchModel.SearchStatusId } : null);
+                formStatusIds: searchModel.SearchStatusId > 0 ? new List<int> { searchModel.SearchStatusId } : null,
+                pageNumber: searchModel.PageNumber,
+                pageSize: searchModel.PageSize
+                );
 
             paymentModelList = paymentList.Select(payment =>
             {
@@ -95,7 +100,8 @@ namespace RA.OrdersManagement.Factories.Payments
                 var createdByUser = _userIdentity.GetUserDetailsAsync(payment.CreatedById).Result;
                 if (createdByUser != null)
                     paymentModel.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(createdByUser);
-
+                paymentModel.CreatedOn = paymentModel.CreatedOn.ConvertUTCToLocalDateTime();
+                paymentModel.ModifiedOn = paymentModel.ModifiedOn.HasValue ? paymentModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
                 return paymentModel;
 
             }).ToList();
@@ -142,7 +148,8 @@ namespace RA.OrdersManagement.Factories.Payments
             {
                 PaymentItemModel paymentItemModel = new PaymentItemModel();
                 paymentItemModel = _mapper.Map(formItem, paymentItemModel);
-
+                paymentItemModel.CreatedOn = paymentItemModel.CreatedOn.ConvertUTCToLocalDateTime();
+                paymentItemModel.ModifiedOn = paymentItemModel.ModifiedOn.HasValue ? paymentItemModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
                 return paymentItemModel;
 
             }).ToList();

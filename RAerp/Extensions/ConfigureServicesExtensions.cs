@@ -1,23 +1,33 @@
-﻿using FluentMigrator.Runner;
+﻿using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
+using FluentMigrator.Runner;
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using RA.Data.App_Data;
 using RAerp.Factories.AccessRightsFactory;
+using RAerp.Factories.ApplicationSettingFactory;
 using RAerp.Factories.CoreFactories;
 using RAerp.Factories.UserFactory;
 using RAerp.Helpers.HtmlHelper;
 using RAerp.Helpers.PluginHelper;
 using RAerp.Helpers.UserHelper;
 using RAerp.Mapping;
+using RAerp.Models.ApplicationSettingsModel;
+using RAerp.Models.EmailModel;
 using RAerp.PluginServiceProvider;
 using RAerp.Security.AccessRightsControl;
 using RAerp.Services.AccessRightsServices;
 using RAerp.Services.AddressServices;
 using RAerp.Services.ApplicationServices;
+using RAerp.Services.ApplicationSettingServices;
 using RAerp.Services.Configurations;
 using RAerp.Services.DataChangeServices;
+using RAerp.Services.EmailServices;
+using RAerp.Services.FileServices;
 using RAerp.Services.PluginNavigationServices;
 using RAerp.Services.UserServices;
+using RAerp.Validators;
 using System.Reflection;
 
 namespace RAerp.Extensions
@@ -48,6 +58,27 @@ namespace RAerp.Extensions
         {
             services.AddDbContext<RAerpContext>(options =>
                     options.UseSqlServer(configuration.GetConnectionString("CurrentConnection")));
+
+            EnsureDatabaseExists(configuration.GetConnectionString("CurrentConnection"));
+        }
+
+        static void EnsureDatabaseExists(string connectionString)
+        {
+            var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connectionString);
+            var databaseName = builder.InitialCatalog;
+            builder.InitialCatalog = "master";
+
+            using var connection = new Microsoft.Data.SqlClient.SqlConnection(builder.ConnectionString);
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = $"""
+                IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'{databaseName}')
+                BEGIN
+                    CREATE DATABASE [{databaseName}];
+                END
+                """;
+            command.ExecuteNonQuery();
         }
 
         public static void RegisterDependencyLifetime(this IServiceCollection services)
@@ -61,6 +92,7 @@ namespace RAerp.Extensions
             services.AddTransient<IApplicationService, ApplicationService>();
             services.AddTransient<IAddressService, AddressService>();
             services.AddTransient<IDataChangeService, DataChangeService>();
+
             // navigation service
             services.AddTransient<INavigationService, NavigationService>();
             // settings
@@ -72,6 +104,12 @@ namespace RAerp.Extensions
             services.AddTransient<IAccessRightsModelFactory, AccessRightsModelFactory>();
             // core helpers
             services.AddTransient<IModelAttributeHelper, ModelAttributeHelper>();
+            // Application Settings
+            services.AddScoped<IApplicationSettingService, ApplicationSettingService>();
+            services.AddScoped<IApplicationSettingModelFactory, ApplicationSettingModelFactory>();
+            services.AddScoped<IValidator<ApplicationSettingModel>, ApplicationSettingValidator>();
+            // Main Services
+            services.AddTransient<IFileService, FileService>();
         }
 
         public static void RegisterFluentValidators(this IServiceCollection services)
@@ -98,6 +136,26 @@ namespace RAerp.Extensions
             services.AddSession();
             services.AddMvc();
             services.AddRazorPages();
+            // API Versioning configuration
+            services.AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+
+                // Choose versioning strategy
+                options.ApiVersionReader = ApiVersionReader.Combine(
+                    new UrlSegmentApiVersionReader(),
+                    new QueryStringApiVersionReader("version"),
+                    new HeaderApiVersionReader("x-api-version")
+                );
+            })
+            .AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV"; // v1, v2
+                options.SubstituteApiVersionInUrl = true;
+            });
+
             // webservice endpoint api
             services.AddSwaggerGen();
         }
@@ -159,6 +217,12 @@ namespace RAerp.Extensions
             //        }
             //    }
             //}
+        }
+
+        public static void RegisterEmailConfiguration(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
+            services.AddTransient<IEmailService, EmailService>();
         }
     }
 }

@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<OutputPath>..\..\..\..\RAerp\Plugins\RA.Discounts</OutputPath>
+		<OutDir>$(OutputPath)</OutDir>
+		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+		<!-- Compile views into the plugin's own assembly -->
+		<RazorCompileOnBuild>true</RazorCompileOnBuild>
+		<RazorCompileOnPublish>true</RazorCompileOnPublish>
+		<!-- Prevent duplicate/leaking of shared static-web-asset manifests across plugins -->
+		<GenerateStaticWebAssetsManifest>false</GenerateStaticWebAssetsManifest>
+		<EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+	</PropertyGroup>
+  <ItemGroup>
+	  <ProjectReference Include="..\..\..\..\CoreModules\RA.EntityTypes\RA.EntityTypes.csproj">
+		  <Private>False</Private>
+		  <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+		  <CopyLocal>False</CopyLocal>
+	  </ProjectReference>
+	  <ProjectReference Include="..\..\..\..\RAerp\RAerp.csproj">
+		  <Private>False</Private>
+		  <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+		  <CopyLocal>False</CopyLocal>
+	  </ProjectReference>
+	  <ProjectReference Include="..\..\RA.Catalogs\RA.Catalogs.csproj">
+		  <Private>False</Private>
+		  <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+		  <CopyLocal>False</CopyLocal>
+	  </ProjectReference>
+  </ItemGroup>
+
+</Project>

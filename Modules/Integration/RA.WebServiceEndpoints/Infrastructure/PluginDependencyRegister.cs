@@ -13,6 +13,7 @@ using RA.WebServiceEndpoints.Controllers;
 using RA.WebServiceEndpoints.Factories;
 using RA.WebServiceEndpoints.Mapping;
 using RA.WebServiceEndpoints.Services;
+using RA.WebServiceEndpoints.Services.RefreshTokenServices;
 using RAerp.PluginServiceProvider;
 using System;
 using System.Collections.Generic;
@@ -38,6 +39,7 @@ namespace RA.WebServiceEndpoints.Infrastructure
             //    .AddApplicationPart(typeof(WebServiceEndpointsAPIController).Assembly);
             // service
             services.AddTransient<IWebServiceEndpointService, WebServiceEndpointService>();
+            services.AddTransient<IRefreshTokenService, RefreshTokenService>();
             // factory
             services.AddTransient<IWebServiceEndpointModelFactory, WebServiceEndpointModelFactory>();
             // automapper profile

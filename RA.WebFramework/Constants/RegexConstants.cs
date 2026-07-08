@@ -8,6 +8,6 @@ namespace RA.WebFramework.Constants
 {
     public static class RegexConstants
     {
-        public const string EntityNameRegex = "^([A-Za-z0-9]+ )+[A-Za-z]+$|^[A-Za-z]+$";
+        public const string EntityNameRegex = "^([A-Za-z0-9]+ )+[A-Za-z]+$|^[A-Za-z0-9]+$";
     }
 }

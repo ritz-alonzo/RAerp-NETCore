@@ -48,6 +48,16 @@ namespace MMS.Factories.Factories.EntityTypeFactory
                     throw new Exception(EntityTypeMessages.EntityTypeNotExists);
 
                 model = _mapper.Map(entityType, model);
+
+                if (model.InstalledOn != DateTime.MinValue)
+                {
+                    model.InstalledOn = model.InstalledOn.ConvertUTCToLocalDateTime();
+                }
+
+                if (model.UnInstalledOn.HasValue)
+                {
+                    model.UnInstalledOn = model.UnInstalledOn.ConvertUTCToLocalDateTime();
+                }
             }
             // child entity type creation
             else
@@ -104,7 +114,8 @@ namespace MMS.Factories.Factories.EntityTypeFactory
                 entityTypeModel.ModalConfigureEnabled = UseModalConfiguration(entityType.Id);
                 entityTypeModel.PluginController = GeneratePluginControllerString(entityType, entityTypeModel.ModalConfigureEnabled);
                 entityTypeModel.PluginConfigurationUrl = GetPluginConfigurationUrl(entityTypeModel.PluginController, entityTypeModel.ModalConfigureEnabled);
-
+                entityTypeModel.InstalledOn = entityTypeModel.InstalledOn != DateTime.MinValue ? entityTypeModel.InstalledOn.ConvertUTCToLocalDateTime() : DateTime.MinValue.ConvertUTCToLocalDateTime();
+                entityTypeModel.UnInstalledOn = entityTypeModel.UnInstalledOn.HasValue ? entityTypeModel.UnInstalledOn.ConvertUTCToLocalDateTime() : null;
                 return entityTypeModel;
 
             }).ToList();
@@ -134,6 +145,8 @@ namespace MMS.Factories.Factories.EntityTypeFactory
                 entityTypeModel.ModalConfigureEnabled = UseModalConfiguration(entityType.Id);
                 entityTypeModel.PluginController = GeneratePluginControllerString(entityType, entityTypeModel.ModalConfigureEnabled);
                 entityTypeModel.PluginConfigurationUrl = GetPluginConfigurationUrl(entityTypeModel.PluginController, entityTypeModel.ModalConfigureEnabled);
+                entityTypeModel.InstalledOn = entityTypeModel.InstalledOn != DateTime.MinValue ? entityTypeModel.InstalledOn.ConvertUTCToLocalDateTime() : DateTime.MinValue.ConvertUTCToLocalDateTime();
+                entityTypeModel.UnInstalledOn = entityTypeModel.UnInstalledOn.HasValue ? entityTypeModel.UnInstalledOn.ConvertUTCToLocalDateTime() : null;
 
                 return entityTypeModel;
 

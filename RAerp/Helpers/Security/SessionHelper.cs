@@ -32,13 +32,16 @@ namespace RAerp.Helpers.Security
 
         public static string RetrieveUserSession(HttpContext httpContext)
         {
+            var userSessionToken = "";
             var token = httpContext.Session.GetString("raerpToken");
             var tokenKey = httpContext.Session.GetString("raerpTokenKey");
 
-            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(tokenKey))
-                throw new ArgumentNullException("Cannot retrieve Session");
+            if (!string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(tokenKey))
+            {
+                userSessionToken = EncryptionHelper.DecryptData(token, tokenKey).Result.ToString();
+            }
 
-            return EncryptionHelper.DecryptData(token, tokenKey).Result.ToString();
+            return userSessionToken;
         }
 
         public static bool SessionGenerated(HttpContext httpContext)

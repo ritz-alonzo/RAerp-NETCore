@@ -7,6 +7,8 @@ namespace RA.OrdersManagement.Services.Payments
 {
     public interface IPaymentService : IFormItemService<Payment, PaymentItem, PaymentSetting, RAOrderManagementContext>
     {
-        Task<IEnumerable<Payment>> GetPaymentListAsync(string searchQuery = null, string searchPaymentRefNbr = null, string searchPaymentOrderNbr = null, DateTime? searchPaymentDate = null, DateTime? searchCreatedDate = null, List<int> paymentStatusIds = null, List<int> formStatusIds = null, bool showDeleted = false);
+        Task<IEnumerable<Payment>> GetPaymentListAsync(string searchQuery = null, string searchPaymentRefNbr = null, string searchPaymentOrderNbr = null, DateTime? searchPaymentDate = null, DateTime? searchCreatedDate = null, List<int> paymentStatusIds = null, List<int> formStatusIds = null, bool showDeleted = false,
+            int? pageNumber = 0,
+            int? pageSize = int.MaxValue);
     }
 }

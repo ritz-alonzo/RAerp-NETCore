@@ -70,7 +70,7 @@ namespace RA.OrdersManagement.Controllers.Carts
 
             var cartConfigureModel = await _cartModelFactory.PrepareCartConfigureModelAsync(systemName);
 
-            return View("~/Plugins/RA.OrdersManagement/Views/Carts/Configuration.cshtml", cartConfigureModel);
+            return View(cartConfigureModel);
         }
 
         [HttpPost]
@@ -107,7 +107,7 @@ namespace RA.OrdersManagement.Controllers.Carts
 
             var model = await _cartModelFactory.PrepareCartSearchModelAsync(new CartSearchModel(), _cartSettings.ItemsPageSize, page);
 
-            return View("~/Plugins/RA.OrdersManagement/Views/Carts/List.cshtml", model);
+            return View(model);
         }
 
         [HttpGet]
@@ -124,7 +124,7 @@ namespace RA.OrdersManagement.Controllers.Carts
 
             var model = await _cartModelFactory.PrepareCartListModelAsync(searchModel);
 
-            return PartialView("~/Plugins/RA.OrdersManagement/Views/Cart/_CartListSearch.cshtml", model);
+            return PartialView(model);
         }
 
         public async Task<IActionResult> Index(Guid formId)
@@ -147,7 +147,7 @@ namespace RA.OrdersManagement.Controllers.Carts
 
             var model = await _cartModelFactory.PrepareCartModelAsync(new CartModel(), cartForm);
 
-            return View("~/Plugins/RA.OrdersManagement/Views/Carts/Index.cshtml", model);
+            return View(model);
         }
 
         public async Task<IActionResult> Create()
@@ -163,7 +163,7 @@ namespace RA.OrdersManagement.Controllers.Carts
 
             var model = await _cartModelFactory.PrepareCartModelAsync(new CartModel(), null);
 
-            return View("~/Plugins/RA.OrdersManagement/Views/Carts/Create.cshtml", model);
+            return View(model);
         }
 
         [HttpPost]
@@ -303,7 +303,7 @@ namespace RA.OrdersManagement.Controllers.Carts
 
             var itemModel = await _cartModelFactory.PrepareCartItemListModelAsync(cartModel, page);
 
-            return PartialView("~/Plugins/RA.OrdersManagement/Views/Carts/_CreateAndEdit.Items.cshtml", itemModel);
+            return PartialView("/Views/Carts/_CreateAndEdit.Items.cshtml", itemModel);
         }
 
         public async Task<IActionResult> InsertItem(Guid formId, List<Guid> catalogIds)
@@ -334,7 +334,7 @@ namespace RA.OrdersManagement.Controllers.Carts
                 cartItem.Qty = 0m;
                 cartItem.Price = catalog.Price;
                 cartItem.CreatedById = (await _userIdentity.GetCurrentUserAsync(HttpContext)).Id;
-                cartItem.CreatedOn = DateTime.Now;
+                cartItem.CreatedOn = DateTime.UtcNow;
 
                 await _cartService.InsertTempItemAsync(cartItem, DataChangeStatus.Insert);
             }

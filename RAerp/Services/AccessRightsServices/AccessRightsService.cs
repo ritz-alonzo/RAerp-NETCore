@@ -31,21 +31,21 @@ namespace RAerp.Services.AccessRightsServices
 
         public async Task Insert(AccessRights accessRights)
         {
-            accessRights.CreatedOn = DateTime.Now;
+            accessRights.CreatedOn = DateTime.UtcNow;
             await _erpContext.AccessRights.AddAsync(accessRights);
             await _erpContext.SaveChangesAsync();
         }
 
         public async Task Update(AccessRights accessRights)
         {
-            accessRights.ModifiedOn = DateTime.Now;
+            accessRights.ModifiedOn = DateTime.UtcNow;
             _erpContext.AccessRights.Update(accessRights);
             await _erpContext.SaveChangesAsync();
         }
 
         public async Task Delete(AccessRights accessRights)
         {
-            accessRights.DeletedOn = DateTime.Now;
+            accessRights.DeletedOn = DateTime.UtcNow;
             accessRights.Deleted = true;
             _erpContext.AccessRights.Update(accessRights);
             await _erpContext.SaveChangesAsync();

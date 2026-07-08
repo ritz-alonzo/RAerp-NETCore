@@ -246,12 +246,30 @@
                                                             }
                                                             else
                                                             {
-                                                                // for now text only
-                                                                <td class="@dataAlignment">
-                                                                    @columnDefinition.ColumnSelectList.FirstOrDefault(c => c.Value == data.Value).Text.ToString()
-                                                                    <input type="hidden" name="@columnDefinition.RecordData" id="@columnDefinition.RecordData" value="@data.Value" />
-                                                                </td>
+                                                                if (!string.IsNullOrEmpty(data.Value))
+                                                                {
+                                                                    // for now text only
+                                                                    <td class="@dataAlignment">
+                                                                        @columnDefinition.ColumnSelectList.FirstOrDefault(c => c.Value == data.Value).Text.ToString()
+                                                                        <input type="hidden" name="@columnDefinition.RecordData" id="@columnDefinition.RecordData" value="@data.Value" />
+                                                                    </td>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <td class="@dataAlignment">
+                                                                        <input type="hidden" name="@columnDefinition.RecordData" id="@columnDefinition.RecordData" value="@data.Value" />
+                                                                    </td>
+                                                                }
                                                             }
+                                                        }
+                                                        break;
+
+                                                    case ControlType.Image:
+                                                        if (!string.IsNullOrEmpty(Model.UrlController) && (rowDataId != Guid.Empty))
+                                                        {
+                                                            <td class="@dataAlignment">
+                                                                <img src="@data.Value" alt="Image" width="100" />
+                                                            </td>
                                                         }
                                                         break;
                                                 }

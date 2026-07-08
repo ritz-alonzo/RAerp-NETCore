@@ -46,7 +46,10 @@ namespace RA.WebServiceEndpoints.Services
                 c.EndpointDomain.ToLower().Contains(searchQuery.ToLower()));
 
             if (createdOn.HasValue)
-                query = query.Where(c => c.CreatedOn >= createdOn.Value);
+            {
+                createdOn = createdOn.ConvertUTCToLocalDateTime();
+                query = query.Where(c => c.CreatedOn.ConvertToUTC() >= createdOn.Value);
+            }
 
             query = query.OrderBy(c => c.CreatedOn);
 
@@ -55,21 +58,21 @@ namespace RA.WebServiceEndpoints.Services
 
         public virtual async Task Insert(WebServiceEndpoint endpoint)
         {
-            endpoint.CreatedOn = DateTime.Now;
+            endpoint.CreatedOn = DateTime.UtcNow;
             await _webServiceEndpoint.AddAsync(endpoint);
             await _context.SaveChangesAsync();
         }
 
         public virtual async Task Update(WebServiceEndpoint endpoint)
         {
-            endpoint.ModifiedOn = DateTime.Now;
+            endpoint.ModifiedOn = DateTime.UtcNow;
             _webServiceEndpoint.Update(endpoint);
             await _context.SaveChangesAsync();
         }
 
         public virtual async Task Delete(WebServiceEndpoint endpoint)
         {
-            endpoint.DeletedOn = DateTime.Now;
+            endpoint.DeletedOn = DateTime.UtcNow;
             endpoint.Deleted = true;
             _webServiceEndpoint.Update(endpoint);
             await _context.SaveChangesAsync();

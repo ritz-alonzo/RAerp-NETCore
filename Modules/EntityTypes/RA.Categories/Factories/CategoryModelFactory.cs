@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using RA.Categories.Data;
 using RA.Categories.Domain;
 using RA.Categories.Services;
+using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.Categories;
 using RA.Core.PluginData.EntityTypes.Categories;
 using RA.EntityTypes.Factories;
@@ -84,13 +85,16 @@ namespace RA.Categories.Factories
 
             var categoryModelList = new List<CategoryModel>();
 
-            categoryModelList = categoryList.Select(businesEntity =>
+            categoryModelList = categoryList.Select(category =>
             {
                 var categoryModel = new CategoryModel();
-                categoryModel = _mapper.Map(businesEntity, categoryModel);
-                var createdByUser = _userIdentity.GetUserDetailsAsync(businesEntity.CreatedById).Result;
+                categoryModel = _mapper.Map(category, categoryModel);
+                var createdByUser = _userIdentity.GetUserDetailsAsync(category.CreatedById).Result;
                 if (createdByUser != null)
                     categoryModel.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(createdByUser);
+
+                categoryModel.CreatedOn = categoryModel.CreatedOn.ConvertUTCToLocalDateTime();
+                categoryModel.ModifiedOn = categoryModel.ModifiedOn.HasValue ? categoryModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
 
                 return categoryModel;
 
@@ -120,7 +124,7 @@ namespace RA.Categories.Factories
                 category = new Category();
 
                 categoryModel.Status = CategoryStatus.Active;
-                categoryModel.CreatedOn = DateTime.Now;
+                categoryModel.CreatedOn = DateTime.UtcNow;
                 categoryModel.Code = "NEW";
             }
             else
@@ -132,7 +136,12 @@ namespace RA.Categories.Factories
             category.EntitySystemName = categoryType.EntitySystemName;
             // settings
             var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<Category, CategorySetting>(entityTypeId);
+            
+            if (categoryModel.CreatedOn != DateTime.MinValue)
+                categoryModel.CreatedOn = categoryModel.CreatedOn.ConvertUTCToLocalDateTime();
 
+            if (categoryModel.ModifiedOn.HasValue)
+                categoryModel.ModifiedOn = categoryModel.ModifiedOn.ConvertUTCToLocalDateTime();
             // base model mapping
             categoryModel = await _baseEntityModelFactory.PrepareBaseEntityModelAsync<CategoryModel, Category, CategorySetting>(categoryModel, category, settings);
 

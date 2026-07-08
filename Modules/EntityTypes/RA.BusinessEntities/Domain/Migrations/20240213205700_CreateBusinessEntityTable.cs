@@ -27,7 +27,8 @@ namespace RA.EntityTypes.Domain.Migrations
                 .WithColumn(nameof(BusinessEntity.Deleted)).AsBoolean()
                 .WithColumn(nameof(BusinessEntity.StatusId)).AsInt32()
                 .WithColumn(nameof(BusinessEntity.CategoryId)).AsGuid().Nullable()
-                .WithColumn(nameof(BusinessEntity.AddressId)).AsGuid().Nullable();
+                .WithColumn(nameof(BusinessEntity.AddressId)).AsGuid().Nullable()
+                .WithColumn(nameof(BusinessEntity.UserId)).AsGuid().Nullable();
         }
         public override void Down()
         {

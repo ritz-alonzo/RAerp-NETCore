@@ -16,6 +16,7 @@ namespace RA.WebServiceEndpoints.App_Data
         }
 
         public DbSet<WebServiceEndpoint> WebServiceEndpoint { get; set; }
+        public DbSet<RefreshToken> RefreshToken { get; set; }
 
         #region Overrides
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

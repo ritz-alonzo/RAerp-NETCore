@@ -7,6 +7,7 @@ using RA.Catalogs.Domain;
 using RA.Catalogs.Services;
 using RA.Categories.Services;
 using RA.Core.Helpers;
+using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.Catalogs;
 using RA.Core.Models.PluginModels.OrdersManagement.Orders;
 using RA.Core.PluginData.EntityTypes.Catalogs;
@@ -97,7 +98,10 @@ namespace RA.OrdersManagement.Factories.Orders
                 searchServiceIds: searchModel.SearchServiceId.HasValue ? new List<Guid> { searchModel.SearchServiceId.Value } : null,
                 searchOrderDate: searchModel.SearchOrderDate,
                 searchCreatedDate: searchModel.SearchCreatedOn,
-                formStatusIds: searchModel.SearchStatusId > 0 ? new List<int> { searchModel.SearchStatusId } : null);
+                formStatusIds: searchModel.SearchStatusId > 0 ? new List<int> { searchModel.SearchStatusId } : null, 
+                pageNumber: searchModel.PageNumber, 
+                pageSize: searchModel.PageSize
+                );
 
             List<SelectListItem> availableServices = new List<SelectListItem>();
             if (_orderSettings != null)
@@ -115,6 +119,12 @@ namespace RA.OrdersManagement.Factories.Orders
                 if (createdByUser != null)
                     orderModel.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(createdByUser);
                 orderModel.AvailableServices = availableServices;
+
+                if (orderModel.CreatedOn != DateTime.MinValue)
+                    orderModel.CreatedOn = orderModel.CreatedOn.ConvertUTCToLocalDateTime();
+
+                if (orderModel.ModifiedOn.HasValue)
+                    orderModel.ModifiedOn = orderModel.ModifiedOn.ConvertUTCToLocalDateTime();
 
                 return orderModel;
 
@@ -134,6 +144,7 @@ namespace RA.OrdersManagement.Factories.Orders
             {
                 orderForm = _orderService.CreateTempForm();
                 orderModel.IsNewDoc = true;
+                orderModel.Status = Core.PluginData.FormTypes.FormStatus.Pending;
             }
 
             orderModel = _mapper.Map(orderForm, orderModel);
@@ -144,6 +155,10 @@ namespace RA.OrdersManagement.Factories.Orders
             {
                 if (_orderSettings.MappedServiceTypeIds.Any())
                     orderModel.AvailableServices = await _catalogService.GetCatalogsSelectListAsync(_orderSettings.MappedServiceTypeIds, (int)CatalogType.Service);
+
+                if (_orderSettings.OpenDocOnCreate && orderModel.IsNewDoc)
+                    orderModel.Status = Core.PluginData.FormTypes.FormStatus.Open;
+            
             }
 
             orderModel.Items = await PrepareOrderItemListModelAsync(orderModel, 1);
@@ -196,6 +211,9 @@ namespace RA.OrdersManagement.Factories.Orders
                         }
                     }
                 }
+
+                orderItemModel.CreatedOn = orderItemModel.CreatedOn.ConvertUTCToLocalDateTime();
+                orderItemModel.ModifiedOn = orderItemModel.ModifiedOn.HasValue ? orderItemModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
 
                 return orderItemModel;
 

@@ -54,7 +54,7 @@ namespace RA.EntityTypes.Services
             bool showAllChildEntities = false,
             Guid? parentEntityTypeId = null)
         {
-            var query = _erpContext.EntityType.AsQueryable();
+            var query = _erpContext.EntityType.AsEnumerable();
 
             if (!string.IsNullOrEmpty(searchQuery))
                 query = query.Where(c =>
@@ -65,7 +65,10 @@ namespace RA.EntityTypes.Services
                 query = query.Where(c => c.EntityClassificationName.Contains(entityClassificationName, StringComparison.InvariantCultureIgnoreCase));
 
             if (createdOn.HasValue)
-                query = query.Where(c => c.InstalledOn >= createdOn.Value);
+            {
+                createdOn = createdOn.ConvertToUTC();
+                query = query.Where(c => c.InstalledOn.ConvertToUTC() >= createdOn.Value);
+            }
 
             if (showAllChildEntities)
                 query = query.Where(c => c.ParentEntityTypeId.HasValue);
@@ -75,14 +78,14 @@ namespace RA.EntityTypes.Services
             if (parentEntityTypeId.IsNotNullOrEmpty())
                 query = query.Where(c => c.ParentEntityTypeId == parentEntityTypeId);
 
-            query = query.OrderBy(c => c.InstalledOn);
+            query = query.Where(c => c.Installed).OrderBy(c => c.InstalledOn);
 
-            return await query.ToListAsync();
+            return query.ToList();
         }
 
         public virtual async Task InsertAsync(EntityType entityType)
         {
-            entityType.InstalledOn = DateTime.Now;
+            entityType.InstalledOn = DateTime.UtcNow;
             await _erpContext.AddAsync(entityType);
             await _erpContext.SaveChangesAsync();
         }
@@ -95,14 +98,14 @@ namespace RA.EntityTypes.Services
 
         public virtual async Task<IEnumerable<EntityType>> GetChildEntitiesAsync(Guid parentTypeId)
         {
-            var query = _erpContext.EntityType.AsQueryable();
+            var query = _erpContext.EntityType.AsEnumerable();
 
             if (parentTypeId.IsNullOrEmpty())
                 throw new Exception("Parent type id cannot be null");
 
             query = query.Where(c => c.ParentEntityTypeId.HasValue && c.ParentEntityTypeId == parentTypeId).OrderBy(c => c.InstalledOn);
 
-            return await query.ToListAsync();
+            return query.ToList();
         }
 
         public virtual async Task<EntityType> GetParentEntityTypeByChildEntityTypeIdAsync(Guid childEntityTypeId)
@@ -167,7 +170,7 @@ namespace RA.EntityTypes.Services
                 SystemName = entitySystemName,
                 EntityTypeId = entityTypeId,
                 Data = "{}",
-                CreatedOn = DateTime.Now,
+                CreatedOn = DateTime.UtcNow,
             };
             await _erpContext.Setting.AddAsync(setting);
             await _erpContext.SaveChangesAsync();
@@ -189,7 +192,7 @@ namespace RA.EntityTypes.Services
             if (setting != null)
             {
                 setting.Data = settingData;
-                setting.ModifiedOn = DateTime.Now;
+                setting.ModifiedOn = DateTime.UtcNow;
             }
             else
             {
@@ -278,6 +281,37 @@ namespace RA.EntityTypes.Services
         public virtual async Task<List<SelectListItem>> GetEntityTypesSelectListAsync()
         {
             var entityTypeList = await GetListAsync(showAllChildEntities: true);
+
+            var entityTypeSelectList = new List<SelectListItem>
+            {
+                // show default
+                new SelectListItem()
+                {
+                    Value = Guid.Empty.ToString(),
+                    Text = "None"
+                }
+            };
+
+            foreach (var entityType in entityTypeList)
+            {
+                var parentEntity = await GetByIdAsync(entityType.ParentEntityTypeId.Value);
+                var entitySelectListText = entityType.EntityName;
+                if (parentEntity != null)
+                    entitySelectListText = entitySelectListText + " - " + parentEntity.EntityName;
+
+                entityTypeSelectList.Add(new SelectListItem()
+                {
+                    Value = entityType.Id.ToString(),
+                    Text = entitySelectListText
+                });
+            }
+
+            return entityTypeSelectList;
+        }
+
+        public virtual async Task<List<SelectListItem>> GetEntityTypesSelectListAsync(string systemName)
+        {
+            var entityTypeList = await GetListAsync(searchQuery: systemName, showAllChildEntities: true);
 
             var entityTypeSelectList = new List<SelectListItem>
             {

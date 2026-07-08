@@ -31,7 +31,6 @@ namespace RA.OrdersManagement.Infrastructure
             var orderManagementNode = new PluginNode();
             orderManagementNode.MenuTitle = "Order Management";
             orderManagementNode.SystemName = "RA.OrdersManagement";
-            orderManagementNode.Url = "/WebServiceEndpoints/List";
             orderManagementNode.IconClass = "fas fa-shipping-fast";
             orderManagementNode.Visible = await _accessControl.HasSuperAdminAccessAsync();
             orderManagementNode.DisplayOrder = 4;

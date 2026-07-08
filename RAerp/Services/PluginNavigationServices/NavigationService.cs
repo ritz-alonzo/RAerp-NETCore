@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using RA.Data.Domain.AccessRightControl;
 using RAerp.Security.AccessRightsControl;
+using RA.Data.Domain.Application;
 
 namespace RAerp.Services.PluginNavigationServices
 {
@@ -49,7 +50,6 @@ namespace RAerp.Services.PluginNavigationServices
             var userNode = new PluginNode();
             userNode.MenuTitle = "Users";
             userNode.SystemName = typeof(User).FullName;
-            userNode.Url = "/Users/List";
             userNode.IconClass = "fa fa-users";
             userNode.Visible = await _accessControl.HasSuperAdminAccessAsync();
             userNode.DisplayOrder = 2;
@@ -57,19 +57,42 @@ namespace RAerp.Services.PluginNavigationServices
 
             if (userNode.Visible)
             {
+                // add users
+                userNode.RelatedNodes.Add(new PluginNode
+                {
+                    MenuTitle = "Users",
+                    SystemName = typeof(User).FullName,
+                    Url = "/Users/List",
+                    DisplayOrder = 1,
+                    Visible = true,
+                    IconClass = "fa fa-users"
+                });
                 // add user role
                 userNode.RelatedNodes.Add(new PluginNode
                 {
                     MenuTitle = "User Roles",
                     SystemName = typeof(UserRole).FullName,
                     Url = "/Users/UserRoleList",
-                    DisplayOrder = 1,
+                    DisplayOrder = 2,
                     Visible = true,
                     IconClass = "fa fa-users"
                 });
             }
 
             adminNodes.Add(userNode);
+            #endregion
+
+            #region Application Settings Node
+            var applicationSettingsNode = new PluginNode();
+            applicationSettingsNode.MenuTitle = "Application Settings";
+            applicationSettingsNode.SystemName = typeof(ApplicationSetting).FullName;
+            applicationSettingsNode.Url = "/ApplicationSettings/Index";
+            applicationSettingsNode.IconClass = "fa fa-cogs";
+            applicationSettingsNode.Visible = await _accessControl.HasSuperAdminAccessAsync();
+            applicationSettingsNode.DisplayOrder = 3;
+            applicationSettingsNode.IsParentNode = true;
+
+            adminNodes.Add(applicationSettingsNode);
             #endregion
 
             #region Core Modules

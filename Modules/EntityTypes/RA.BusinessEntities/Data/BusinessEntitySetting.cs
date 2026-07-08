@@ -13,6 +13,7 @@ namespace RA.BusinessEntities.Data
         {
             MappedCategoryIds = new List<Guid>();
         }
+        public bool IsUserMappingEnabled { get; set; }
         public List<Guid> MappedCategoryIds { get; set; }
     }
 }

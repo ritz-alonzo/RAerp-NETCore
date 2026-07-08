@@ -1,13 +1,31 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
 	<OutputPath>..\..\RAerp\Plugins\RA.EntityTypes</OutputPath>
 	<OutDir>$(OutputPath)</OutDir>
+	<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+
+	  <!-- Compile views into the plugin's own assembly --> 
+	<RazorCompileOnBuild>true</RazorCompileOnBuild>
+	<RazorCompileOnPublish>true</RazorCompileOnPublish>
+
+	  <!--Prevent duplicate/leaking of shared static-web-asset manifests across plugins  -->
+	  <GenerateStaticWebAssetsManifest>false</GenerateStaticWebAssetsManifest>
+	<EnableDefaultCompileItems>true</EnableDefaultCompileItems>
   </PropertyGroup>
 
-  <ItemGroup>
+	<!--<ItemGroup>
+		-->
+	  <!-- Keep .cshtml as physical files too, ONLY if you use runtime compilation for hot-reload/design work --><!--
+		<Content Update="Views\**\*.cshtml">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+	</ItemGroup>-->
+	
+	<!--<ItemGroup>
     <Content Include="Views\ChildEntityTypeList.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -26,7 +44,7 @@
     <Content Include="Views\_ViewImports.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
+  </ItemGroup>-->
 
   <ItemGroup>
 	  <ProjectReference Include="..\..\Libraries\RA.Core\RA.Core.csproj">

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -6,52 +6,13 @@
 	  <OutputPath>..\..\..\RAerp\Plugins\RA.OrdersManagement</OutputPath>
 	  <OutDir>$(OutputPath)</OutDir>
 	  <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+	  <!-- Compile views into the plugin's own assembly -->
+	  <RazorCompileOnBuild>true</RazorCompileOnBuild>
+	  <RazorCompileOnPublish>true</RazorCompileOnPublish>
+	  <!-- Prevent duplicate/leaking of shared static-web-asset manifests across plugins -->
+	  <GenerateStaticWebAssetsManifest>false</GenerateStaticWebAssetsManifest>
+	  <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="Views\Orders\Configuration.cshtml" />
-    <None Remove="Views\Orders\_OrderList.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Views\Orders\Configuration.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Orders\Create.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Orders\Index.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Orders\List.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Orders\_Configuration.Main.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Orders\_Configuration.Mapping.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Orders\_CreateAndEdit.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Orders\_CreateAndEdit.General.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Orders\_CreateAndEdit.System.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Orders\_CreateAndEdit.Items.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\Orders\_OrderList.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\_ViewImports.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
   <ItemGroup>
 	  <ProjectReference Include="..\..\..\CoreModules\RA.EntityTypes\RA.EntityTypes.csproj">
 		  <Private>False</Private>

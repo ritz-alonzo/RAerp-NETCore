@@ -3,6 +3,134 @@
     Layout = "~/Views/Shared/Layouts/_AdminLayout.cshtml";
 }
 
-<div class="text-center">
-    <h1 class="display-4" style="color: slategrey">Welcome to RAerp</h1>
+<!-- Page heading -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 style="font-size:22px; font-weight:600; color:#1a1d2e; letter-spacing:-0.4px; margin:0;">Dashboard</h1>
+    </div>
+    <button class="btn btn-sm" style="background:#6c63ff; color:#fff; border:none; border-radius:9px; padding:8px 18px; font-family:'Sora',sans-serif; font-size:13px; font-weight:500;">
+        <i class="fas fa-plus me-1"></i> New Project
+    </button>
+</div>
+ 
+<!-- Stat cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start justify-content-between">
+                <div>
+                    <div class="stat-label">Revenue</div>
+                    <div class="stat-value">$84.2k</div>
+                    <div class="stat-change"><i class="fas fa-arrow-up"></i> 12.4% this month</div>
+                </div>
+                <div class="stat-icon" style="background:#eef0fd; color:#6c63ff;"><i class="fas fa-chart-line"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start justify-content-between">
+                <div>
+                    <div class="stat-label">Users</div>
+                    <div class="stat-value">3,921</div>
+                    <div class="stat-change"><i class="fas fa-arrow-up"></i> 8.1% this week</div>
+                </div>
+                <div class="stat-icon" style="background:#f0fdf4; color:#22c55e;"><i class="fas fa-users"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start justify-content-between">
+                <div>
+                    <div class="stat-label">Projects</div>
+                    <div class="stat-value">47</div>
+                    <div class="stat-change" style="color:#f59e0b;"><i class="fas fa-arrow-right"></i> No change</div>
+                </div>
+                <div class="stat-icon" style="background:#fffbeb; color:#f59e0b;"><i class="fas fa-folder-open"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start justify-content-between">
+                <div>
+                    <div class="stat-label">Tasks</div>
+                    <div class="stat-value">128</div>
+                    <div class="stat-change" style="color:#ef4444;"><i class="fas fa-arrow-down"></i> 3.2% overdue</div>
+                </div>
+                <div class="stat-icon" style="background:#fef2f2; color:#ef4444;"><i class="fas fa-check-square"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+<!-- Two columns -->
+<div class="row g-3">
+    <!-- Recent activity -->
+    <div class="col-12 col-lg-7">
+        <div class="content-card">
+            <h6>Recent Activity</h6>
+            <div class="activity-item">
+                <div class="activity-dot" style="background:#6c63ff;"></div>
+                <div>
+                    <div style="font-size:13.5px; font-weight:500; color:#1a1d2e;">New project "Apollo" created</div>
+                    <div style="font-size:12px; color:#9198ab; font-family:'DM Mono',monospace;">2 minutes ago · Jamie Lee</div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-dot" style="background:#22c55e;"></div>
+                <div>
+                    <div style="font-size:13.5px; font-weight:500; color:#1a1d2e;">Invoice #0041 marked paid</div>
+                    <div style="font-size:12px; color:#9198ab; font-family:'DM Mono',monospace;">1 hour ago · Finance Bot</div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-dot" style="background:#f59e0b;"></div>
+                <div>
+                    <div style="font-size:13.5px; font-weight:500; color:#1a1d2e;">3 tasks approaching deadline</div>
+                    <div style="font-size:12px; color:#9198ab; font-family:'DM Mono',monospace;">3 hours ago · Automation</div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-dot" style="background:#6c63ff;"></div>
+                <div>
+                    <div style="font-size:13.5px; font-weight:500; color:#1a1d2e;">Sarah joined the team</div>
+                    <div style="font-size:12px; color:#9198ab; font-family:'DM Mono',monospace;">Yesterday · HR System</div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-dot" style="background:#ef4444;"></div>
+                <div>
+                    <div style="font-size:13.5px; font-weight:500; color:#1a1d2e;">Server usage at 91% capacity</div>
+                    <div style="font-size:12px; color:#9198ab; font-family:'DM Mono',monospace;">Yesterday · DevOps Alert</div>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- Quick actions -->
+    <div class="col-12 col-lg-5">
+        <div class="content-card h-100">
+            <h6>Quick Actions</h6>
+            <div class="d-flex flex-column gap-2">
+                <button class="btn w-100 text-start d-flex align-items-center gap-3" style="background:#f8f9fc; border:1px solid #eaecf0; border-radius:10px; padding:12px 14px; font-family:'Sora',sans-serif; font-size:13.5px; color:#1a1d2e;">
+                    <div style="width:34px;height:34px;border-radius:9px;background:#eef0fd;color:#6c63ff;display:flex;align-items:center;justify-content:center;font-size:17px;"><i class="fas fa-plus-square"></i></div>
+                    Create new project
+                </button>
+                <button class="btn w-100 text-start d-flex align-items-center gap-3" style="background:#f8f9fc; border:1px solid #eaecf0; border-radius:10px; padding:12px 14px; font-family:'Sora',sans-serif; font-size:13.5px; color:#1a1d2e;">
+                    <div style="width:34px;height:34px;border-radius:9px;background:#f0fdf4;color:#22c55e;display:flex;align-items:center;justify-content:center;font-size:17px;"><i class="fas fa-user-plus"></i></div>
+                    Invite team member
+                </button>
+                <button class="btn w-100 text-start d-flex align-items-center gap-3" style="background:#f8f9fc; border:1px solid #eaecf0; border-radius:10px; padding:12px 14px; font-family:'Sora',sans-serif; font-size:13.5px; color:#1a1d2e;">
+                    <div style="width:34px;height:34px;border-radius:9px;background:#fffbeb;color:#f59e0b;display:flex;align-items:center;justify-content:center;font-size:17px;"><i class="fas fa-file-medical"></i></div>
+                    Generate report
+                </button>
+                <button class="btn w-100 text-start d-flex align-items-center gap-3" style="background:#f8f9fc; border:1px solid #eaecf0; border-radius:10px; padding:12px 14px; font-family:'Sora',sans-serif; font-size:13.5px; color:#1a1d2e;">
+                    <div style="width:34px;height:34px;border-radius:9px;background:#fef2f2;color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:17px;"><i class="fas fa-calendar-check"></i></div>
+                    Schedule meeting
+                </button>
+            </div>
+        </div>
+    </div>
 </div>

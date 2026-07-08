@@ -23,9 +23,8 @@ namespace RA.EntityTypes.Validators
                 .WithMessage(EntityTypeMessages.CodeRequired);
 
             RuleFor(c => c.Name)
-                .NotEmpty()
-                .Matches(RegexConstants.EntityNameRegex)
-                .WithMessage(EntityTypeMessages.NameRequired);
+                .NotEmpty().WithMessage(EntityTypeMessages.NameRequired)
+                .Matches(RegexConstants.EntityNameRegex).WithMessage("Invalid Name, remove numbers");
         }
     }
 }

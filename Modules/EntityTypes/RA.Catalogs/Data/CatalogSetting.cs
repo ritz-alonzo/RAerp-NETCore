@@ -13,6 +13,7 @@ namespace RA.Catalogs.Data
         {
             MappedCategoryIds = new List<Guid>();
         }
+        public bool IsImageEnabled { get; set; }
         public List<Guid> MappedCategoryIds { get; set; }
     }
 }

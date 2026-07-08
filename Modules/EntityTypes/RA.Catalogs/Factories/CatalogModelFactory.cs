@@ -87,17 +87,19 @@ namespace RA.Catalogs.Factories
 
             var model = new CatalogListModel();
 
-            var catalogList = await _catalogService.GetCatalogListAsync(
+            var catalogList = await _catalogService.GetCatalogPagedResultListAsync(
                 searchModel.SearchEntityTypeId,
                 searchQuery: searchModel.SearchQuery,
-                catalogStatusIds: searchModel.SearchStatusId > 0 ? new List<int> { searchModel.SearchStatusId } : null
+                catalogStatusIds: searchModel.SearchStatusId > 0 ? new List<int> { searchModel.SearchStatusId } : null,
+                pageNumber: searchModel.PageNumber,
+                pageSize: searchModel.PageSize
                 );
             // settings
             var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<Catalog, CatalogSetting>(searchModel.SearchEntityTypeId);
 
             var catalogModelList = new List<CatalogModel>();
 
-            catalogModelList = catalogList.Select(catalog =>
+            catalogModelList = catalogList.Items.Select(catalog =>
             {
                 var catalogModel = new CatalogModel();
                 catalogModel = _mapper.Map(catalog, catalogModel);
@@ -116,7 +118,7 @@ namespace RA.Catalogs.Factories
 
             }).ToList();
 
-            _baseEntityModelFactory.PrepareBaseEntityListModel(model, catalogModelList, searchModel, catalogList.Count());
+            _baseEntityModelFactory.PrepareBaseEntityListModel(model, catalogModelList, searchModel, catalogList.TotalCount);
 
             // disable for now - will enable when full cycle testing 
             //_baseEntityModelFactory.PrepareBaseEntityListModelUIAccess<CatalogListModel, CatalogModel, Catalog, CatalogSetting>(model, searchModel.SearchEntityTypeId);
@@ -144,7 +146,7 @@ namespace RA.Catalogs.Factories
                 catalog = new Catalog();
 
                 catalogModel.Status = CatalogStatus.Active;
-                catalogModel.CreatedOn = DateTime.Now;
+                catalogModel.CreatedOn = DateTime.UtcNow;
                 catalogModel.Code = "NEW";
             }
             else
@@ -177,8 +179,19 @@ namespace RA.Catalogs.Factories
                 {
                     catalogModel.AvailableCatalogTypes = PluginDataHelper.EnumToSelectListItems<CatalogType>(new List<int> { (int)CatalogType.Service });
                 }
+
+                if (settings.IsImageEnabled)
+                {
+                    catalogModel.ImagePath = catalog.ImagePath;
+                    catalogModel.ImageUrl = catalog.ImagePath;
+                }
             }
 
+            if (catalogModel.CreatedOn != DateTime.MinValue)
+                catalogModel.CreatedOn = catalogModel.CreatedOn.ConvertUTCToLocalDateTime();
+
+            if (catalogModel.ModifiedOn.HasValue)
+                catalogModel.ModifiedOn = catalogModel.ModifiedOn.ConvertUTCToLocalDateTime();
             // base model mapping
             catalogModel = await _baseEntityModelFactory.PrepareBaseEntityModelAsync<CatalogModel, Catalog, CatalogSetting>(catalogModel, catalog, settings);
 
@@ -233,7 +246,7 @@ namespace RA.Catalogs.Factories
 
             var model = new CatalogListModel();
 
-            var catalogList = await _catalogService.GetCatalogListAsync(
+            var catalogList = await _catalogService.GetCatalogPagedResultListAsync(
                 searchModel.SearchCatalogTypeIds,
                 searchQuery: searchModel.SearchQuery,
                 catalogStatusIds: searchModel.SearchStatusId > 0 ? new List<int> { searchModel.SearchStatusId } : null
@@ -241,12 +254,12 @@ namespace RA.Catalogs.Factories
 
             if (searchModel.SearchExistingCatalogIds.HasAny())
             {
-                catalogList = catalogList.Where(c => !searchModel.SearchExistingCatalogIds.Contains(c.Id));
+                catalogList.Items = catalogList.Items.Where(c => !searchModel.SearchExistingCatalogIds.Contains(c.Id)).ToList();
             }
 
             var catalogModelList = new List<CatalogModel>();
 
-            catalogModelList = catalogList.Select(catalog =>
+            catalogModelList = catalogList.Items.Select(catalog =>
             {
                 var catalogModel = new CatalogModel();
                 catalogModel = _mapper.Map(catalog, catalogModel);
@@ -263,11 +276,14 @@ namespace RA.Catalogs.Factories
                         catalogModel.AvailableCategories = _categoryService.GetCategoriesSelectListAsync(settings.MappedCategoryIds).Result;
                 }
 
+                catalogModel.CreatedOn = catalogModel.CreatedOn.ConvertUTCToLocalDateTime();
+                catalogModel.ModifiedOn = catalogModel.ModifiedOn.HasValue ? catalogModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+
                 return catalogModel;
 
             }).ToList();
 
-            _baseEntityModelFactory.PrepareBaseEntityListModel(model, catalogModelList, searchModel, catalogList.Count());
+            _baseEntityModelFactory.PrepareBaseEntityListModel(model, catalogModelList, searchModel, catalogList.TotalCount);
 
             return model;
 

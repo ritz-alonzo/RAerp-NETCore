@@ -44,6 +44,10 @@ namespace RAerp.Helpers.SMSHelper
         #endregion
 
         #region OTP Generation
+        public static string GenerateOTP()
+        {
+            return new Random().Next(000001, 999999).ToString();
+        }
 
         public static string GenerateOTP(string smsApiKey)
         {

@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = string.Format(HtmlContentFormat.PageTitle, "Profile");
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    Layout = "~/Views/Shared/Layouts/_AdminLayout.cshtml";
     HtmlActiveNodeMenu.SetActivePluginMenu(Context, Model.SystemName);
 }
 
@@ -10,17 +10,25 @@
     @Html.AntiForgeryToken()
     @Html.HiddenFor(c => c.Id)
     @Html.HiddenFor(c => c.Password)
-    <div class="content-header-title">
+    <div class="form-content-header-title">
         @{
             <text>@Html.Raw(string.Format(HtmlContentFormat.HeaderTitle, "Profile", Model.FirstName + " " + Model.LastName))</text>
         }
     </div>
-    <div class="content-header-control">
+    <div class="form-content-header-control">
         <div class="content-back-redirection-control">
             <a asp-action="List" asp-controller="Users"><i class="fa fa-arrow-left"></i> Back to List</a>
         </div>
         <div>
             <input type="submit" value="Save" class="btn btn-success" />
+            @if (Model.AccountStatus == RA.Data.Data.UserAccountStatus.Active)
+            {
+                <a asp-action="ChangePassword" asp-controller="Users" asp-route-id="@Model.Id" class="btn btn-primary">Change Password</a>
+            }
+            else if (Model.AccountStatus == RA.Data.Data.UserAccountStatus.Pending)
+            {
+                <a asp-action="VerifyAccount" asp-controller="Users" asp-route-id="@Model.Id" class="btn btn-secondary">Verify Account</a>
+            }
         </div>
     </div>
     <hr />
@@ -35,23 +43,13 @@
                             @HtmlContentConstants.GeneralTab
                         </button>
                     </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="config-main-tab" data-bs-toggle="tab" data-bs-target="#configMain" type="button" role="tab" aria-controls="configMain" aria-selected="true">
-                            @HtmlContentConstants.MainTab
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="config-mapping-tab" data-bs-toggle="tab" data-bs-target="#configMapping" type="button" role="tab" aria-controls="configMapping" aria-selected="false">
-                            @HtmlContentConstants.MappingsTab
-                        </button>
-                    </li>
                 </ul>
                 <div class="tab-content" id="formTabContent">
                     <div class="tab-pane fade show active" id="generalForm" role="tabpanel" aria-labelledby="general-form-tab">
                         <div class="card-body">
                             <div class="row">
                                 <div class="form-content-header-group">
-                                    @HtmlContentConstants.InfoHeader
+                                    <i class="fa fa-info-circle"></i> @HtmlContentConstants.InfoHeader
                                 </div>
                                 <div class="custom-input-set col-md-6">
                                     <label asp-for="@Model.FirstName" class="form-label" data-required="true"></label>@*working - for testing add data-required=true for fields that are required*@
@@ -83,26 +81,26 @@
                             </div>
                             <div class="row">
                                 <div class="form-content-header-group">
-                                    @HtmlContentConstants.SystemHeader
+                                    <i class="fa fa-cogs"></i> @HtmlContentConstants.SystemHeader
                                 </div>
                                 <div class="custom-input-set col-md-6">
                                     <label asp-for="@Model.CreatedByUser.FullName" class="form-label"></label>
-                                    <input asp-for="@Model.CreatedByUser.FullName" type="text" class="form-control" autocomplete="off" disabled />
+                                    <input asp-for="@Model.CreatedByUser.FullName" type="text" class="form-control" autocomplete="off" readonly />
                                     <span asp-validation-for="@Model.CreatedByUser.FullName" class="text-danger"></span>
                                 </div>
                                 <div class="custom-input-set col-md-6">
                                     <label asp-for="@Model.CreatedOn" class="form-label"></label>
-                                    <input asp-for="@Model.CreatedOn" type="date" id="datepicker-autoclose" class="form-control" autocomplete="off" disabled />
+                                    <input asp-for="@Model.CreatedOn" type="date" id="datepicker-autoclose" class="form-control" autocomplete="off" readonly />
                                     <span asp-validation-for="@Model.CreatedOn" class="text-danger"></span>
                                 </div>
                                 <div class="custom-input-set col-md-6">
                                     <label asp-for="@Model.ModifiedOn" class="form-label"></label>
-                                    <input asp-for="@Model.ModifiedOn" type="date" id="datepicker-autoclose" class="form-control" autocomplete="off" disabled />
+                                    <input asp-for="@Model.ModifiedOn" type="date" id="datepicker-autoclose" class="form-control" autocomplete="off" readonly />
                                     <span asp-validation-for="@Model.ModifiedOn" class="text-danger"></span>
                                 </div>
                                 <div class="custom-input-set col-md-6">
                                     <label asp-for="@Model.AccountStatus" class="form-label"></label>
-                                    <input asp-for="@Model.AccountStatus" type="text" class="form-control" autocomplete="off" disabled />
+                                    <input asp-for="@Model.AccountStatus" type="text" class="form-control" autocomplete="off" readonly />
                                     <span asp-validation-for="@Model.AccountStatus" class="text-danger"></span>
                                 </div>
                             </div>

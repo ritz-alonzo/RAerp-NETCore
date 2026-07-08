@@ -1,0 +1,49 @@
+﻿@model FormTypeSearchModel
+@{
+    ViewData["Title"] = Model.FormTypeName;
+    Layout = "~/Views/Shared/Layouts/_AdminLayout.cshtml";
+    HtmlActiveNodeMenu.SetActivePluginMenu(Context, Model.FormTypeSystemName);
+}
+
+<div class="col-md-9">
+    <h2>@Model.FormTypeName</h2>
+</div>
+<form-search id="formTypes_search">
+    @Html.HiddenFor(c => c.PageNumber)
+    @Html.HiddenFor(c => c.PageSize)
+    @Html.HiddenFor(c => c.TotalItems)
+    <div id="search">
+        <div class="card">
+            <div class="card-header-search">
+                <h4 class="text-muted">Search</h4>
+            </div>
+            <div class="card-body-search">
+                 <div class="row">
+                    <div class="col-md-6">
+                        <div class="custom-input-set mb-2">
+                            <label asp-for="SearchQuery" class="form-label"></label>
+                            <input asp-for="SearchQuery" class="form-control" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="custom-input-set mb-2">
+                            <label asp-for="SearchInstalledOn" class="form-label"></label>
+                            <input asp-for="SearchInstalledOn" id="datepicker-autoclose" class="form-control" type="date" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form-search>
+
+<div id="formTypes">
+    @await Html.PartialAsync("_FormTypeList", Model.FormTypes)
+</div>
+
+
+@section scripts{
+    <script>
+
+    </script>
+}

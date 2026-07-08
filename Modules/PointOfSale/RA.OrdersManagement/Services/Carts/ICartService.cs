@@ -7,6 +7,8 @@ namespace RA.OrdersManagement.Services.Carts
 {
     public interface ICartService : IFormItemService<Cart, CartItem, CartSetting, RAOrderManagementContext>
     {
-        Task<IEnumerable<Cart>> GetCartListAsync(string searchQuery = null, string searchCustomerName = null, List<Guid> searchServiceIds = null, DateTime? searchCreatedDate = null, List<int> formStatusIds = null, bool showDeleted = false);
+        Task<IEnumerable<Cart>> GetCartListAsync(string searchQuery = null, string searchCustomerName = null, List<Guid> searchServiceIds = null, DateTime? searchCreatedDate = null, List<int> formStatusIds = null, bool showDeleted = false,
+            int? pageNumber = 0,
+            int? pageSize = int.MaxValue);
     }
 }
