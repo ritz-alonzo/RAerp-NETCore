@@ -37,7 +37,8 @@ namespace RAerp.Domain.Migrations.Users
                 .WithColumn(nameof(User.FailedLoginAttempt)).AsInt32().Nullable()
                 .WithColumn(nameof(User.EmailResendAttempt)).AsInt32().Nullable()
                 .WithColumn(nameof(User.IsLoggedOn)).AsBoolean().Nullable()
-                .WithColumn(nameof(User.IsVerified)).AsBoolean().Nullable();
+                .WithColumn(nameof(User.IsVerified)).AsBoolean().Nullable()
+                .WithColumn(nameof(User.ModifiedById)).AsGuid().Nullable();
 
             Create.Table(nameof(UserRole))
                 .WithColumn(nameof(UserRole.Id)).AsGuid().PrimaryKey()
@@ -46,7 +47,8 @@ namespace RAerp.Domain.Migrations.Users
                 .WithColumn(nameof(UserRole.CreatedOn)).AsDateTime()
                 .WithColumn(nameof(UserRole.ModifiedOn)).AsDateTime2().Nullable()
                 .WithColumn(nameof(UserRole.DeletedOn)).AsDateTime2().Nullable()
-                .WithColumn(nameof(UserRole.Deleted)).AsBoolean();
+                .WithColumn(nameof(UserRole.Deleted)).AsBoolean()
+                .WithColumn(nameof(UserRole.ModifiedById)).AsGuid().Nullable();
 
             Create.Table(nameof(UserUserRoleMapping))
                 .WithColumn(nameof(UserUserRoleMapping.Id)).AsGuid().PrimaryKey()
