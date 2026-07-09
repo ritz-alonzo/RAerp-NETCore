@@ -96,7 +96,7 @@ namespace RA.Inventory.Services.InventoryReservationServices
             if (statusIds.HasAny())
                 query = query.Where(c => statusIds.Contains(c.StatusId));
 
-            query = query.OrderBy(c => c.ReservedOn);
+            query = query.OrderByDescending(c => c.ReservedOn);
 
             return query.ToList();
         }
@@ -141,7 +141,7 @@ namespace RA.Inventory.Services.InventoryReservationServices
             if (statusIds.HasAny())
                 query = query.Where(c => statusIds.Contains(c.StatusId));
 
-            query = query.OrderBy(c => c.ReservedOn);
+            query = query.OrderByDescending(c => c.ReservedOn);
 
             return query.ToPagedResult(pageNumber, pageSize);
         }

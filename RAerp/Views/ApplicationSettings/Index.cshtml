@@ -134,64 +134,68 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Client Credentials Tab -->
-                    <div class="tab-pane fade" id="credentials" role="tabpanel" aria-labelledby="credentials-tab">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="form-content-header-group">
-                                    <i class="fa fa-key"></i> API Authentication Credentials
-                                </div>
-                                    
-                                <div class="col-md-12">
-                                    <div class="alert alert-warning" role="alert">
-                                        <i class="fa fa-exclamation-triangle"></i>
-                                        <strong>Security Notice:</strong> Keep these credentials secure. They will be used to authenticate API requests for this application.
+                    @if (Model.Id.IsNotNullOrEmpty()) {
+                        <!-- Client Credentials Tab -->
+                        <div class="tab-pane fade" id="credentials" role="tabpanel" aria-labelledby="credentials-tab">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="form-content-header-group">
+                                        <i class="fa fa-key"></i> API Authentication Credentials
                                     </div>
-                                </div>
 
-                                <div class="custom-input-set col-md-12">
-                                    <label class="form-label">Client ID</label>
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" value="@Model.ClientId" readonly id="clientIdDisplay" />
-                                        <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('clientIdDisplay')">
-                                            <i class="fa fa-copy"></i> Copy
-                                        </button>
+                                    <div class="col-md-12">
+                                        <div class="alert alert-warning" role="alert">
+                                            <i class="fa fa-exclamation-triangle"></i>
+                                            <strong>Security Notice:</strong> Keep these credentials secure. They will be used to authenticate API requests for this application.
+                                        </div>
                                     </div>
-                                    <small class="form-text text-muted">
-                                        This unique identifier is used to identify your application when making API requests.
-                                    </small>
-                                </div>
 
-                                <div class="custom-input-set col-md-12">
-                                    <label class="form-label">Client Secret</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control" value="@Model.ClientSecret" readonly id="clientSecretDisplay" />
-                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility()" title="Show/Hide Secret">
-                                            <i class="fa fa-eye" id="toggleIcon"></i>
-                                        </button>
-                                        <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('clientSecretDisplay')" title="Copy to Clipboard">
-                                            <i class="fa fa-copy"></i> Copy
-                                        </button>
-                                        <button class="btn btn-warning" type="button" onclick="regenerateSecret('@Model.Id')" title="Regenerate Secret">
-                                            <i class="fa fa-refresh"></i> Regenerate
-                                        </button>
+                                    <div class="custom-input-set col-md-12">
+                                        <label class="form-label">Client ID</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" value="@Model.ClientId" readonly id="clientIdDisplay" />
+                                            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('clientIdDisplay')">
+                                                <i class="fa fa-copy"></i> Copy
+                                            </button>
+                                            <button class="btn btn-warning" type="button" onclick="generateClientId('@Model.Id')" title="Generate" style="border: 1px solid black">
+                                                <i class="fa fa-refresh"></i> Generate
+                                            </button>
+                                        </div>
+                                        <small class="form-text text-muted">
+                                            This unique identifier is used to identify your application when making API requests.
+                                        </small>
                                     </div>
-                                    <small class="form-text text-muted">
-                                        This secret is used along with the Client ID to authenticate API requests. Store it securely.
-                                    </small>
-                                </div>
 
-                                <div class="col-md-12">
-                                    <div class="alert alert-info" role="alert">
-                                        <i class="fa fa-info-circle"></i>
-                                        <strong>Regenerate Secret:</strong> If you suspect the secret has been compromised, click "Regenerate" to create a new one.
-                                        The old secret will immediately stop working.
+                                    <div class="custom-input-set col-md-12">
+                                        <label class="form-label">Client Secret</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" value="@Model.ClientSecret" readonly id="clientSecretDisplay" />
+                                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility()" title="Show/Hide Secret">
+                                                <i class="fa fa-eye" id="toggleIcon"></i>
+                                            </button>
+                                            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('clientSecretDisplay')" title="Copy to Clipboard">
+                                                <i class="fa fa-copy"></i> Copy
+                                            </button>
+                                            <button class="btn btn-warning" type="button" onclick="regenerateSecret('@Model.Id')" title="Regenerate Secret" style="border: 1px solid black">
+                                                <i class="fa fa-refresh"></i> Regenerate
+                                            </button>
+                                        </div>
+                                        <small class="form-text text-muted">
+                                            This secret is used along with the Client ID to authenticate API requests. Store it securely.
+                                        </small>
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <div class="alert alert-info" role="alert">
+                                            <i class="fa fa-info-circle"></i>
+                                            <strong>Regenerate Secret:</strong> If you suspect the secret has been compromised, click "Regenerate" to create a new one.
+                                            The old secret will immediately stop working.
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
@@ -227,6 +231,32 @@
             });
         }
 
+        function generateClientId(id) {
+            if (!confirm('Are you sure you want to generate the client id?\n\nWARNING: The old secret will immediately stop working and any applications using it will need to be updated.')) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("GenerateClientId", "ApplicationSettings")',
+                type: 'POST',
+                data: {
+                    id: id,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        $('#clientIdDisplay').val(response.clientId);
+                        toastr.success("Successfully generated client id");
+                    } else {
+                        toastr.error(response.message || 'Error generating client id');
+                    }
+                },
+                error: function () {
+                    toastr.error('Error generating client id');
+                }
+            });
+        }
+
         function regenerateSecret(id) {
             if (!confirm('Are you sure you want to regenerate the client secret?\n\nWARNING: The old secret will immediately stop working and any applications using it will need to be updated.')) {
                 return;
@@ -242,7 +272,7 @@
                 success: function (response) {
                     if (response.success) {
                         $('#clientSecretDisplay').val(response.clientSecret);
-                        alert('✓ Client secret regenerated successfully!\n\nPlease copy and save the new secret immediately. You will not be able to see it again.');
+                        toastr.success('✓ Client secret regenerated successfully!\n\nPlease copy and save the new secret immediately. You will not be able to see it again.');
                         
                         // Briefly show the secret
                         const input = document.getElementById('clientSecretDisplay');
@@ -251,11 +281,11 @@
                         icon.classList.remove('fa-eye');
                         icon.classList.add('fa-eye-slash');
                     } else {
-                        alert(response.message || 'Error regenerating secret');
+                        toastr.error(response.message || 'Error regenerating secret');
                     }
                 },
                 error: function () {
-                    alert('Error regenerating secret');
+                    toastr.error('Error regenerating secret');
                 }
             });
         }

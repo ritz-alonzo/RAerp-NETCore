@@ -11,5 +11,7 @@ namespace RA.WebServiceEndpoints.Models
         public string Status { get; set; }
         public string Token { get; set; }
         public string RefreshToken { get; set; }
+        public string ClientId { get; set; }
+        public string ClientSecret { get; set; }
     }
 }

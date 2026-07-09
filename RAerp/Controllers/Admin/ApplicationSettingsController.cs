@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RA.Data.Domain.Application;
 using RAerp.Factories.ApplicationSettingFactory;
+using RAerp.Helpers.Security;
 using RAerp.Helpers.UserHelper;
 using RAerp.Models.ApplicationSettingsModel;
 using RAerp.Services.ApplicationSettingServices;
@@ -51,10 +52,6 @@ namespace RAerp.Controllers.Admin
             try
             {
                 var applicationSetting = _mapper.Map<ApplicationSetting>(model);
-                
-                // Generate unique client credentials
-                applicationSetting.ClientId = Guid.NewGuid().ToString("N");
-                applicationSetting.ClientSecret = GenerateClientSecret();
                 
                 // Set audit fields
                 var currentUser = await _userIdentity.GetCurrentUserAsync(HttpContext);
@@ -142,6 +139,34 @@ namespace RAerp.Controllers.Admin
             }
         }
 
+        // POST: ApplicationSettings/GenerateClientId/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GenerateClientId(Guid id)
+        {
+            try
+            {
+                var applicationSetting = await _applicationSettingService.GetByIdAsync(id);
+                if (applicationSetting == null)
+                    return JsonError("Application setting not found.");
+
+                // Regenerate client ID
+                applicationSetting.ClientId = EncryptionHelper.GenerateSalt();
+
+                // Set audit fields
+                var currentUser = await _userIdentity.GetCurrentUserAsync(HttpContext);
+                applicationSetting.ModifiedById = currentUser.Id;
+
+                await _applicationSettingService.UpdateAsync(applicationSetting);
+
+                return Json(new { success = true, clientId = applicationSetting.ClientId });
+            }
+            catch (Exception ex)
+            {
+                return JsonError($"Error regenerating client ID: {ex.Message}");
+            }
+        }
+
         // POST: ApplicationSettings/RegenerateSecret/5
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -154,7 +179,7 @@ namespace RAerp.Controllers.Admin
                     return JsonError("Application setting not found.");
 
                 // Regenerate client secret
-                applicationSetting.ClientSecret = GenerateClientSecret();
+                applicationSetting.ClientSecret = EncryptionHelper.GenerateSalt();
                 
                 // Set audit fields
                 var currentUser = await _userIdentity.GetCurrentUserAsync(HttpContext);

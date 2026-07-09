@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.SqlServer.Server;
 using RA.Core.Models.PluginModels.OrdersManagement.Carts;
+using RA.Data.Domain.Application;
 using RA.OrdersManagement.Domain.Carts;
 using RA.OrdersManagement.Domain.Orders;
 using RA.OrdersManagement.Services.Carts;
@@ -11,6 +12,7 @@ using RA.WebFramework.Extensions;
 using RAerp.Controllers.Admin;
 using RAerp.Helpers.UserHelper;
 using RAerp.Security.AccessRightsControl;
+using RAerp.Services.ApplicationSettingServices;
 using RAerp.Services.UserServices;
 using System.Net;
 
@@ -26,16 +28,21 @@ namespace RA.OrdersManagement.Controllers.Carts
         private readonly IAccessControl _accessControl;
         private readonly IUserIdentity _userIdentity;
         private readonly ICartService _cartService;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
         public CartsAPIController(IAccessControl accessControl,
             IUserIdentity userIdentity,
-            ICartService cartService)
+            ICartService cartService,
+            IApplicationSettingService applicationSettingService)
         {
             _accessControl = accessControl;
             _userIdentity = userIdentity;
             _cartService = cartService;
+            _applicationSettingService = applicationSettingService;
+            _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
         }
         #endregion
 
@@ -43,7 +50,7 @@ namespace RA.OrdersManagement.Controllers.Carts
         [HttpGet, MapToApiVersion("1.0")]
         public async Task<IActionResult> GetCartList([FromQuery] CartSearchModel cartSearchModel)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
 
             var cartList = (await _cartService.GetCartListAsync(
                     searchQuery: cartSearchModel?.SearchQuery,
@@ -65,7 +72,7 @@ namespace RA.OrdersManagement.Controllers.Carts
             if (!string.IsNullOrEmpty(idOrFormNbr))
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "FormId or FormNbr doesn't have value"));
 
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
 
             Cart cart = null;
             if (Guid.TryParse(idOrFormNbr, out Guid id))
@@ -85,7 +92,7 @@ namespace RA.OrdersManagement.Controllers.Carts
             if (cart == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Cart is empty"));
 
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
 
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
 
@@ -101,7 +108,7 @@ namespace RA.OrdersManagement.Controllers.Carts
             if (cart == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Cart is empty"));
 
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
 
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
 
@@ -114,7 +121,7 @@ namespace RA.OrdersManagement.Controllers.Carts
         [HttpDelete("{idOrFormNbr}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> DeleteCart(string idOrFormNbr)
         {
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
 
             Cart cart = null;
             if (Guid.TryParse(idOrFormNbr, out Guid id))
@@ -138,7 +145,7 @@ namespace RA.OrdersManagement.Controllers.Carts
         [HttpGet("item/{formId}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetCartItemList(string formId)
         {
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
 
             List<CartItem> cartItemList = new List<CartItem>();
             if (Guid.TryParse(formId, out Guid result))
@@ -153,7 +160,7 @@ namespace RA.OrdersManagement.Controllers.Carts
         [HttpGet("item/{formId}/{catalogId}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetCartItemByFormIdAndCatalogId(string formId, string catalogId)
         {
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
 
             if (string.IsNullOrEmpty(formId) || string.IsNullOrEmpty(catalogId))
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Both FormId and CatalogId should have values"));
@@ -177,7 +184,7 @@ namespace RA.OrdersManagement.Controllers.Carts
         [HttpPost("item"), MapToApiVersion("1.0")]
         public async Task<IActionResult> InsertCartItems([FromBody] List<CartItem> cartItems)
         {
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
 
             if (!cartItems.Any())
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Cart item doesn't have value"));
@@ -223,7 +230,7 @@ namespace RA.OrdersManagement.Controllers.Carts
         [HttpPut("item"), MapToApiVersion("1.0")]
         public async Task<IActionResult> UpdateCartItems([FromBody] CartItem cartItem)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
 
             if (cartItem == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Cart item doesn't have value"));
@@ -274,7 +281,7 @@ namespace RA.OrdersManagement.Controllers.Carts
         [HttpDelete("item/{itemId}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> DeleteCartItem(string itemId)
         {
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
 
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
 

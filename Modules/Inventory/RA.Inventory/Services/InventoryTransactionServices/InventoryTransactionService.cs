@@ -110,7 +110,7 @@ namespace RA.Inventory.Services.InventoryTransactionServices
             if (transactionTypeIds.HasAny())
                 query = query.Where(c => transactionTypeIds.Contains(c.TransactionTypeId));
 
-            query = query.OrderBy(c => c.CreatedOn);
+            query = query.OrderByDescending(c => c.CreatedOn);
 
             return query.ToList();
         }
@@ -163,7 +163,7 @@ namespace RA.Inventory.Services.InventoryTransactionServices
             if (transactionTypeIds.HasAny())
                 query = query.Where(c => transactionTypeIds.Contains(c.TransactionTypeId));
 
-            query = query.OrderBy(c => c.CreatedOn);
+            query = query.OrderByDescending(c => c.CreatedOn);
 
             return query.ToPagedResult(pageNumber, pageSize);
         }

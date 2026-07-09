@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RA.Core.Models.PluginModels.OrdersManagement.Carts;
 using RA.Core.Models.PluginModels.OrdersManagement.Orders;
+using RA.Data.Domain.Application;
 using RA.FormTypes.Services;
 using RA.OrdersManagement.Data;
 using RA.OrdersManagement.Domain.Carts;
@@ -14,6 +15,7 @@ using RA.WebFramework.Extensions;
 using RAerp.Controllers.Admin;
 using RAerp.Helpers.UserHelper;
 using RAerp.Security.AccessRightsControl;
+using RAerp.Services.ApplicationSettingServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,6 +42,8 @@ namespace RA.OrdersManagement.Controllers.Orders
         private readonly IMapper _mapper;
         private readonly IFormTypeManager _formTypeManager;
         private readonly OrderSetting _orderSettings;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
@@ -48,7 +52,8 @@ namespace RA.OrdersManagement.Controllers.Orders
             IOrderService orderService,
             ICartService cartService,
             IMapper mapper,
-            IFormTypeManager formTypeManager)
+            IFormTypeManager formTypeManager,
+            IApplicationSettingService applicationSettingService)
         {
             _accessControl = accessControl;
             _userIdentity = userIdentity;
@@ -57,6 +62,8 @@ namespace RA.OrdersManagement.Controllers.Orders
             _mapper = mapper;
             _formTypeManager = formTypeManager;
             _orderSettings = _formTypeManager.GetSettingDataOfFormAsync<Order, OrderSetting>().Result;
+            _applicationSettingService = applicationSettingService;
+            _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
         }
         #endregion
 
@@ -66,7 +73,7 @@ namespace RA.OrdersManagement.Controllers.Orders
         [HttpGet, MapToApiVersion("1.0")]
         public async Task<IActionResult> GetOrderList([FromQuery] OrderSearchModel orderSearchModel)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
 
             var orderList = await _orderService.GetOrderListAsync(
                 searchQuery: orderSearchModel?.SearchQuery,
@@ -89,7 +96,7 @@ namespace RA.OrdersManagement.Controllers.Orders
             if (!string.IsNullOrEmpty(idOrFormNbr))
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "FormId or FormNbr doesn't have value"));
 
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
 
             Order order = null;
             if (Guid.TryParse(idOrFormNbr, out Guid result))
@@ -109,7 +116,7 @@ namespace RA.OrdersManagement.Controllers.Orders
             if (order == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order is empty"));
 
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
 
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
 
@@ -168,7 +175,7 @@ namespace RA.OrdersManagement.Controllers.Orders
             if (order == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order is empty"));
 
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
 
             if (_orderSettings == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order configuration not yet configured"));
@@ -245,6 +252,7 @@ namespace RA.OrdersManagement.Controllers.Orders
                 order.TotalVatAmount = (order.TotalGrossAmount - order.TotalDiscountAmount) * 0.12m;
                 order.TotalNetAmount = (order.TotalGrossAmount - order.TotalDiscountAmount) * 1.12m;
                 #endregion
+
                 order.OrderDate = DateTime.UtcNow;
             }
             await _orderService.UpdateFormAsync(order);
@@ -255,7 +263,7 @@ namespace RA.OrdersManagement.Controllers.Orders
         [HttpDelete("{idOrFormNbr}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> DeleteOrder(string idOrFormNbr)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
 
             Order order = null;
             if (Guid.TryParse(idOrFormNbr, out Guid id))
@@ -279,7 +287,7 @@ namespace RA.OrdersManagement.Controllers.Orders
         [HttpGet("item/{formId}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetOrderItemList(string formId)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
 
             List<OrderItem> orderItemList = new List<OrderItem>();
             if (Guid.TryParse(formId, out Guid result))
@@ -294,7 +302,7 @@ namespace RA.OrdersManagement.Controllers.Orders
         [HttpPost("item"), MapToApiVersion("1.0")]
         public async Task<IActionResult> InsertOrderItems([FromBody] List<OrderItem> orderItems)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
 
             if (!orderItems.Any())
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order item doesn't have value"));
@@ -317,7 +325,7 @@ namespace RA.OrdersManagement.Controllers.Orders
         [HttpPut("item"), MapToApiVersion("1.0")]
         public async Task<IActionResult> UpdateOrderItems([FromBody] List<OrderItem> orderItems)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
 
             if (!orderItems.Any())
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order item doesn't have value"));
@@ -339,7 +347,7 @@ namespace RA.OrdersManagement.Controllers.Orders
         [HttpDelete("item"), MapToApiVersion("1.0")]
         public async Task<IActionResult> DeleteOrderItem([FromBody] List<OrderItem> orderItems)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
 
             if (!orderItems.Any())
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order item doesn't have value"));
@@ -365,7 +373,7 @@ namespace RA.OrdersManagement.Controllers.Orders
         [HttpGet, MapToApiVersion("2.0")]
         public async Task<IActionResult> GetOrderListv2([FromQuery] OrderSearchModel orderSearchModel)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
 
             var orderList = await _orderService.GetOrderListAsync(
                 searchQuery: orderSearchModel?.SearchQuery,

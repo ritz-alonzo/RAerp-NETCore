@@ -2,6 +2,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RA.Data.Domain.Application;
 using RA.Data.Domain.EntityTypes;
 using RA.Discounts.Domain;
 using RA.Discounts.Models;
@@ -11,6 +12,7 @@ using RA.WebFramework.Extensions;
 using RAerp.Controllers.Admin;
 using RAerp.Helpers.UserHelper;
 using RAerp.Security.AccessRightsControl;
+using RAerp.Services.ApplicationSettingServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,14 +36,17 @@ namespace RA.Discounts.Controllers
         private readonly IAccessControl _accessControl;
         private readonly IUserIdentity _userIdentity;
         private readonly EntityType _discountEntityType;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
-        public DiscountAPIController(IDiscountService discountService, 
-            IMapper mapper, 
-            IEntityTypeManager entityTypeManager, 
-            IAccessControl accessControl, 
-            IUserIdentity userIdentity)
+        public DiscountAPIController(IDiscountService discountService,
+            IMapper mapper,
+            IEntityTypeManager entityTypeManager,
+            IAccessControl accessControl,
+            IUserIdentity userIdentity,
+            IApplicationSettingService applicationSettingService)
         {
             _discountService = discountService;
             _mapper = mapper;
@@ -49,6 +54,8 @@ namespace RA.Discounts.Controllers
             _accessControl = accessControl;
             _userIdentity = userIdentity;
             _discountEntityType = _entityTypeManager.GetTypeBySystemNameAsync(typeof(Discount).FullName).Result;
+            _applicationSettingService = applicationSettingService;
+            _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
         }
         #endregion
 
@@ -56,7 +63,7 @@ namespace RA.Discounts.Controllers
         [HttpGet, MapToApiVersion("1.0")]
         public async Task<IActionResult> GetDiscountList([FromQuery] DiscountSearchModel searchModel)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
 
             if (_discountEntityType == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
@@ -84,7 +91,7 @@ namespace RA.Discounts.Controllers
         [HttpPost, MapToApiVersion("1.0")]
         public async Task<IActionResult> CreateDiscount([FromBody] Discount discount)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
 
             if (_discountEntityType == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
@@ -101,7 +108,7 @@ namespace RA.Discounts.Controllers
         [HttpPut, MapToApiVersion("1.0")]
         public async Task<IActionResult> UpdateDiscount([FromBody] Discount discount)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
 
             if (_discountEntityType == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
@@ -120,7 +127,7 @@ namespace RA.Discounts.Controllers
         [HttpDelete("{discountId:guid}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> DeleteDiscount(Guid discountId)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
 
             if (_discountEntityType == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
@@ -139,7 +146,7 @@ namespace RA.Discounts.Controllers
         [HttpGet("redemption"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetDiscountRedemptionList()
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
 
             if (_discountEntityType == null)
                 return NotFound(GenerateResponseModel<Discount>(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
@@ -152,7 +159,7 @@ namespace RA.Discounts.Controllers
         [HttpPost("redemption"), MapToApiVersion("1.0")]
         public async Task<IActionResult> CreateDiscountRedemption([FromBody] DiscountRedemption discountRedemption)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
 
             if (_discountEntityType == null)
                 return NotFound(GenerateResponseModel<Discount>(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
@@ -168,7 +175,7 @@ namespace RA.Discounts.Controllers
         [HttpPut("redemption"), MapToApiVersion("1.0")]
         public async Task<IActionResult> UpdateDiscountRedemption([FromBody] DiscountRedemption discountRedemption)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
 
             if (_discountEntityType == null)
                 return NotFound(GenerateResponseModel<Discount>(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
@@ -184,7 +191,7 @@ namespace RA.Discounts.Controllers
         [HttpDelete("redemption/{discountRedemptionId:guid}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> DeleteDiscountRedemption(Guid discountRedemptionId)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
 
             if (_discountEntityType == null)
                 return NotFound(GenerateResponseModel<Discount>(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));

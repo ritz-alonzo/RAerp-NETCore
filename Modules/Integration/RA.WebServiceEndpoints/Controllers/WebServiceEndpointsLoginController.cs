@@ -4,12 +4,15 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using RA.Core.Domain;
+using RA.Data.Domain.Application;
 using RA.Data.Domain.Users;
 using RA.WebFramework.Extensions;
 using RA.WebServiceEndpoints.Domain;
 using RA.WebServiceEndpoints.Models;
 using RA.WebServiceEndpoints.Services.RefreshTokenServices;
 using RAerp.Helpers.Security;
+using RAerp.Services.ApplicationServices;
+using RAerp.Services.ApplicationSettingServices;
 using RAerp.Services.UserServices;
 using System;
 using System.Collections.Generic;
@@ -34,14 +37,18 @@ namespace RA.WebServiceEndpoints.Controllers
         private string _clientId;
         private string _clientSecret;
         private readonly IRefreshTokenService _refreshTokenService;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
-        public WebServiceEndpointsLoginController(IUserService userService, IConfiguration configuration, IRefreshTokenService refreshTokenService)
+        public WebServiceEndpointsLoginController(IUserService userService, IConfiguration configuration, IRefreshTokenService refreshTokenService, IApplicationSettingService applicationSettingService)
         {
             _userService = userService;
             _jwtSecretKey = configuration.GetValue<string>("ApiSettings:JWTSecretKey");
             _refreshTokenService = refreshTokenService;
+            _applicationSettingService = applicationSettingService;
+            _applicationSetting = applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
         }
         #endregion
 
@@ -52,20 +59,6 @@ namespace RA.WebServiceEndpoints.Controllers
             if (model == null)
                 return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "No username and password entered." });
             
-            // Add check of client ID and client secret in database. For now, we are hardcoding the values in appsettings.json file.
-            if (HttpContext.Request.Headers["client_id"].FirstOrDefault() == null)
-            {
-                return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "No client id in Headers." });
-            }
-
-            if (HttpContext.Request.Headers["client_secret"].FirstOrDefault() == null)
-            {
-                return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "No client secret in Headers." });
-            }
-
-            _clientId = HttpContext.Request.Headers["client_id"].ToString();
-            _clientSecret = HttpContext.Request.Headers["client_secret"].ToString();
-
             if (model.UserName == null || model.Password == null)
                 return NotFound(new WebServiceEndpointResponseErrorModel() { Status = HttpStatusCode.NotFound.ToString(), Message = "Username or password should have value." });
 
@@ -90,7 +83,9 @@ namespace RA.WebServiceEndpoints.Controllers
                 {
                     Status = HttpStatusCode.OK.ToString(),
                     Token = accessToken,
-                    RefreshToken = refreshToken.Token
+                    RefreshToken = refreshToken.Token,
+                    ClientId = _applicationSetting?.ClientId,
+                    ClientSecret = _applicationSetting?.ClientSecret
                 });
             }
             else
@@ -154,7 +149,9 @@ namespace RA.WebServiceEndpoints.Controllers
             {
                 Status = HttpStatusCode.OK.ToString(),
                 Token = accessToken,
-                RefreshToken = refreshToken.Token
+                RefreshToken = refreshToken.Token,
+                ClientId = _applicationSetting?.ClientId,
+                ClientSecret = _applicationSetting?.ClientSecret
             });
         }
 

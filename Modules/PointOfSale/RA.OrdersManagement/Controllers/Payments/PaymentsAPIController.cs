@@ -2,12 +2,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RA.Core.Models.PluginModels.OrdersManagement.Payments;
+using RA.Data.Domain.Application;
 using RA.OrdersManagement.Domain.Payments;
 using RA.OrdersManagement.Services.Payments;
 using RA.WebFramework.Extensions;
 using RAerp.Controllers.Admin;
 using RAerp.Helpers.UserHelper;
 using RAerp.Security.AccessRightsControl;
+using RAerp.Services.ApplicationSettingServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,16 +29,21 @@ namespace RA.OrdersManagement.Controllers.Payments
         private readonly IAccessControl _accessControl;
         private readonly IUserIdentity _userIdentity;
         private readonly IPaymentService _paymentService;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
         public PaymentsAPIController(IAccessControl accessControl,
             IUserIdentity userIdentity,
-            IPaymentService paymentService)
+            IPaymentService paymentService,
+            IApplicationSettingService applicationSettingService)
         {
             _accessControl = accessControl;
             _userIdentity = userIdentity;
             _paymentService = paymentService;
+            _applicationSettingService = applicationSettingService;
+            _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
         }
         #endregion
 
@@ -46,7 +53,7 @@ namespace RA.OrdersManagement.Controllers.Payments
         [HttpGet, MapToApiVersion("1.0")]
         public async Task<IActionResult> GetPaymentList([FromQuery] PaymentSearchModel paymentSearchModel)
         {
-            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity, _applicationSetting);
 
             var paymentList = await _paymentService.GetPaymentListAsync(
                 searchQuery: paymentSearchModel?.SearchQuery,
@@ -70,7 +77,7 @@ namespace RA.OrdersManagement.Controllers.Payments
             if (!string.IsNullOrEmpty(idOrFormNbr))
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "FormId or FormNbr doesn't have value"));
 
-            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity, _applicationSetting);
 
             Payment payment = null;
             if (Guid.TryParse(idOrFormNbr, out Guid result))
@@ -90,7 +97,7 @@ namespace RA.OrdersManagement.Controllers.Payments
             if (payment == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Payment is empty"));
 
-            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity, _applicationSetting);
 
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
 
@@ -106,7 +113,7 @@ namespace RA.OrdersManagement.Controllers.Payments
             if (payment == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Payment is empty"));
 
-            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity, _applicationSetting);
 
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
 
@@ -119,7 +126,7 @@ namespace RA.OrdersManagement.Controllers.Payments
         [HttpDelete("{idOrFormNbr}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> DeletePayment(string idOrFormNbr)
         {
-            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity, _applicationSetting);
 
             Payment payment = null;
             if (Guid.TryParse(idOrFormNbr, out Guid id))
@@ -143,7 +150,7 @@ namespace RA.OrdersManagement.Controllers.Payments
         [HttpGet("item/{formId}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetPaymentItemList(string formId)
         {
-            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity, _applicationSetting);
 
             List<PaymentItem> paymentItemList = new List<PaymentItem>();
             if (Guid.TryParse(formId, out Guid result))
@@ -158,7 +165,7 @@ namespace RA.OrdersManagement.Controllers.Payments
         [HttpPost("item"), MapToApiVersion("1.0")]
         public async Task<IActionResult> InsertPaymentItem([FromBody] List<PaymentItem> paymentItems)
         {
-            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity, _applicationSetting);
 
             if (!paymentItems.Any())
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Payment item doesn't have value"));
@@ -180,7 +187,7 @@ namespace RA.OrdersManagement.Controllers.Payments
         [HttpPut("item"), MapToApiVersion("1.0")]
         public async Task<IActionResult> UpdatePaymentItem([FromBody] List<PaymentItem> paymentItems)
         {
-            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity, _applicationSetting);
 
             if (!paymentItems.Any())
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Payment item doesn't have value"));
@@ -202,7 +209,7 @@ namespace RA.OrdersManagement.Controllers.Payments
         [HttpDelete("item"), MapToApiVersion("1.0")]
         public async Task<IActionResult> DeletePaymentItem([FromBody] List<PaymentItem> paymentItems)
         {
-            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity, _applicationSetting);
 
             if (!paymentItems.Any())
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Payment item doesn't have value"));
@@ -228,7 +235,7 @@ namespace RA.OrdersManagement.Controllers.Payments
         [HttpGet, MapToApiVersion("2.0")]
         public async Task<IActionResult> GetPaymentListv2([FromQuery] PaymentSearchModel paymentSearchModel)
         {
-            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<Payment>(_accessControl, _userIdentity, _applicationSetting);
 
             var paymentList = await _paymentService.GetPaymentListAsync(
                 searchQuery: paymentSearchModel?.SearchQuery,

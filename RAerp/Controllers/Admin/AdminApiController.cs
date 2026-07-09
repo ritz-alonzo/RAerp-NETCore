@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RA.Core.Domain;
+using RA.Data.Domain.Application;
 using RA.Data.Domain.Users;
 using RAerp.Helpers.UserHelper;
 using RAerp.Models.ApiModel;
 using RAerp.Security.AccessRightsControl;
+using RAerp.Services.ApplicationSettingServices;
 using RAerp.Services.UserServices;
 using System.Net;
 
@@ -167,7 +169,7 @@ namespace RAerp.Controllers.Admin
             return errorResponseModel;
         }
 
-        public async Task<IActionResult> ValidateUserAccessAndCredentials<TForm>(IAccessControl accessControl, IUserIdentity userIdentity)
+        public async Task<IActionResult> ValidateUserAccessAndCredentials<TForm>(IAccessControl accessControl, IUserIdentity userIdentity, ApplicationSetting applicationSetting)
             where TForm : BaseEntity
         {
             // Access rights
@@ -178,6 +180,18 @@ namespace RAerp.Controllers.Admin
             var currentUser = await GetCurrentCredentialsAsync(userIdentity);
             if (currentUser == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "User has not yet logged in"));
+
+            string clientId = HttpContext.Request.Headers["client_id"].FirstOrDefault();
+            string clientSecret = HttpContext.Request.Headers["client_secret"].FirstOrDefault();
+
+            if (string.IsNullOrEmpty(clientId))
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client id in Headers."));
+
+            if (string.IsNullOrEmpty(clientSecret))
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client secret in Headers."));
+
+            if (clientId != applicationSetting.ClientId || clientSecret != applicationSetting.ClientSecret)
+                return Unauthorized(GenerateErrorResponseModel(HttpStatusCode.Unauthorized, "Invalid client id or client secret."));
 
             return Ok();
         }

@@ -15,6 +15,7 @@ using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.Catalogs;
 using RA.Core.Models.PluginModels.Categories;
 using RA.Data.Domain.Addresses;
+using RA.Data.Domain.Application;
 using RA.Data.Domain.Users;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
@@ -22,6 +23,7 @@ using RA.WebServiceEndpoints.Models;
 using RA.WebServiceEndpoints.Services;
 using RAerp.Helpers.AddressHelper;
 using RAerp.Services.AddressServices;
+using RAerp.Services.ApplicationSettingServices;
 using RAerp.Services.UserServices;
 using System;
 using System.Collections;
@@ -54,6 +56,8 @@ namespace RA.WebServiceEndpoints.Controllers
         private readonly ICatalogService _catalogService;
         private readonly IMapper _mapper;
         private readonly IAddressService _addressService;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
@@ -64,7 +68,8 @@ namespace RA.WebServiceEndpoints.Controllers
             ICategoryService categoryService,
             ICatalogService catalogService,
             IMapper mapper,
-            IAddressService addressService)
+            IAddressService addressService,
+            IApplicationSettingService applicationSettingService)
         {
             _webServiceEndpointService = webServiceEndpointService;
             _entityTypeManager = entityTypeManager;
@@ -74,6 +79,8 @@ namespace RA.WebServiceEndpoints.Controllers
             _catalogService = catalogService;
             _mapper = mapper;
             _addressService = addressService;
+            _applicationSettingService = applicationSettingService;
+            _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
         }
         #endregion
 
@@ -86,6 +93,18 @@ namespace RA.WebServiceEndpoints.Controllers
             // TODO: will add checking of access rights here
             if (string.IsNullOrEmpty(endpoint))
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint cannot be empty"));
+
+            string clientId = HttpContext.Request.Headers["client_id"].FirstOrDefault();
+            string clientSecret = HttpContext.Request.Headers["client_secret"].FirstOrDefault();
+
+            if (string.IsNullOrEmpty(clientId))
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client id in Headers."));
+
+            if (string.IsNullOrEmpty(clientSecret))
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client secret in Headers."));
+
+            if (clientId != _applicationSetting.ClientId || clientSecret != _applicationSetting.ClientSecret)
+                return Unauthorized(GenerateErrorResponseModel(HttpStatusCode.Unauthorized, "Invalid client id or client secret."));
 
             var webServiceEndpoint = await _webServiceEndpointService.GetEndpointByEndpointName(endpoint);
             if (webServiceEndpoint == null)
@@ -145,9 +164,20 @@ namespace RA.WebServiceEndpoints.Controllers
         {
             // TODO: will add checking of access rights here
             //
-
             if (string.IsNullOrEmpty(endpoint))
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint cannot be empty"));
+
+            string clientId = HttpContext.Request.Headers["client_id"].FirstOrDefault();
+            string clientSecret = HttpContext.Request.Headers["client_secret"].FirstOrDefault();
+
+            if (string.IsNullOrEmpty(clientId))
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client id in Headers."));
+
+            if (string.IsNullOrEmpty(clientSecret))
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client secret in Headers."));
+
+            if (clientId != _applicationSetting.ClientId || clientSecret != _applicationSetting.ClientSecret)
+                return Unauthorized(GenerateErrorResponseModel(HttpStatusCode.Unauthorized, "Invalid client id or client secret."));
 
             var webServiceEndpoint = await _webServiceEndpointService.GetEndpointByEndpointName(endpoint);
             if (webServiceEndpoint == null)
@@ -199,6 +229,18 @@ namespace RA.WebServiceEndpoints.Controllers
 
             if (string.IsNullOrEmpty(endpoint))
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint cannot be empty"));
+
+            string clientId = HttpContext.Request.Headers["client_id"].FirstOrDefault();
+            string clientSecret = HttpContext.Request.Headers["client_secret"].FirstOrDefault();
+
+            if (string.IsNullOrEmpty(clientId))
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client id in Headers."));
+
+            if (string.IsNullOrEmpty(clientSecret))
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client secret in Headers."));
+
+            if (clientId != _applicationSetting.ClientId || clientSecret != _applicationSetting.ClientSecret)
+                return Unauthorized(GenerateErrorResponseModel(HttpStatusCode.Unauthorized, "Invalid client id or client secret."));
 
             var webServiceEndpoint = await _webServiceEndpointService.GetEndpointByEndpointName(endpoint);
             if (webServiceEndpoint == null)
@@ -301,6 +343,18 @@ namespace RA.WebServiceEndpoints.Controllers
             if (string.IsNullOrEmpty(endpoint))
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint cannot be empty"));
 
+            string clientId = HttpContext.Request.Headers["client_id"].FirstOrDefault();
+            string clientSecret = HttpContext.Request.Headers["client_secret"].FirstOrDefault();
+
+            if (string.IsNullOrEmpty(clientId))
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client id in Headers."));
+
+            if (string.IsNullOrEmpty(clientSecret))
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client secret in Headers."));
+
+            if (clientId != _applicationSetting.ClientId || clientSecret != _applicationSetting.ClientSecret)
+                return Unauthorized(GenerateErrorResponseModel(HttpStatusCode.Unauthorized, "Invalid client id or client secret."));
+
             var webServiceEndpoint = await _webServiceEndpointService.GetEndpointByEndpointName(endpoint);
             if (webServiceEndpoint == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint doesn't exists, create this endpoint in Web Service Endpoints screen"));
@@ -365,6 +419,18 @@ namespace RA.WebServiceEndpoints.Controllers
 
             if (string.IsNullOrEmpty(endpoint))
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Endpoint cannot be empty"));
+
+            string clientId = HttpContext.Request.Headers["client_id"].FirstOrDefault();
+            string clientSecret = HttpContext.Request.Headers["client_secret"].FirstOrDefault();
+
+            if (string.IsNullOrEmpty(clientId))
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client id in Headers."));
+
+            if (string.IsNullOrEmpty(clientSecret))
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client secret in Headers."));
+
+            if (clientId != _applicationSetting.ClientId || clientSecret != _applicationSetting.ClientSecret)
+                return Unauthorized(GenerateErrorResponseModel(HttpStatusCode.Unauthorized, "Invalid client id or client secret."));
 
             var webServiceEndpoint = await _webServiceEndpointService.GetEndpointByEndpointName(endpoint);
             if (webServiceEndpoint == null)

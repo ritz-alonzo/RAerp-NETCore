@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RA.Core.PluginData.Inventory;
+using RA.Data.Domain.Application;
 using RA.Inventory.Domain;
 using RA.Inventory.Models;
 using RA.Inventory.Services.InventoryReservationServices;
@@ -16,6 +17,7 @@ using RA.WebFramework.Extensions;
 using RAerp.Controllers.Admin;
 using RAerp.Helpers.UserHelper;
 using RAerp.Security.AccessRightsControl;
+using RAerp.Services.ApplicationSettingServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,6 +40,8 @@ namespace RA.Inventory.Controllers
         private readonly IInventoryStockService _inventoryStockService;
         private readonly IInventoryReservationService _inventoryReservationService;
         private readonly IInventoryTransactionService _inventoryTransactionService;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
@@ -46,7 +50,8 @@ namespace RA.Inventory.Controllers
             IAccessControl accessControl,
             IInventoryStockService inventoryStockService,
             IInventoryReservationService inventoryReservationService,
-            IInventoryTransactionService inventoryTransactionService)
+            IInventoryTransactionService inventoryTransactionService,
+            IApplicationSettingService applicationSettingService)
         {
             _inventoryManager = inventoryManager;
             _userIdentity = userIdentity;
@@ -54,6 +59,8 @@ namespace RA.Inventory.Controllers
             _inventoryStockService = inventoryStockService;
             _inventoryReservationService = inventoryReservationService;
             _inventoryTransactionService = inventoryTransactionService;
+            _applicationSettingService = applicationSettingService;
+            _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
         }
         #endregion
 
@@ -61,7 +68,8 @@ namespace RA.Inventory.Controllers
         [HttpGet("stock"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetAllStockList([FromQuery] InventoryStockSearchModel searchModel)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+
             if (searchModel.PageNumber == 0 && searchModel.PageSize == 0)
             {
                 var stockList = await _inventoryStockService.GetStockListAsync(
@@ -91,7 +99,7 @@ namespace RA.Inventory.Controllers
         [HttpGet("stock/catalog/{catalogTypeId:guid}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetCatalogStockList(Guid catalogTypeId)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
 
             if (catalogTypeId.IsNullOrEmpty())
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "CatalogId is invalid"));
@@ -105,7 +113,7 @@ namespace RA.Inventory.Controllers
         [HttpGet("stock/warehouse/{catalogTypeId:guid}/{warehouseId:guid}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetWarehouseStockList(Guid catalogTypeId, Guid warehouseId)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
 
             if (catalogTypeId.IsNullOrEmpty())
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "CatalogId is invalid"));
@@ -122,7 +130,7 @@ namespace RA.Inventory.Controllers
         [HttpGet("stock/{catalogId:guid}/{warehouseId:guid}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetStockByCatalogIdAndWarehouseId(Guid catalogId, Guid warehouseId)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
 
             var stock = await _inventoryStockService.GetByCatalogIdAndWarehouseIdAsync(catalogId, warehouseId);
             if (stock is null)
@@ -135,7 +143,7 @@ namespace RA.Inventory.Controllers
         [HttpPost("stock/initialize"), MapToApiVersion("1.0")]
         public async Task<IActionResult> InitializeStock([FromBody] InventoryStock req)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
 
             if (req.QuantityOnHand <= 0)
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Cannot add stock with 0 qty or negative qty"));
@@ -163,7 +171,7 @@ namespace RA.Inventory.Controllers
         [HttpPost("stock/receive"), MapToApiVersion("1.0")]
         public async Task<IActionResult> ReceiveStock([FromBody] InventoryTransaction req)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
 
             if (req.Quantity <= 0)
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Cannot receive stock with 0 qty or negative qty"));
@@ -190,7 +198,7 @@ namespace RA.Inventory.Controllers
         [HttpPost("stock/release"), MapToApiVersion("1.0")]
         public async Task<IActionResult> ReleaseStock([FromBody] InventoryTransaction req)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
 
             if (req.Quantity <= 0)
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Cannot release stock with 0 qty or negative qty"));
@@ -217,7 +225,7 @@ namespace RA.Inventory.Controllers
         [HttpPost("stock/adjust"), MapToApiVersion("1.0")]
         public async Task<IActionResult> ManualAdjustment([FromBody] InventoryTransaction req)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
 
             if (req.Quantity <= 0)
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Cannot adjust stock with 0 qty or negative qty"));
@@ -237,7 +245,7 @@ namespace RA.Inventory.Controllers
         [HttpGet("transaction"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetTransactionList([FromQuery] InventoryTransactionSearchModel searchModel)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
 
             if (searchModel.PageNumber == 0 && searchModel.PageSize == 0)
             {
@@ -277,7 +285,8 @@ namespace RA.Inventory.Controllers
         [HttpGet("reservation"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetReservationList([FromQuery] InventoryReservationSearchModel searchModel)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+
             if (searchModel.PageNumber == 0 && searchModel.PageSize == 0)
             {
                 var reservations = await _inventoryReservationService.GetReservationListAsync(
@@ -309,7 +318,7 @@ namespace RA.Inventory.Controllers
         [HttpPost("reservation"), MapToApiVersion("1.0")]
         public async Task<IActionResult> ReserveStock([FromBody] InventoryReservation req)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
 
             if (req.Quantity <= 0)
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Cannot release stock with 0 qty or negative qty"));
@@ -334,7 +343,7 @@ namespace RA.Inventory.Controllers
         [HttpGet("reservation/{reservationId:guid}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetReservation(Guid reservationId)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
 
             if (reservationId.IsNullOrEmpty())
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "ReservationId cannot be empty"));
@@ -350,7 +359,7 @@ namespace RA.Inventory.Controllers
         [HttpPost("reservation/fulfill")]
         public async Task<IActionResult> FulfillReservation([FromBody] InventoryReservation req)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity);
+            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
 
             if (req.Id.IsNullOrEmpty())
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "ReservationId is invalid"));
