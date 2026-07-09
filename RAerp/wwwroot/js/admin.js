@@ -496,6 +496,7 @@ $(window).on('load', (e) => {
     if (createdOnElements.length > 0) {
         $(createdOnElements).each((index, item) => {
             if (item.value != '') {
+                console.log(item.value);
                 item.value = moment(item.value, 'YYYY-MM-DD hh:mm:ss A').format('YYYY-MM-DD hh:mm:ss A');
             }
         });

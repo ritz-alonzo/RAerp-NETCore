@@ -95,7 +95,7 @@ namespace RA.Inventory.Services.InventoryTransactionServices
                 query = query.Where(c => warehouseIds.Contains(c.WarehouseId));
 
             if (searchCreatedOn.HasValue)
-                query = query.Where(c => c.CreatedOn.Date == searchCreatedOn.Value.ConvertUTCToLocalDateTime().Date);
+                query = query.Where(c => c.CreatedOn.Date == searchCreatedOn.Value.ConvertToUTC().Date);
 
             if (catalogTypeId.IsNotNullOrEmpty())
             {
@@ -148,7 +148,7 @@ namespace RA.Inventory.Services.InventoryTransactionServices
                 query = query.Where(c => warehouseIds.Contains(c.WarehouseId));
 
             if (searchCreatedOn.HasValue)
-                query = query.Where(c => c.CreatedOn.Date == searchCreatedOn.Value.ConvertUTCToLocalDateTime().Date);
+                query = query.Where(c => c.CreatedOn.Date == searchCreatedOn.Value.ConvertToUTC().Date);
 
             if (catalogTypeId.IsNotNullOrEmpty())
             {

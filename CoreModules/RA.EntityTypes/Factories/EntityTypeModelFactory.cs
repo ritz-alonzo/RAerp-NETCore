@@ -1,12 +1,14 @@
 ﻿using AutoMapper;
 using Microsoft.IdentityModel.Tokens;
 using RA.Core.Models.PluginModels.EntityTypes;
+using RA.Data.Domain.Application;
 using RA.Data.Domain.EntityTypes;
 using RA.EntityTypes.Factories;
 using RA.EntityTypes.Helpers;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
 using RAerp.Factories.CoreFactories;
+using RAerp.Services.ApplicationSettingServices;
 using System.Security.Policy;
 
 namespace MMS.Factories.Factories.EntityTypeFactory
@@ -21,14 +23,21 @@ namespace MMS.Factories.Factories.EntityTypeFactory
         private readonly IEntityTypeManager _entityTypeManager;
         private readonly IBaseModelFactory _baseModelFactory;
         private readonly IMapper _mapper;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
-        public EntityTypeModelFactory(IEntityTypeManager entityTypeManager, IBaseModelFactory baseModelFactory, IMapper mapper)
+        public EntityTypeModelFactory(IEntityTypeManager entityTypeManager, 
+            IBaseModelFactory baseModelFactory, 
+            IMapper mapper, 
+            IApplicationSettingService applicationSettingService)
         {
             _entityTypeManager = entityTypeManager;
             _baseModelFactory = baseModelFactory;
             _mapper = mapper;
+            _applicationSettingService = applicationSettingService;
+            _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync().Result;
         }
         #endregion
 
@@ -50,14 +59,10 @@ namespace MMS.Factories.Factories.EntityTypeFactory
                 model = _mapper.Map(entityType, model);
 
                 if (model.InstalledOn != DateTime.MinValue)
-                {
-                    model.InstalledOn = model.InstalledOn.ConvertUTCToLocalDateTime();
-                }
+                    model.InstalledOn = model.InstalledOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
 
                 if (model.UnInstalledOn.HasValue)
-                {
-                    model.UnInstalledOn = model.UnInstalledOn.ConvertUTCToLocalDateTime();
-                }
+                    model.UnInstalledOn = model.UnInstalledOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
             }
             // child entity type creation
             else
@@ -114,8 +119,8 @@ namespace MMS.Factories.Factories.EntityTypeFactory
                 entityTypeModel.ModalConfigureEnabled = UseModalConfiguration(entityType.Id);
                 entityTypeModel.PluginController = GeneratePluginControllerString(entityType, entityTypeModel.ModalConfigureEnabled);
                 entityTypeModel.PluginConfigurationUrl = GetPluginConfigurationUrl(entityTypeModel.PluginController, entityTypeModel.ModalConfigureEnabled);
-                entityTypeModel.InstalledOn = entityTypeModel.InstalledOn != DateTime.MinValue ? entityTypeModel.InstalledOn.ConvertUTCToLocalDateTime() : DateTime.MinValue.ConvertUTCToLocalDateTime();
-                entityTypeModel.UnInstalledOn = entityTypeModel.UnInstalledOn.HasValue ? entityTypeModel.UnInstalledOn.ConvertUTCToLocalDateTime() : null;
+                entityTypeModel.InstalledOn = entityTypeModel.InstalledOn != DateTime.MinValue ? entityTypeModel.InstalledOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : DateTime.MinValue.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+                entityTypeModel.UnInstalledOn = entityTypeModel.UnInstalledOn.HasValue ? entityTypeModel.UnInstalledOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
                 return entityTypeModel;
 
             }).ToList();
@@ -145,8 +150,8 @@ namespace MMS.Factories.Factories.EntityTypeFactory
                 entityTypeModel.ModalConfigureEnabled = UseModalConfiguration(entityType.Id);
                 entityTypeModel.PluginController = GeneratePluginControllerString(entityType, entityTypeModel.ModalConfigureEnabled);
                 entityTypeModel.PluginConfigurationUrl = GetPluginConfigurationUrl(entityTypeModel.PluginController, entityTypeModel.ModalConfigureEnabled);
-                entityTypeModel.InstalledOn = entityTypeModel.InstalledOn != DateTime.MinValue ? entityTypeModel.InstalledOn.ConvertUTCToLocalDateTime() : DateTime.MinValue.ConvertUTCToLocalDateTime();
-                entityTypeModel.UnInstalledOn = entityTypeModel.UnInstalledOn.HasValue ? entityTypeModel.UnInstalledOn.ConvertUTCToLocalDateTime() : null;
+                entityTypeModel.InstalledOn = entityTypeModel.InstalledOn != DateTime.MinValue ? entityTypeModel.InstalledOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : DateTime.MinValue.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+                entityTypeModel.UnInstalledOn = entityTypeModel.UnInstalledOn.HasValue ? entityTypeModel.UnInstalledOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
 
                 return entityTypeModel;
 

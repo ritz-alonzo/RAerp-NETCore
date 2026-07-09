@@ -296,7 +296,7 @@ label[data-required=true]:after {
         font-size: 12px;
     }
 
-    .form-content-header-control div input, .form-content-header-control div a {
+    .form-content-header-control div input, .form-content-header-control div a, .form-content-header-control div button {
         padding-top: 5px;
         font-size: 12px;
     }

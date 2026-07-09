@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using RA.Core.Helpers;
 using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Data.Data;
+using RA.Data.Domain.Application;
 using RA.Data.Domain.Users;
 using RA.WebFramework.Extensions;
 using RAerp.Factories.CoreFactories;
@@ -12,6 +13,7 @@ using RAerp.Helpers.Constants;
 using RAerp.Helpers.Security;
 using RAerp.Helpers.UserHelper;
 using RAerp.Models.UsersModel;
+using RAerp.Services.ApplicationSettingServices;
 using RAerp.Services.UserServices;
 using System.Security.Cryptography.Xml;
 
@@ -27,16 +29,21 @@ namespace RAerp.Factories.UserFactory
         private readonly IBaseAdminModelFactory _baseAdminModelFactory;
         private readonly IMapper _mapper;
         private readonly IUserIdentity _userIdentity;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
 
-        public UserModelFactory(IUserService userService, 
-            IBaseAdminModelFactory baseSearchModelFactory, 
-            IMapper mapper, 
-            IUserIdentity userIdentity)
+        public UserModelFactory(IUserService userService,
+            IBaseAdminModelFactory baseSearchModelFactory,
+            IMapper mapper,
+            IUserIdentity userIdentity,
+            IApplicationSettingService applicationSettingService)
         {
             _userService = userService;
             _baseAdminModelFactory = baseSearchModelFactory;
             _mapper = mapper;
             _userIdentity = userIdentity;
+            _applicationSettingService = applicationSettingService;
+            _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
         }
 
         #region Users
@@ -74,8 +81,8 @@ namespace RAerp.Factories.UserFactory
                 // source : user destination : userModel
                 // needed to create new UserModel() first
                 userModel = _mapper.Map(user, userModel);
-                userModel.CreatedOn = userModel.CreatedOn.ConvertUTCToLocalDateTime();
-                userModel.ModifiedOn = userModel.ModifiedOn.HasValue ? userModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+                userModel.CreatedOn = userModel.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+                userModel.ModifiedOn = userModel.ModifiedOn.HasValue ? userModel.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
                 return userModel;
 
             }).ToList();
@@ -103,10 +110,10 @@ namespace RAerp.Factories.UserFactory
             model = _mapper.Map(entity, model);
 
             if (model.CreatedOn != DateTime.MinValue)
-                model.CreatedOn = model.CreatedOn.ConvertUTCToLocalDateTime();
+                model.CreatedOn = model.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
 
             if (entity.ModifiedOn.HasValue)
-                model.ModifiedOn = entity.ModifiedOn.ConvertUTCToLocalDateTime();
+                model.ModifiedOn = entity.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
 
             model.AccountStatus = entity.AccountStatus;
             // will fix this so that when there's still no user role available will
@@ -179,8 +186,8 @@ namespace RAerp.Factories.UserFactory
                 // source : user destination : userModel
                 // needed to create new UserModel() first
                 userRoleModel = _mapper.Map(userRole, userRoleModel);
-                userRoleModel.CreatedOn = userRoleModel.CreatedOn.ConvertUTCToLocalDateTime();
-                userRoleModel.ModifiedOn = userRoleModel.ModifiedOn.HasValue ? userRoleModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+                userRoleModel.CreatedOn = userRoleModel.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+                userRoleModel.ModifiedOn = userRoleModel.ModifiedOn.HasValue ? userRoleModel.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
                 return userRoleModel;
 
             }).ToList();
@@ -205,10 +212,10 @@ namespace RAerp.Factories.UserFactory
             model = _mapper.Map(entity, model);
 
             if (model.CreatedOn != DateTime.MinValue)
-                model.CreatedOn = model.CreatedOn.ConvertUTCToLocalDateTime();
+                model.CreatedOn = model.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
 
             if (entity.ModifiedOn.HasValue)
-                model.ModifiedOn = entity.ModifiedOn.ConvertUTCToLocalDateTime();
+                model.ModifiedOn = entity.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
 
             await _baseAdminModelFactory.PrepareBaseAdminModelAsync(model, entity);
 

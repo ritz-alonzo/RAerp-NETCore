@@ -1,17 +1,20 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.DependencyInjection;
 using RA.Categories.Data;
 using RA.Categories.Domain;
 using RA.Categories.Services;
 using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.Categories;
 using RA.Core.PluginData.EntityTypes.Categories;
+using RA.Data.Domain.Application;
 using RA.EntityTypes.Factories;
 using RA.EntityTypes.Helpers;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
 using RAerp.Helpers.UserHelper;
+using RAerp.Services.ApplicationSettingServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,6 +32,8 @@ namespace RA.Categories.Factories
         private readonly IEntityTypeManager _entityTypeManager;
         private readonly IUserIdentity _userIdentity;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
@@ -45,6 +50,8 @@ namespace RA.Categories.Factories
             _entityTypeManager = entityTypeManager;
             _userIdentity = userIdentity;
             _httpContextAccessor = httpContextAccessor;
+            _applicationSettingService = httpContextAccessor.HttpContext?.RequestServices.GetService<IApplicationSettingService>();
+            _applicationSetting = _applicationSettingService?.GetCurrentApplicationSettingAsync().Result;
         }
         #endregion
 
@@ -93,8 +100,8 @@ namespace RA.Categories.Factories
                 if (createdByUser != null)
                     categoryModel.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(createdByUser);
 
-                categoryModel.CreatedOn = categoryModel.CreatedOn.ConvertUTCToLocalDateTime();
-                categoryModel.ModifiedOn = categoryModel.ModifiedOn.HasValue ? categoryModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+                categoryModel.CreatedOn = categoryModel.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+                categoryModel.ModifiedOn = categoryModel.ModifiedOn.HasValue ? categoryModel.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
 
                 return categoryModel;
 
@@ -137,11 +144,6 @@ namespace RA.Categories.Factories
             // settings
             var settings = await _entityTypeManager.GetSettingDataOfEntityAsync<Category, CategorySetting>(entityTypeId);
             
-            if (categoryModel.CreatedOn != DateTime.MinValue)
-                categoryModel.CreatedOn = categoryModel.CreatedOn.ConvertUTCToLocalDateTime();
-
-            if (categoryModel.ModifiedOn.HasValue)
-                categoryModel.ModifiedOn = categoryModel.ModifiedOn.ConvertUTCToLocalDateTime();
             // base model mapping
             categoryModel = await _baseEntityModelFactory.PrepareBaseEntityModelAsync<CategoryModel, Category, CategorySetting>(categoryModel, category, settings);
 

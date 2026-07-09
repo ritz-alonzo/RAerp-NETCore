@@ -2,6 +2,7 @@
 using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.WebServiceEndpoints;
 using RA.Core.Models.PortableViewModels;
+using RA.Data.Domain.Application;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
 using RA.WebServiceEndpoints.Domain;
@@ -11,6 +12,7 @@ using RAerp.Factories.CoreFactories;
 using RAerp.Helpers.PluginHelper;
 using RAerp.Helpers.UserHelper;
 using RAerp.PluginServiceProvider;
+using RAerp.Services.ApplicationSettingServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +28,9 @@ namespace RA.WebServiceEndpoints.Factories
         private readonly IBaseModelFactory _baseModelFactory;
         private readonly IMapper _mapper;
         private readonly IEntityTypeManager _entityTypeManager;
-        private readonly IUserIdentity _userIdentity;
+        private readonly IUserIdentity _userIdentity; 
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
@@ -34,13 +38,16 @@ namespace RA.WebServiceEndpoints.Factories
             IBaseModelFactory baseModelFactory,
             IMapper mapper,
             IEntityTypeManager entityTypeManager,
-            IUserIdentity userIdentity)
+            IUserIdentity userIdentity,
+            IApplicationSettingService applicationSettingService)
         {
             _webServiceEndpointService = webServiceEndpointService;
             _baseModelFactory = baseModelFactory;
             _mapper = mapper;
             _entityTypeManager = entityTypeManager;
             _userIdentity = userIdentity;
+            _applicationSettingService = applicationSettingService;
+            _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
         }
         #endregion
 
@@ -85,8 +92,8 @@ namespace RA.WebServiceEndpoints.Factories
                     webServiceEndpointModel.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(createdByUser);
                 // END
                 webServiceEndpointModel.EndpointEntityTypeName = _entityTypeManager.GetByIdAsync(webServiceEndpoint.EndpointEntityTypeId.Value).Result.EntityName;
-                webServiceEndpointModel.CreatedOn = webServiceEndpointModel.CreatedOn.ConvertUTCToLocalDateTime();
-                webServiceEndpointModel.ModifiedOn = webServiceEndpointModel.ModifiedOn.HasValue ? webServiceEndpointModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+                webServiceEndpointModel.CreatedOn = webServiceEndpointModel.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+                webServiceEndpointModel.ModifiedOn = webServiceEndpointModel.ModifiedOn.HasValue ? webServiceEndpointModel.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
                 
                 return webServiceEndpointModel;
 
@@ -147,10 +154,10 @@ namespace RA.WebServiceEndpoints.Factories
             model.WebServiceEndpointSystemName = typeof(WebServiceEndpoint).FullName;
 
             if (model.CreatedOn != DateTime.MinValue)
-                model.CreatedOn = model.CreatedOn.ConvertUTCToLocalDateTime();
+                model.CreatedOn = model.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
 
             if (model.ModifiedOn.HasValue)
-                model.ModifiedOn = model.ModifiedOn.ConvertUTCToLocalDateTime();
+                model.ModifiedOn = model.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
 
             await _baseModelFactory.PrepareBaseModelAsync<WebServiceEndpointModel>(model);
 

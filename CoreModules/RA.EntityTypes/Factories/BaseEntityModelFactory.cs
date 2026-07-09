@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using RA.Core.Domain;
 using RA.Core.Helpers;
 using RA.Core.Models.BaseModels;
@@ -7,6 +8,7 @@ using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.EntityTypes;
 using RA.Core.Models.PortableViewModels;
 using RA.Core.Models.UserInfaceModels;
+using RA.Data.Domain.Application;
 using RA.Data.Domain.EntityTypes;
 using RA.EntityTypes.Data;
 using RA.EntityTypes.Domain;
@@ -17,6 +19,7 @@ using RAerp.Helpers.PluginHelper;
 using RAerp.Helpers.UserHelper;
 using RAerp.PluginServiceProvider;
 using RAerp.Security.AccessRightsControl;
+using RAerp.Services.ApplicationSettingServices;
 using RAerp.Services.Configurations;
 using System;
 using System.Collections.Generic;
@@ -36,6 +39,8 @@ namespace RA.EntityTypes.Factories
         private readonly IEntityTypeManager _entityTypeManager;
         private readonly IAccessControl _accessControl;
         private readonly IMapper _mapper;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
@@ -51,6 +56,8 @@ namespace RA.EntityTypes.Factories
             _entityTypeManager = entityTypeManager;
             _accessControl = accessControl;
             _mapper = mapper;
+            _applicationSettingService = httpContextAccessor.HttpContext?.RequestServices.GetService<IApplicationSettingService>();
+            _applicationSetting = _applicationSettingService?.GetCurrentApplicationSettingAsync().Result;
         }
         #endregion
 
@@ -98,8 +105,8 @@ namespace RA.EntityTypes.Factories
             model = await PrepareBaseModelAsync(model);
             model.EntityTypeSystemName = entity.EntitySystemName;
             model.EntityTypeName = GetEntityTypeNameFromSystemName(entity.EntitySystemName);
-            model.CreatedOn = entity.CreatedOn.ConvertUTCToLocalDateTime();
-            model.ModifiedOn = entity.ModifiedOn.HasValue ? entity.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+            model.CreatedOn = entity.CreatedOn != DateTime.MinValue ? entity.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : model.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+            model.ModifiedOn = entity.ModifiedOn.HasValue ? entity.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
             // Preparation of UI Access Rights and Settings Model
             model = await PrepareBaseEntityModelUIAccessAsync<TModel, TEntity, TSettings>(model, entity, settings);
             // Preparation of View Components

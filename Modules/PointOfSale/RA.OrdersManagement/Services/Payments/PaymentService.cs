@@ -95,7 +95,7 @@ namespace RA.OrdersManagement.Services.Payments
             var tempOrderForm = base.CreateTempForm();
             tempOrderForm.AmountPaid = 0m;
             tempOrderForm.ChangeAmount = 0m;
-            tempOrderForm.PaymentDate = DateTime.Now;
+            tempOrderForm.PaymentDate = DateTime.UtcNow;
             return tempOrderForm;
         }
         #endregion

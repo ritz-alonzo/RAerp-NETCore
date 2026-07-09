@@ -11,6 +11,7 @@ using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.Catalogs;
 using RA.Core.Models.PluginModels.OrdersManagement.Orders;
 using RA.Core.PluginData.EntityTypes.Catalogs;
+using RA.Data.Domain.Application;
 using RA.FormTypes.Factories;
 using RA.FormTypes.Services;
 using RA.OrdersManagement.Data;
@@ -19,6 +20,7 @@ using RA.OrdersManagement.Services.Orders;
 using RA.WebFramework.Extensions;
 using RAerp.Helpers.UserHelper;
 using RAerp.Security.AccessRightsControl;
+using RAerp.Services.ApplicationSettingServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,6 +41,8 @@ namespace RA.OrdersManagement.Factories.Orders
         private readonly IOrderService _orderService;
         private readonly OrderSetting _orderSettings;
         private readonly ICategoryService _categoryService;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
@@ -49,7 +53,8 @@ namespace RA.OrdersManagement.Factories.Orders
             IAccessControl accessControl,
             ICatalogService catalogService,
             IOrderService orderService,
-            ICategoryService categoryService)
+            ICategoryService categoryService,
+            IApplicationSettingService applicationSettingService)
         {
             _baseFormModelFactory = baseFormModelFactory;
             _formTypeManager = formTypeManager;
@@ -60,6 +65,8 @@ namespace RA.OrdersManagement.Factories.Orders
             _orderService = orderService;
             _orderSettings = _formTypeManager.GetSettingDataOfFormAsync<Order, OrderSetting>().Result;
             _categoryService = categoryService;
+            _applicationSettingService = applicationSettingService;
+            _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
         }
         #endregion
 
@@ -121,10 +128,10 @@ namespace RA.OrdersManagement.Factories.Orders
                 orderModel.AvailableServices = availableServices;
 
                 if (orderModel.CreatedOn != DateTime.MinValue)
-                    orderModel.CreatedOn = orderModel.CreatedOn.ConvertUTCToLocalDateTime();
+                    orderModel.CreatedOn = orderModel.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
 
                 if (orderModel.ModifiedOn.HasValue)
-                    orderModel.ModifiedOn = orderModel.ModifiedOn.ConvertUTCToLocalDateTime();
+                    orderModel.ModifiedOn = orderModel.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
 
                 return orderModel;
 
@@ -212,8 +219,8 @@ namespace RA.OrdersManagement.Factories.Orders
                     }
                 }
 
-                orderItemModel.CreatedOn = orderItemModel.CreatedOn.ConvertUTCToLocalDateTime();
-                orderItemModel.ModifiedOn = orderItemModel.ModifiedOn.HasValue ? orderItemModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+                orderItemModel.CreatedOn = orderItemModel.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+                orderItemModel.ModifiedOn = orderItemModel.ModifiedOn.HasValue ? orderItemModel.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
 
                 return orderItemModel;
 

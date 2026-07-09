@@ -6,6 +6,7 @@ using RA.Core.Models.PluginModels.OrdersManagement.Carts;
 using RA.Core.Models.PluginModels.OrdersManagement.Payments;
 using RA.Core.PluginData.EntityTypes.Catalogs;
 using RA.Core.PluginData.FormTypes.OrdersManagement.Payments;
+using RA.Data.Domain.Application;
 using RA.FormTypes.Factories;
 using RA.FormTypes.Services;
 using RA.OrdersManagement.Data;
@@ -14,6 +15,7 @@ using RA.OrdersManagement.Services.Payments;
 using RA.WebFramework.Extensions;
 using RAerp.Helpers.UserHelper;
 using RAerp.Security.AccessRightsControl;
+using RAerp.Services.ApplicationSettingServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,6 +35,8 @@ namespace RA.OrdersManagement.Factories.Payments
         private readonly ICatalogService _catalogService;
         private readonly IPaymentService _paymentService;
         private readonly PaymentSetting _paymentSettings;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
@@ -42,7 +46,8 @@ namespace RA.OrdersManagement.Factories.Payments
             IUserIdentity userIdentity,
             IAccessControl accessControl,
             ICatalogService catalogService,
-            IPaymentService paymentService)
+            IPaymentService paymentService,
+            IApplicationSettingService applicationSettingService)
         {
             _baseFormModelFactory = baseFormModelFactory;
             _formTypeManager = formTypeManager;
@@ -52,6 +57,8 @@ namespace RA.OrdersManagement.Factories.Payments
             _catalogService = catalogService;
             _paymentService = paymentService;
             _paymentSettings = _formTypeManager.GetSettingDataOfFormAsync<Payment, PaymentSetting>().Result;
+            _applicationSettingService = applicationSettingService;
+            _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
         }
         #endregion
 
@@ -100,8 +107,8 @@ namespace RA.OrdersManagement.Factories.Payments
                 var createdByUser = _userIdentity.GetUserDetailsAsync(payment.CreatedById).Result;
                 if (createdByUser != null)
                     paymentModel.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(createdByUser);
-                paymentModel.CreatedOn = paymentModel.CreatedOn.ConvertUTCToLocalDateTime();
-                paymentModel.ModifiedOn = paymentModel.ModifiedOn.HasValue ? paymentModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+                paymentModel.CreatedOn = paymentModel.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+                paymentModel.ModifiedOn = paymentModel.ModifiedOn.HasValue ? paymentModel.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
                 return paymentModel;
 
             }).ToList();
@@ -148,8 +155,8 @@ namespace RA.OrdersManagement.Factories.Payments
             {
                 PaymentItemModel paymentItemModel = new PaymentItemModel();
                 paymentItemModel = _mapper.Map(formItem, paymentItemModel);
-                paymentItemModel.CreatedOn = paymentItemModel.CreatedOn.ConvertUTCToLocalDateTime();
-                paymentItemModel.ModifiedOn = paymentItemModel.ModifiedOn.HasValue ? paymentItemModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+                paymentItemModel.CreatedOn = paymentItemModel.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+                paymentItemModel.ModifiedOn = paymentItemModel.ModifiedOn.HasValue ? paymentItemModel.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
                 return paymentItemModel;
 
             }).ToList();

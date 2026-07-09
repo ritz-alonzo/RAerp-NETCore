@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using RA.Core.Helpers;
 using RA.Core.Models.BaseModels;
 using RA.Core.Models.PluginModels.BusinessEntities;
@@ -7,6 +8,7 @@ using RA.Core.Models.PluginModels.EntityTypes;
 using RA.Core.Models.PluginModels.FormTypes;
 using RA.Core.Models.PortableViewModels;
 using RA.Core.PluginData.FormTypes;
+using RA.Data.Domain.Application;
 using RA.FormTypes.Data;
 using RA.FormTypes.Domain;
 using RA.FormTypes.Services;
@@ -16,6 +18,7 @@ using RAerp.Helpers.PluginHelper;
 using RAerp.Helpers.UserHelper;
 using RAerp.PluginServiceProvider;
 using RAerp.Security.AccessRightsControl;
+using RAerp.Services.ApplicationSettingServices;
 using RAerp.Services.Configurations;
 using System;
 using System.Collections.Generic;
@@ -31,6 +34,8 @@ namespace RA.FormTypes.Factories
         private readonly IFormTypeManager _formTypeManager;
         private readonly IAccessControl _accessControl;
         private readonly IMapper _mapper;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
@@ -45,6 +50,8 @@ namespace RA.FormTypes.Factories
             _formTypeManager = formTypeManager;
             _accessControl = accessControl;
             _mapper = mapper;
+            _applicationSettingService = httpContextAccessor.HttpContext?.RequestServices.GetService<IApplicationSettingService>();
+            _applicationSetting = _applicationSettingService?.GetCurrentApplicationSettingAsync().Result;
         }
         #endregion
 
@@ -83,8 +90,8 @@ namespace RA.FormTypes.Factories
             model = await PrepareBaseModelAsync(model);
             model.FormTypeSystemName = typeof(TForm).FullName;
             model.FormTypeName = typeof(TForm).Name;
-            model.CreatedOn = form.CreatedOn.ConvertUTCToLocalDateTime();
-            model.ModifiedOn = form.ModifiedOn.HasValue ? form.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+            model.CreatedOn = form.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+            model.ModifiedOn = form.ModifiedOn.HasValue ? form.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
             if (settings != null)
                 model.FormSettings = _mapper.Map(settings, model.FormSettings);
             // Preparation of UI Access Rights and Settings Model

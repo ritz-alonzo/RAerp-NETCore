@@ -40,7 +40,7 @@ namespace RAErp.Controllers.Users
         private readonly string _smsAPIKey;
         private readonly IEmailService _emailService;
         private readonly IApplicationSettingService _applicationSettingService;
-        private readonly ApplicationSetting _currentApplicationSetting;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
@@ -63,7 +63,7 @@ namespace RAErp.Controllers.Users
             _smsAPIKey = configuration.GetValue<string>("ApiSettings:SMSApiKey");
             _emailService = emailService;
             _applicationSettingService = applicationSettingService;
-            _currentApplicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync().Result;
+            _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync().Result;
         }
         #endregion
 
@@ -202,9 +202,9 @@ namespace RAErp.Controllers.Users
 
                 // Send SMS One Time PIN for verification
                 //entity = await SendSMSHelper.SendSMSOTPRequest(entity, _smsAPIKey);
-                if (_currentApplicationSetting != null)
+                if (_applicationSetting != null)
                 {
-                    if (_currentApplicationSetting.IsEmailVerificationEnabled)
+                    if (_applicationSetting.IsEmailVerificationEnabled)
                     {
                         var generatedOTP = SendSMSHelper.GenerateOTP();
                         // Send One Time PIN in Email
@@ -214,7 +214,7 @@ namespace RAErp.Controllers.Users
                                 <p>Please verify your account.</p>
                                 <p>Your Generated OTP is: <b>{generatedOTP}</b></p>
                                 </br>
-                                <p>This OTP will be valid until: <b>{DateTime.UtcNow.AddHours(1).ConvertUTCToLocalDateTime()}</b></p>
+                                <p>This OTP will be valid until: <b>{DateTime.UtcNow.AddHours(1).ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone)}</b></p>
                                 </br>
                                 </br>
                                 <p>Please Enter the generated OTP before the expiry, to verify your account.</p>
@@ -244,7 +244,7 @@ namespace RAErp.Controllers.Users
                 // map to user role
                 await _userService.InsertMapping(entity.Id, model.UserRoleId);
 
-                if (_currentApplicationSetting.IsEmailVerificationEnabled)
+                if (_applicationSetting.IsEmailVerificationEnabled)
                     return RedirectToAction("VerifyAccount", new { id = entity.Id });
                 else
                     return RedirectToAction("Profile", new { id = entity.Id });
@@ -297,14 +297,14 @@ namespace RAErp.Controllers.Users
                 if (model.OneTimePIN != entity.OneTimePIN)
                 {
                     // Add configuration settings for allowable attempts for checking here
-                    if (_currentApplicationSetting != null)
+                    if (_applicationSetting != null)
                     {
-                        if (entity.OneTimePINAttempt.GetValueOrDefault() > _currentApplicationSetting.OneTimePINAttemptLimit)
+                        if (entity.OneTimePINAttempt.GetValueOrDefault() > _applicationSetting.OneTimePINAttemptLimit)
                         {
                             AdminErrorNotification(model, "OTP Attempts exceeds limit");
                             return View(model);
                         }
-                        else if (entity.EmailResendAttempt > _currentApplicationSetting.EmailVerificationAttemptLimit)
+                        else if (entity.EmailResendAttempt > _applicationSetting.EmailVerificationAttemptLimit)
                         {
                             AdminErrorNotification(model, "Email verification attempt exceeds limit");
                             return View(model);
@@ -358,10 +358,10 @@ namespace RAErp.Controllers.Users
                 return RedirectToAction("Profile", new { id = id });
             }
 
-            if (_currentApplicationSetting == null)
+            if (_applicationSetting == null)
                 return JsonError("Application Settings not yet configured");
 
-            if (entity.EmailResendAttempt > _currentApplicationSetting.EmailVerificationAttemptLimit)
+            if (entity.EmailResendAttempt > _applicationSetting.EmailVerificationAttemptLimit)
             {
                 return RedirectToAction("Verify Account", new { id = id });
             }
@@ -377,7 +377,7 @@ namespace RAErp.Controllers.Users
                 <p>Please verify your account.</p>
                 <p>Your Generated OTP is: <b>{generatedOTP}</b></p>
                 </br>
-                <p>This OTP will be valid until: <b>{entity.OneTimePINValidUntil.GetValueOrDefault().ConvertUTCToLocalDateTime()}</b></p>
+                <p>This OTP will be valid until: <b>{entity.OneTimePINValidUntil.GetValueOrDefault().ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone)}</b></p>
                 </br>
                 </br>
                 <p>Please Enter the generated OTP before the expiry, to verify your account.</p>

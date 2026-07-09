@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Newtonsoft.Json.Linq;
 using RA.WebFramework.Models.Pagination;
 using System;
 using System.Data.Entity;
@@ -59,6 +60,29 @@ namespace RA.WebFramework.Extensions
             .ToLowerInvariant();
 
             return allowedExt.Contains(extension) || allowedContentTypes.Contains(extension);
+        }
+
+        public static DateTime ConvertUTCToAppSettingsDateTime(this DateTime date, string timeZoneId)
+        {
+            if (string.IsNullOrEmpty(timeZoneId))
+            {
+                timeZoneId = "Singapore Standard Time"; // default to Singapore Standard Time if not provided
+            }
+
+            var utcValue = date.Kind == DateTimeKind.Utc ? date : DateTime.SpecifyKind(date, DateTimeKind.Utc);
+            var tz = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            return TimeZoneInfo.ConvertTimeFromUtc(utcValue, tz);
+        }
+
+        public static DateTime ConvertUTCToAppSettingsDateTime(this DateTime? date, string timeZoneId)
+        {
+            if (string.IsNullOrEmpty(timeZoneId))
+            {
+                timeZoneId = "Singapore Standard Time"; // default to Singapore Standard Time if not provided
+            }
+            var utcValue = date.Value.Kind == DateTimeKind.Utc ? date : DateTime.SpecifyKind(date.Value, DateTimeKind.Utc);
+            var tz = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            return TimeZoneInfo.ConvertTimeFromUtc(utcValue.Value, tz);
         }
 
         public static DateTime ConvertUTCToLocalDateTime(this DateTime date)

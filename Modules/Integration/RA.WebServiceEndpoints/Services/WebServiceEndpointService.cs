@@ -47,7 +47,7 @@ namespace RA.WebServiceEndpoints.Services
 
             if (createdOn.HasValue)
             {
-                createdOn = createdOn.ConvertUTCToLocalDateTime();
+                createdOn = createdOn.ConvertToUTC();
                 query = query.Where(c => c.CreatedOn.ConvertToUTC() >= createdOn.Value);
             }
 

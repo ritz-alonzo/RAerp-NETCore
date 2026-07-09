@@ -67,7 +67,7 @@ namespace RA.Inventory.Services.InventoryStockServices
                 query = query.Where(c => warehouseIds.Contains(c.WarehouseId));
 
             if (searchCreatedOn.HasValue)
-                query = query.Where(c => c.CreatedOn.Date == searchCreatedOn.Value.ConvertUTCToLocalDateTime().Date);
+                query = query.Where(c => c.CreatedOn.Date == searchCreatedOn.Value.ConvertToUTC().Date);
 
             // by default included low stock
             if (showLowStockOnly)
@@ -122,7 +122,7 @@ namespace RA.Inventory.Services.InventoryStockServices
                 query = query.Where(c => warehouseIds.Contains(c.WarehouseId));
 
             if (searchCreatedOn.HasValue)
-                query = query.Where(c => c.CreatedOn.Date == searchCreatedOn.Value.ConvertUTCToLocalDateTime().Date);
+                query = query.Where(c => c.CreatedOn.Date == searchCreatedOn.Value.ConvertToUTC().Date);
 
             // by default included low stock
             if (showLowStockOnly)

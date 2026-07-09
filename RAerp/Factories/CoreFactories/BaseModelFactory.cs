@@ -23,7 +23,9 @@ namespace RAerp.Factories.CoreFactories
         #endregion
 
         #region Ctor
-        public BaseModelFactory(IUserIdentity userIdentity, IHttpContextAccessor httpContextAccessor, ISettingService settingService)
+        public BaseModelFactory(IUserIdentity userIdentity, 
+            IHttpContextAccessor httpContextAccessor, 
+            ISettingService settingService)
         {
             _userIdentity = userIdentity;
             _httpContextAccessor = httpContextAccessor;

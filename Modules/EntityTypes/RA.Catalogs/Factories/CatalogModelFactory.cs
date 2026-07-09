@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.DependencyInjection;
 using RA.Catalogs.Data;
 using RA.Catalogs.Domain;
 using RA.Catalogs.Services;
@@ -11,12 +12,14 @@ using RA.Core.Models.PluginModels.Catalogs;
 using RA.Core.PluginData.EntityTypes.BusinessEntities;
 using RA.Core.PluginData.EntityTypes.Catalogs;
 using RA.Data.Domain.Addresses;
+using RA.Data.Domain.Application;
 using RA.EntityTypes.Factories;
 using RA.EntityTypes.Helpers;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
 using RAerp.Helpers.AddressHelper;
 using RAerp.Helpers.UserHelper;
+using RAerp.Services.ApplicationSettingServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,7 +37,9 @@ namespace RA.Catalogs.Factories
         private readonly IEntityTypeManager _entityTypeManager;
         private readonly IUserIdentity _userIdentity;
         private readonly ICategoryService _categoryService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IHttpContextAccessor _httpContextAccessor; 
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
@@ -53,6 +58,8 @@ namespace RA.Catalogs.Factories
             _userIdentity = userIdentity;
             _categoryService = categoryService;
             _httpContextAccessor = httpContextAccessor;
+            _applicationSettingService = httpContextAccessor.HttpContext?.RequestServices.GetService<IApplicationSettingService>();
+            _applicationSetting = _applicationSettingService?.GetCurrentApplicationSettingAsync().Result;
         }
         #endregion
 
@@ -187,11 +194,6 @@ namespace RA.Catalogs.Factories
                 }
             }
 
-            if (catalogModel.CreatedOn != DateTime.MinValue)
-                catalogModel.CreatedOn = catalogModel.CreatedOn.ConvertUTCToLocalDateTime();
-
-            if (catalogModel.ModifiedOn.HasValue)
-                catalogModel.ModifiedOn = catalogModel.ModifiedOn.ConvertUTCToLocalDateTime();
             // base model mapping
             catalogModel = await _baseEntityModelFactory.PrepareBaseEntityModelAsync<CatalogModel, Catalog, CatalogSetting>(catalogModel, catalog, settings);
 
@@ -276,8 +278,8 @@ namespace RA.Catalogs.Factories
                         catalogModel.AvailableCategories = _categoryService.GetCategoriesSelectListAsync(settings.MappedCategoryIds).Result;
                 }
 
-                catalogModel.CreatedOn = catalogModel.CreatedOn.ConvertUTCToLocalDateTime();
-                catalogModel.ModifiedOn = catalogModel.ModifiedOn.HasValue ? catalogModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+                catalogModel.CreatedOn = catalogModel.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+                catalogModel.ModifiedOn = catalogModel.ModifiedOn.HasValue ? catalogModel.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
 
                 return catalogModel;
 

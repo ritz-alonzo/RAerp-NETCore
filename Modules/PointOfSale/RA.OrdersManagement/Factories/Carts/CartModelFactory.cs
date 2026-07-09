@@ -4,6 +4,7 @@ using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.OrdersManagement.Carts;
 using RA.Core.Models.PluginModels.OrdersManagement.Orders;
 using RA.Core.PluginData.EntityTypes.Catalogs;
+using RA.Data.Domain.Application;
 using RA.FormTypes.Factories;
 using RA.FormTypes.Services;
 using RA.OrdersManagement.Data;
@@ -12,6 +13,7 @@ using RA.OrdersManagement.Services.Carts;
 using RA.WebFramework.Extensions;
 using RAerp.Helpers.UserHelper;
 using RAerp.Security.AccessRightsControl;
+using RAerp.Services.ApplicationSettingServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,6 +33,8 @@ namespace RA.OrdersManagement.Factories.Carts
         private readonly ICatalogService _catalogService;
         private readonly ICartService _cartService;
         private readonly CartSetting _cartSettings;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
@@ -40,7 +44,8 @@ namespace RA.OrdersManagement.Factories.Carts
             IUserIdentity userIdentity,
             IAccessControl accessControl,
             ICatalogService catalogService,
-            ICartService cartService)
+            ICartService cartService,
+            IApplicationSettingService applicationSettingService)
         {
             _baseFormModelFactory = baseFormModelFactory;
             _formTypeManager = formTypeManager;
@@ -50,6 +55,8 @@ namespace RA.OrdersManagement.Factories.Carts
             _catalogService = catalogService;
             _cartService = cartService;
             _cartSettings = _formTypeManager.GetSettingDataOfFormAsync<Cart, CartSetting>().Result;
+            _applicationSettingService = applicationSettingService;
+            _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
         }
         #endregion
 
@@ -108,10 +115,10 @@ namespace RA.OrdersManagement.Factories.Carts
                 }
 
                 if (cartModel.CreatedOn != DateTime.MinValue)
-                    cartModel.CreatedOn = cartModel.CreatedOn.ConvertUTCToLocalDateTime();
+                    cartModel.CreatedOn = cartModel.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
 
                 if (cartModel.ModifiedOn.HasValue)
-                    cartModel.ModifiedOn = cartModel.ModifiedOn.ConvertUTCToLocalDateTime();
+                    cartModel.ModifiedOn = cartModel.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
 
                 return cartModel;
 
@@ -165,8 +172,8 @@ namespace RA.OrdersManagement.Factories.Carts
             {
                 CartItemModel cartItemModel = new CartItemModel();
                 cartItemModel = _mapper.Map(formItem, cartItemModel);
-                cartItemModel.CreatedOn = cartItemModel.CreatedOn.ConvertUTCToLocalDateTime();
-                cartItemModel.ModifiedOn = cartItemModel.ModifiedOn.HasValue ? cartItemModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+                cartItemModel.CreatedOn = cartItemModel.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+                cartItemModel.ModifiedOn = cartItemModel.ModifiedOn.HasValue ? cartItemModel.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
                 return cartItemModel;
 
             }).ToList();

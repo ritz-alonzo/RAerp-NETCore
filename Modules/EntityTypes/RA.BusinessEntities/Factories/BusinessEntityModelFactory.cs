@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.DependencyInjection;
 using RA.BusinessEntities.Data;
 using RA.BusinessEntities.Domain;
 using RA.BusinessEntities.Services;
@@ -8,6 +9,7 @@ using RA.Categories.Services;
 using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.PluginData.EntityTypes.BusinessEntities;
 using RA.Data.Domain.Addresses;
+using RA.Data.Domain.Application;
 using RA.EntityTypes.Factories;
 using RA.EntityTypes.Helpers;
 using RA.EntityTypes.Services;
@@ -15,6 +17,7 @@ using RA.WebFramework.Extensions;
 using RAerp.Helpers.AddressHelper;
 using RAerp.Helpers.UserHelper;
 using RAerp.Services.AddressServices;
+using RAerp.Services.ApplicationSettingServices;
 using RAerp.Services.UserServices;
 
 namespace RA.BusinessEntities.Factories
@@ -31,6 +34,8 @@ namespace RA.BusinessEntities.Factories
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IAddressService _addressService;
         private readonly IUserService _userService;
+        private readonly IApplicationSettingService _applicationSettingService;
+        private readonly ApplicationSetting _applicationSetting;
         #endregion
 
         #region Ctor
@@ -53,6 +58,8 @@ namespace RA.BusinessEntities.Factories
             _httpContextAccessor = httpContextAccessor;
             _addressService = addressService;
             _userService = userService;
+            _applicationSettingService = httpContextAccessor.HttpContext?.RequestServices.GetService<IApplicationSettingService>();
+            _applicationSetting = _applicationSettingService?.GetCurrentApplicationSettingAsync().Result;
         }
         #endregion
 
@@ -103,8 +110,8 @@ namespace RA.BusinessEntities.Factories
                 //if (createdByUser != null)
                 //    businessEntityModel.CreatedByUser = UserOverviewHelper.PrepareUserOverviewModel(createdByUser);
                 businessEntityModel.AvailableCategories = availableCategories;
-                businessEntityModel.CreatedOn = businessEntityModel.CreatedOn.ConvertUTCToLocalDateTime();
-                businessEntityModel.ModifiedOn = businessEntityModel.ModifiedOn.HasValue ? businessEntityModel.ModifiedOn.ConvertUTCToLocalDateTime() : null;
+                businessEntityModel.CreatedOn = businessEntityModel.CreatedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone);
+                businessEntityModel.ModifiedOn = businessEntityModel.ModifiedOn.HasValue ? businessEntityModel.ModifiedOn.ConvertUTCToAppSettingsDateTime(_applicationSetting?.DefaultTimeZone) : null;
 
                 return businessEntityModel;
 
@@ -138,7 +145,7 @@ namespace RA.BusinessEntities.Factories
                 businessEntity = new BusinessEntity();
 
                 businessEntityModel.Status = BusinessEntityStatus.Active;
-                businessEntityModel.CreatedOn = DateTime.UtcNow.ConvertUTCToLocalDateTime();
+                businessEntityModel.CreatedOn = DateTime.UtcNow;
                 businessEntityModel.Code = "NEW";
             }
             else
@@ -193,11 +200,6 @@ namespace RA.BusinessEntities.Factories
                 }
             }
 
-            if (businessEntityModel.CreatedOn != DateTime.MinValue)
-                businessEntityModel.CreatedOn = businessEntityModel.CreatedOn.ConvertUTCToLocalDateTime();
-
-            if (businessEntityModel.ModifiedOn.HasValue)
-                businessEntityModel.ModifiedOn = businessEntityModel.ModifiedOn.ConvertUTCToLocalDateTime();
             // base model mapping
             businessEntityModel = await _baseEntityModelFactory.PrepareBaseEntityModelAsync<BusinessEntityModel, BusinessEntity, BusinessEntitySetting>(businessEntityModel, businessEntity, settings);
 

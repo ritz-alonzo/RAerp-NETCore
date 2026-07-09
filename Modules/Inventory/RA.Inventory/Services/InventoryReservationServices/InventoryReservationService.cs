@@ -81,7 +81,7 @@ namespace RA.Inventory.Services.InventoryReservationServices
                 query = query.Where(c => catalogIds.Contains(c.CatalogId));
 
             if (searchReserveOn.HasValue)
-                query = query.Where(c => c.ReservedOn.Date == searchReserveOn.Value.ConvertUTCToLocalDateTime().Date);
+                query = query.Where(c => c.ReservedOn.Date == searchReserveOn.Value.ConvertToUTC().Date);
 
             if (catalogTypeId.IsNotNullOrEmpty())
             {
@@ -126,7 +126,7 @@ namespace RA.Inventory.Services.InventoryReservationServices
                 query = query.Where(c => catalogIds.Contains(c.CatalogId));
 
             if (searchReserveOn.HasValue)
-                query = query.Where(c => c.ReservedOn.Date == searchReserveOn.Value.ConvertUTCToLocalDateTime().Date);
+                query = query.Where(c => c.ReservedOn.Date == searchReserveOn.Value.ConvertToUTC().Date);
 
             if (catalogTypeId.IsNotNullOrEmpty())
             {

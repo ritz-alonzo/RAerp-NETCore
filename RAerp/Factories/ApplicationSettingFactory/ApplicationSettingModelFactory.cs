@@ -50,9 +50,9 @@ namespace RAerp.Factories.ApplicationSettingFactory
             await _baseAdminModelFactory.PrepareBaseAdminModelAsync(model, applicationSetting);
 
             if (model.CreatedOn != DateTime.MinValue)
-                model.CreatedOn = model.CreatedOn.ConvertUTCToLocalDateTime();
+                model.CreatedOn = model.CreatedOn.ConvertUTCToAppSettingsDateTime(applicationSetting?.DefaultTimeZone);
             if (model.ModifiedOn.HasValue)
-                model.ModifiedOn = model.ModifiedOn.ConvertUTCToLocalDateTime();
+                model.ModifiedOn = model.ModifiedOn.ConvertUTCToAppSettingsDateTime(applicationSetting?.DefaultTimeZone);
 
             if (string.IsNullOrEmpty(model.DefaultTimeZone))
             {

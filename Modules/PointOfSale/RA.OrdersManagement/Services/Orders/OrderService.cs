@@ -85,7 +85,7 @@ namespace RA.OrdersManagement.Services.Orders
             var tempOrderForm = base.CreateTempForm();
             tempOrderForm.TotalQty = 0m;
             tempOrderForm.TotalNetAmount = 0m;
-            tempOrderForm.OrderDate = DateTime.Now;
+            tempOrderForm.OrderDate = DateTime.UtcNow;
             return tempOrderForm;
         }
         #endregion
