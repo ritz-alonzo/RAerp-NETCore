@@ -42,7 +42,7 @@ namespace RA.WebServiceEndpoints.Controllers
     /// This is for Entity Types only
     /// </summary>
     [ApiController]
-    [Route("api/[controller]/{endpoint}")]
+    [Route("api/webservice/{endpoint}")]
     public class WebServiceEndpointsAPIController : ControllerBase
     {
         #region Constants

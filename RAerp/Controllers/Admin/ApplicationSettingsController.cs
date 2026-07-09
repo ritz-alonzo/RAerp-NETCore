@@ -30,7 +30,7 @@ namespace RAerp.Controllers.Admin
 
         #region Methods
 
-        // GET: ApplicationSettings/Create
+        // GET: ApplicationSettings/Create/Test
         public async Task<IActionResult> Create()
         {
             var model = await _applicationSettingModelFactory.PrepareApplicationSettingModelAsync();

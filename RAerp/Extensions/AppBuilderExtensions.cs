@@ -59,7 +59,7 @@ namespace RAerp.Extensions
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             // needed for Angular
-            app.UseCors(options => options.WithOrigins("http://localhost:4200", "http://localhost:5173")
+            app.UseCors(options => options.WithOrigins("http://localhost:4200", "http://localhost:5173", "https://raerpv1-app.netlify.app")
             .AllowAnyMethod()
             .AllowAnyHeader());
             // end
