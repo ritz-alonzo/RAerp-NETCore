@@ -1,6 +1,6 @@
-﻿using RA.Data.App_Data;
-using RA.Data.Domain.AccessRightControl;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using RAerp.App_Data;
+using RAerp.Domain.AccessRightControl;
 
 namespace RAerp.Services.AccessRightsServices
 {
@@ -16,7 +16,7 @@ namespace RAerp.Services.AccessRightsServices
         #region CRUD
         public async Task<IEnumerable<AccessRights>> GetList()
         {
-            return await _erpContext.AccessRights.ToListAsync();
+            return await _erpContext.AccessRights.AsNoTracking().ToListAsync();
         }
 
         public async Task<AccessRights> GetById(Guid id)

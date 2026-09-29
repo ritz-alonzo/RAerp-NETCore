@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
-using RA.Data.Domain.EntityTypes;
-using RA.Data.Domain.Settings;
 using RA.EntityTypes.Data;
 using RA.EntityTypes.Domain;
+using RAerp.Domain.EntityTypes;
+using RAerp.Domain.Settings;
 
 namespace RA.EntityTypes.Services
 {
@@ -13,6 +13,7 @@ namespace RA.EntityTypes.Services
         Task<EntityType> GetByIdAsync(Guid id);
         Task<EntityType> GetTypeBySystemNameAsync(string systemName);
         Task<List<EntityType>> GetTypesBySystemNameAsync(string systemName);
+        Task<EntityType> GetTypeByEntityNameAsync(string entityName);
         Task<EntityType> GetTypeByEntityClassificationNameAsync(string systemName, string entityTypeName);
         Task<IEnumerable<EntityType>> GetListAsync(
             string searchQuery = null, 

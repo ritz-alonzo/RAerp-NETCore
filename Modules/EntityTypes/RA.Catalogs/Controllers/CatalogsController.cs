@@ -11,8 +11,6 @@ using RA.Core.Helpers;
 using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.Catalogs;
 using RA.Core.PluginData.EntityTypes.Catalogs;
-using RA.Data.Domain.Addresses;
-using RA.Data.Domain.EntityTypes;
 using RA.EntityTypes.Helpers;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
@@ -24,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace RA.Catalogs.Controllers
@@ -80,6 +79,16 @@ namespace RA.Catalogs.Controllers
 
             if (catalogConfigureModel.EntityTypeId.IsNullOrEmpty())
                 return JsonError(EntityTypeMessages.EntityTypeIdNotExists);
+
+            // Will move this to Validators
+            if (catalogConfigureModel.IsBarcodeEnabled)
+            {
+                if (catalogConfigureModel?.BarcodeTemplate.Length < 14)
+                    return JsonError("Barcode template should be at least 14 characters.");
+
+                if (!Regex.IsMatch(catalogConfigureModel?.BarcodeTemplate, @"^\d+$"))
+                    return JsonError("Barcode template should be numeric only");
+            }
 
             // will insert automatically when GetSettingDataOfEntity is used
             var settings = _entityTypeManager.GetSettingDataOfEntityAsync<Catalog, CatalogSetting>(catalogConfigureModel.EntityTypeId, catalogConfigureModel.SystemName).Result;

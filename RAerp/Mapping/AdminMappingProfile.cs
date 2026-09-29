@@ -1,6 +1,9 @@
 ﻿using AutoMapper;
-using RA.Data.Domain.Application;
-using RA.Data.Domain.Users;
+using RAerp.Domain.Application;
+using RAerp.Domain.EntityAttributes;
+using RAerp.Domain.Users;
+using RAerp.DTO.EntityAttributes;
+using RAerp.DTO.Users;
 using RAerp.Models.AccessRightsControlModel;
 using RAerp.Models.ApplicationSettingsModel;
 using RAerp.Models.UsersModel;
@@ -34,6 +37,17 @@ namespace RAerp.Mapping
 
             #endregion
 
+            #region Entity Attributes Dto
+            CreateMap<EntityAttribute, EntityAttributeResponseDto>();
+            CreateMap<EntityAttributeRequestDto, EntityAttribute>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            #endregion
+
+            #region User Dto
+            CreateMap<User, UserResponseDto>();
+            CreateMap<UserRequestDto, User>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            #endregion
         }
     }
 }

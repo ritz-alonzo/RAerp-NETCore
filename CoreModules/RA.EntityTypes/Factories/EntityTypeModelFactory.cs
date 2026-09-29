@@ -1,12 +1,12 @@
 ﻿using AutoMapper;
 using Microsoft.IdentityModel.Tokens;
 using RA.Core.Models.PluginModels.EntityTypes;
-using RA.Data.Domain.Application;
-using RA.Data.Domain.EntityTypes;
 using RA.EntityTypes.Factories;
 using RA.EntityTypes.Helpers;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
+using RAerp.Domain.Application;
+using RAerp.Domain.EntityTypes;
 using RAerp.Factories.CoreFactories;
 using RAerp.Services.ApplicationSettingServices;
 using System.Security.Policy;

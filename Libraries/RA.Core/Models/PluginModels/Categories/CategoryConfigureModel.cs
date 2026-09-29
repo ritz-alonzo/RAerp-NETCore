@@ -9,5 +9,6 @@ namespace RA.Core.Models.PluginModels.Categories
 {
     public class CategoryConfigureModel : BaseEntityConfigureModel
     {
+        public bool IsImageEnabled { get; set; }
     }
 }

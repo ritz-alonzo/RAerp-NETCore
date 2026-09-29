@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 using RA.Core.Domain;
-using RA.Data.Domain.Application;
-using RA.Data.Domain.Users;
+using RA.Data.Data;
+using RAerp.Domain.Application;
+using RAerp.Domain.Users;
+using RAerp.Extensions;
 using RAerp.Helpers.UserHelper;
 using RAerp.Models.ApiModel;
 using RAerp.Security.AccessRightsControl;
@@ -14,6 +17,7 @@ namespace RAerp.Controllers.Admin
     public class AdminApiController : ControllerBase
     {
         #region Methods
+        [NonAction]
         public ApiResponseListModel<TEntity> GenerateListResponseModel<TEntity>(HttpStatusCode statusCode, string message, int? pageNumber = null, int? pageSize = null, IEnumerable<TEntity> dataList = null)
             where TEntity : BaseEntity
         {
@@ -49,6 +53,7 @@ namespace RAerp.Controllers.Admin
             return responseModel;
         }
 
+        [NonAction]
         public ApiResponseModel<TEntity> GenerateResponseModel<TEntity>(HttpStatusCode statusCode, string message, TEntity data = null)
             where TEntity : BaseEntity
         {
@@ -58,6 +63,11 @@ namespace RAerp.Controllers.Admin
             {
                 case HttpStatusCode.OK:
                     responseModel.Status = HttpStatusCode.OK.ToString();
+                    responseModel.Success = true;
+                    break;
+
+                case HttpStatusCode.Created:
+                    responseModel.Status = HttpStatusCode.Created.ToString();
                     responseModel.Success = true;
                     break;
 
@@ -84,7 +94,7 @@ namespace RAerp.Controllers.Admin
 
             return responseModel;
         }
-
+        [NonAction]
         public ApiResponseAdminListModel<TEntity> GenerateListResponseAdminModel<TEntity>(HttpStatusCode statusCode, string message, IEnumerable<TEntity> dataList = null)
             where TEntity : BaseAdminEntity
         {
@@ -115,7 +125,7 @@ namespace RAerp.Controllers.Admin
 
             return responseModel;
         }
-
+        [NonAction]
         public ApiResponseAdminModel<TEntity> GenerateResponseAdminModel<TEntity>(HttpStatusCode statusCode, string message, TEntity data = null)
             where TEntity : BaseAdminEntity
         {
@@ -147,63 +157,122 @@ namespace RAerp.Controllers.Admin
             return responseModel;
         }
 
+        [NonAction]
         public ApiResponseErrorModel GenerateErrorResponseModel(HttpStatusCode statusCode, string message)
         {
             var errorResponseModel = new ApiResponseErrorModel();
             errorResponseModel.Message = message;
             errorResponseModel.Success = false;
-            switch (statusCode)
-            {
-                case HttpStatusCode.OK:
-                    errorResponseModel.Status = HttpStatusCode.OK.ToString();
-                    break;
+            errorResponseModel.Status = statusCode.ToString();
+            //switch (statusCode)
+            //{
+            //    case HttpStatusCode.OK:
+            //        errorResponseModel.Status = HttpStatusCode.OK.ToString();
+            //        break;
 
-                case HttpStatusCode.NotFound:
-                    errorResponseModel.Status = HttpStatusCode.NotFound.ToString();
-                    break;
+            //    case HttpStatusCode.NotFound:
+            //        errorResponseModel.Status = HttpStatusCode.NotFound.ToString();
+            //        break;
 
-                case HttpStatusCode.Unauthorized:
-                    errorResponseModel.Status = HttpStatusCode.Unauthorized.ToString();
-                    break;
-            }
+            //    case HttpStatusCode.Unauthorized:
+            //        errorResponseModel.Status = HttpStatusCode.Unauthorized.ToString();
+            //        break;
+            //}
             return errorResponseModel;
         }
-
-        public async Task<IActionResult> ValidateUserAccessAndCredentials<TForm>(IAccessControl accessControl, IUserIdentity userIdentity, ApplicationSetting applicationSetting)
+        [NonAction]
+        public async Task<ApiValidationModel> ValidateUserAccessAndCredentials<TForm>(IAccessControl accessControl, IUserIdentity userIdentity, ApplicationSetting applicationSetting)
             where TForm : BaseEntity
         {
+            ApiValidationModel model = new ApiValidationModel();
             // Access rights
             if (!accessControl.HasViewAccessAsync<TForm>().Result)
-                return Unauthorized();
+            {
+                model.IsPassed = false;
+                model.StatusCode = HttpStatusCode.Forbidden;
+                model.Message = "You do not have access rights to view this resource.";
+                return model;
+            }
 
             // Validate User if logged in
             var currentUser = await GetCurrentCredentialsAsync(userIdentity);
             if (currentUser == null)
-                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "User has not yet logged in"));
+            {
+                model.IsPassed = false;
+                model.StatusCode = HttpStatusCode.NotFound;
+                model.Message = "User has not yet logged in";
+                return model;
+            }
 
-            string clientId = HttpContext.Request.Headers["client_id"].FirstOrDefault();
-            string clientSecret = HttpContext.Request.Headers["client_secret"].FirstOrDefault();
+            if (currentUser.AccountStatus != UserAccountStatus.Active)
+            {
+                model.IsPassed = false;
+                model.StatusCode = HttpStatusCode.Forbidden;
+                model.Message = "User account is not active.";
+                return model;
+            }
+
+            if (currentUser.IsVerified != true)
+            {
+                model.IsPassed = false;
+                model.StatusCode = HttpStatusCode.Forbidden;
+                model.Message = "User account is not verified.";
+                return model;
+            }
+
+            string clientId = HttpContext.Request.Cookies["client_id"];
+            string clientSecret = HttpContext.Request.Cookies["client_secret"];
 
             if (string.IsNullOrEmpty(clientId))
-                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client id in Headers."));
+            {
+                model.IsPassed = false;
+                model.StatusCode = HttpStatusCode.NotFound;
+                model.Message = "No client id in Headers.";
+                return model;
+            }
 
             if (string.IsNullOrEmpty(clientSecret))
-                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "No client secret in Headers."));
+            {
+                model.IsPassed = false;
+                model.StatusCode = HttpStatusCode.NotFound;
+                model.Message = "No client secret in Headers.";
+                return model;
+            }
 
             if (clientId != applicationSetting.ClientId || clientSecret != applicationSetting.ClientSecret)
-                return Unauthorized(GenerateErrorResponseModel(HttpStatusCode.Unauthorized, "Invalid client id or client secret."));
+            {
+                model.IsPassed = false;
+                model.StatusCode = HttpStatusCode.Forbidden;
+                model.Message = "Invalid client id or client secret.";
+                return model;
+            }
 
-            return Ok();
+            return model;
         }
-
+        [NonAction]
         public async Task<User> GetCurrentCredentialsAsync(IUserIdentity userIdentity)
         {
             return await userIdentity.GetCurrentApiUserAsync(HttpContext.User);
         }
-
-        public async Task ValidateRequestEntityValues()
+        [NonAction]
+        public async Task<ApiRequestValidationModel> ValidateRequestEntityValues<TRequest, TRequestValidator>(TRequest requestDto)
+            where TRequest : BaseEntity
+            where TRequestValidator : AbstractValidator<TRequest>
         {
-            
+            ApiRequestValidationModel apiRequestValidationModel = new ApiRequestValidationModel();
+
+            var validator = (IValidator<TRequest>)Activator.CreateInstance(typeof(TRequestValidator));
+            if (validator != null)
+            {
+                var validationResult = await validator.ValidateAsync(requestDto);
+                if (!validationResult.IsValid)
+                {
+                    apiRequestValidationModel.IsValid = false;
+                    apiRequestValidationModel.ValidationMessage = validationResult.RequestDtoValidationErrors("Validation failed:");
+                }
+            }
+
+            return apiRequestValidationModel;
         }
         #endregion
     }

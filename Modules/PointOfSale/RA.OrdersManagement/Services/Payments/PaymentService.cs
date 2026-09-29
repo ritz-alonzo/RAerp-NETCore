@@ -1,12 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using RA.Core.DataCaching.CacheManagement;
+using RA.Core.PluginData.FormTypes;
+using RA.Core.PluginData.FormTypes.OrdersManagement.Payments;
 using RA.FormTypes.Services;
 using RA.OrdersManagement.App_Data;
 using RA.OrdersManagement.Data;
 using RA.OrdersManagement.Domain.Orders;
 using RA.OrdersManagement.Domain.Payments;
 using RA.WebFramework.Extensions;
+using RA.WebFramework.Models.Pagination;
 using RAerp.Services.DataChangeServices;
 using System;
 using System.Collections.Generic;
@@ -39,19 +42,98 @@ namespace RA.OrdersManagement.Services.Payments
         #endregion
 
         #region CRUD
+        public async Task<Payment> GetForConfirmationPaymentByOrderIdAsync(Guid orderId)
+        {
+            return await _payment.AsNoTracking()
+                .Where(c => c.OrderId == orderId && c.PaymentStatus == PaymentStatus.ForConfirmation && c.Status == FormStatus.Onhold)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<IEnumerable<Payment>> GetPaymentListAsync(
             string searchQuery = null,
             string searchPaymentRefNbr = null,
             string searchPaymentOrderNbr = null,
+            string searchCustomerName = null,
             DateTime? searchPaymentDate = null,
             DateTime? searchCreatedDate = null,
             List<int> paymentStatusIds = null,
             List<int> formStatusIds = null,
+            List<Guid> paymentMethodIds = null,
             bool showDeleted = false,
             int? pageNumber = 0,
             int? pageSize = int.MaxValue)
         {
-            var query = await GetFormListAsync();
+            var query = _payment.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchQuery))
+                query = query.Where(c =>
+                c.FormNbr.ToLower().Contains(searchQuery.ToLower()));
+
+            if (!string.IsNullOrEmpty(searchPaymentRefNbr))
+                query = query.Where(c =>
+                c.PaymentRefNbr.ToLower().Contains(searchPaymentRefNbr.ToLower()));
+
+            if (!string.IsNullOrEmpty(searchPaymentOrderNbr))
+                query = from payment in query
+                        join order in _erpContext.Order
+                        on payment.OrderId equals order.Id
+                        where order.FormNbr.ToLower() == searchPaymentRefNbr.ToLower()
+                        select payment;
+
+            if (searchPaymentDate.HasValue)
+                query = query.Where(c =>
+                c.PaymentDate.Date.Equals(searchPaymentDate.Value.Date));
+
+            if (searchCreatedDate.HasValue)
+                query = query.Where(c =>
+                c.CreatedOn.Date.Equals(searchCreatedDate.Value));
+
+            if (paymentStatusIds.HasAny())
+                query = query.Where(c =>
+                paymentStatusIds.Contains(c.PaymentStatusId));
+
+            if (formStatusIds.HasAny())
+                query = query.Where(c =>
+                formStatusIds.Contains(c.StatusId));
+
+            if (paymentMethodIds.HasAny())
+                query = query.Where(c => 
+                paymentMethodIds.Contains(c.PaymentMethodId));
+
+            if (showDeleted)
+                query = query.Where(c => !c.Deleted);
+
+            query = query.OrderBy(c => c.PaymentDate);
+
+            return await ToPagedListAsync(query, pageNumber ?? 0, pageSize ?? 0);
+        }
+
+        public override Payment CreateTempForm()
+        {
+            var tempOrderForm = base.CreateTempForm();
+            tempOrderForm.AmountPaid = 0m;
+            tempOrderForm.ChangeAmount = 0m;
+            tempOrderForm.PaymentDate = DateTime.UtcNow;
+            return tempOrderForm;
+        }
+        #endregion
+
+        #region Paged List
+        public async Task<PagedResult<Payment>> GetPaymentPagedResultListAsync(
+            string searchQuery = null,
+            string searchPaymentRefNbr = null,
+            string searchPaymentOrderNbr = null,
+            string searchCustomerName = null,
+            DateTime? searchPaymentDate = null,
+            DateTime? searchCreatedDate = null,
+            List<int> paymentStatusIds = null,
+            List<int> formStatusIds = null,
+            List<Guid> paymentMethodIds = null,
+            bool showDeleted = false,
+            int? pageNumber = 0,
+            int? pageSize = int.MaxValue)
+        {
+            var query = _payment.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrEmpty(searchQuery))
                 query = query.Where(c =>
@@ -87,18 +169,14 @@ namespace RA.OrdersManagement.Services.Payments
             if (showDeleted)
                 query = query.Where(c => !c.Deleted);
 
-            return await ToPagedListAsync(query, pageNumber ?? 0, pageSize ?? 0);
-        }
+            if (paymentMethodIds.HasAny())
+                query = query.Where(c =>
+                paymentMethodIds.Contains(c.PaymentMethodId));
 
-        public override Payment CreateTempForm()
-        {
-            var tempOrderForm = base.CreateTempForm();
-            tempOrderForm.AmountPaid = 0m;
-            tempOrderForm.ChangeAmount = 0m;
-            tempOrderForm.PaymentDate = DateTime.UtcNow;
-            return tempOrderForm;
+            query = query.OrderBy(c => c.PaymentDate);
+
+            return query.ToPagedResult(pageNumber, pageSize);
         }
         #endregion
-
     }
 }

@@ -258,7 +258,7 @@ namespace RA.OrdersManagement.Controllers.Payments
                 }
                 else
                 {
-                    paymentForm.PaymentStatus = PaymentStatus.AwaitingPayment;
+                    paymentForm.PaymentStatus = PaymentStatus.ForConfirmation;
                 }
 
                 var paymentItems = await _paymentService.GetItemsByFormIdAsync(paymentForm.Id);

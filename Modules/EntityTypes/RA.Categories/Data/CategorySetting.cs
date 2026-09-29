@@ -9,5 +9,6 @@ namespace RA.Categories.Data
 {
     public class CategorySetting : BaseEntityTypeSetting
     {
+        public bool IsImageEnabled { get; set; }
     }
 }

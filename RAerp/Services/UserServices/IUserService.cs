@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
-using RA.Data.Domain.Users;
+using RAerp.Domain.Users;
 using System;
 using System.Collections.Generic;
 
@@ -13,9 +13,12 @@ namespace RAerp.Services.UserServices
             DateTime? createdOn = null);
         Task<User> GetById(Guid id);
         Task<User> GetUserByUsername(string userName);
+        Task<User> GetUserByFirstNameAndLastNameAsync(string firstName, string lastName);
+        Task<User> GetUserByEmailAsync(string email);
         Task Insert(User entity);
         Task Update(User entity);
         Task Delete(User entity);
+        Task<bool> CheckUserIfExists(string username, string email = null);
         #endregion
 
         #region User Role

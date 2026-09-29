@@ -6,11 +6,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Domain\Inventory\" />
+    <Compile Remove="Domain\Inventory\**" />
+    <EmbeddedResource Remove="Domain\Inventory\**" />
+    <None Remove="Domain\Inventory\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="App_Data\" />
     <Folder Include="Domain\Sales\" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\RA.WebFramework\RA.WebFramework.csproj" />
     <ProjectReference Include="..\RA.Core\RA.Core.csproj" />
   </ItemGroup>
 

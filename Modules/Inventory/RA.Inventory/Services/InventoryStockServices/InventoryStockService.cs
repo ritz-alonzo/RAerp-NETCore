@@ -58,7 +58,7 @@ namespace RA.Inventory.Services.InventoryStockServices
             int pageNumber = 0,
             int pageSize = 0)
         {
-            var query = await GetListAsync();
+            var query = _context.InventoryStock.AsNoTracking().AsQueryable();
 
             if (catalogIds.HasAny())
                 query = query.Where(c => catalogIds.Contains(c.CatalogId));
@@ -113,7 +113,7 @@ namespace RA.Inventory.Services.InventoryStockServices
             int pageNumber = 0,
             int pageSize = int.MaxValue)
         {
-            var query = await GetListAsync();
+            var query = _context.InventoryStock.AsNoTracking().AsQueryable();
 
             if (catalogIds.HasAny())
                 query = query.Where(c => catalogIds.Contains(c.CatalogId));

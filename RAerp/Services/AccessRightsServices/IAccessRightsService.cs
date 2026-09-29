@@ -1,4 +1,4 @@
-﻿using RA.Data.Domain.AccessRightControl;
+﻿using RAerp.Domain.AccessRightControl;
 
 namespace RAerp.Services.AccessRightsServices
 {

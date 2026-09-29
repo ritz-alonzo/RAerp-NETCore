@@ -8,6 +8,7 @@ using RA.Inventory.App_Data;
 using RA.Inventory.Controllers;
 using RA.Inventory.Domain;
 using RA.Inventory.Factories;
+using RA.Inventory.Mapping;
 using RA.Inventory.Services.InventoryReservationServices;
 using RA.Inventory.Services.InventoryServices;
 using RA.Inventory.Services.InventoryStockServices;
@@ -42,7 +43,7 @@ namespace RA.Inventory.Infrastructure
             // factory
             services.AddTransient<IInventoryModelFactory, InventoryModelFactory>();
             // automapper profile
-            //services.AddAutoMapper(cfg => { cfg.AddProfile<BusinessEntityMappingProfile>(); });
+            services.AddAutoMapper(cfg => { cfg.AddProfile<InventoryMappingProfile>(); });
             // validator
             //services.AddTransient<IValidator<BusinessEntityModel>, BusinessEntityValidator>();
         }

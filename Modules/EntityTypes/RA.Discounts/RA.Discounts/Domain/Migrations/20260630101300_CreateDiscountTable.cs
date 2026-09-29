@@ -44,10 +44,13 @@ namespace RA.Discounts.Domain.Migrations
                 .WithColumn(nameof(DiscountRedemption.DiscountId)).AsGuid()
                 .WithColumn(nameof(DiscountRedemption.DiscountCode)).AsString().Nullable()
                 .WithColumn(nameof(DiscountRedemption.OrderId)).AsGuid()
+                .WithColumn(nameof(DiscountRedemption.OrderNbr)).AsString().Nullable()
                 .WithColumn(nameof(DiscountRedemption.CustomerId)).AsGuid()
                 .WithColumn(nameof(DiscountRedemption.OriginalAmount)).AsDecimal()
                 .WithColumn(nameof(DiscountRedemption.DiscountAmount)).AsDecimal()
                 .WithColumn(nameof(DiscountRedemption.DiscountedAmount)).AsDecimal()
+                .WithColumn(nameof(DiscountRedemption.RedeemedAt)).AsDateTime()
+                .WithColumn(nameof(DiscountRedemption.IsPending)).AsBoolean()
                 ;
         }
         public override void Down()

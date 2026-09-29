@@ -1,4 +1,4 @@
-﻿using RA.Data.Domain.Settings;
+﻿using RAerp.Domain.Settings;
 using System;
 
 namespace RAerp.Services.Configurations

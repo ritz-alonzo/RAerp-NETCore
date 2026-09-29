@@ -1,9 +1,9 @@
 ﻿using RA.Core.Domain;
 using RA.Core.Models.BaseModels;
 using RA.Core.Models.PluginModels.EntityTypes;
-using RA.Data.Domain.EntityTypes;
 using RA.EntityTypes.Data;
 using RA.EntityTypes.Domain;
+using RAerp.Domain.EntityTypes;
 
 namespace RA.EntityTypes.Factories
 {

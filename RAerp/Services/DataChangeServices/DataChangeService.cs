@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using RA.Data.App_Data;
-using RA.Data.Domain.DataChanges;
+using RAerp.App_Data;
+using RAerp.Domain.DataChanges;
 
 namespace RAerp.Services.DataChangeServices
 {
@@ -32,12 +32,12 @@ namespace RAerp.Services.DataChangeServices
 
         public async Task<IEnumerable<DataChange>> GetListAsync()
         {
-            return await _dataChange.ToListAsync();
+            return await _dataChange.AsNoTracking().ToListAsync();
         }
 
         public async Task<IEnumerable<DataChange>> GetListByDataIdAsync(Guid dataId)
         {
-            return await _dataChange.Where(c => c.DataId == dataId).ToListAsync();
+            return await _dataChange.Where(c => c.DataId == dataId).AsNoTracking().ToListAsync();
         }
 
         public async Task InsertAsync(DataChange data)

@@ -5,9 +5,9 @@ using Newtonsoft.Json;
 using RA.Core.Helpers;
 using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Data.Data;
-using RA.Data.Domain.Application;
-using RA.Data.Domain.Users;
 using RA.WebFramework.Extensions;
+using RAerp.Domain.Application;
+using RAerp.Domain.Users;
 using RAerp.Factories.CoreFactories;
 using RAerp.Helpers.Constants;
 using RAerp.Helpers.Security;
@@ -138,7 +138,6 @@ namespace RAerp.Factories.UserFactory
 
                 // change mapped password to any password
                 model.Password = AdminMessages.HiddenPasswordDisplay;
-                model.Username = !string.IsNullOrEmpty(model.Username) ? await EncryptionHelper.DecryptData(model.Username, entity.Salt) : null;
                 model.Email = !string.IsNullOrEmpty(model.Email) ? await EncryptionHelper.DecryptData(model.Email, entity.Salt) : null;
                 model.ContactNo = !string.IsNullOrEmpty(model.ContactNo) ? await EncryptionHelper.DecryptData(model.ContactNo, entity.Salt) : null;
                 model.OneTimePIN = null;

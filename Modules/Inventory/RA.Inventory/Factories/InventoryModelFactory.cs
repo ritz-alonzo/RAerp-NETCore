@@ -1,7 +1,6 @@
 ﻿using RA.Catalogs.Domain;
 using RA.Catalogs.Services;
 using RA.Core.Models.PluginModels.Inventory;
-using RA.Data.Domain.EntityTypes;
 using RA.EntityTypes.Services;
 using RA.Inventory.Helper;
 using RA.Inventory.Services.InventoryServices;

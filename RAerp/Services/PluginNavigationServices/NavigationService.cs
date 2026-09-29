@@ -1,6 +1,4 @@
-﻿using RA.Data.App_Data;
-using RA.Data.Domain.Users;
-using RAerp.Helpers.PluginHelper;
+﻿using RAerp.Helpers.PluginHelper;
 using RAerp.Models.NavigationModel;
 using RAerp.PluginServiceProvider;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +7,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using RA.Data.Domain.AccessRightControl;
 using RAerp.Security.AccessRightsControl;
-using RA.Data.Domain.Application;
+using RAerp.App_Data;
+using RAerp.Domain.AccessRightControl;
+using RAerp.Domain.Users;
+using RAerp.Domain.Application;
 
 namespace RAerp.Services.PluginNavigationServices
 {

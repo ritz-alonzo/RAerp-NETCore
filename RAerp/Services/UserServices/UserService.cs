@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using RA.Data.App_Data;
-using RA.Data.Domain.Users;
+using RA.Data.Data;
 using RA.WebFramework.Extensions;
+using RAerp.App_Data;
+using RAerp.Domain.Users;
 using RAerp.Helpers.Constants;
 using RAerp.Helpers.Security;
 using System;
@@ -31,7 +32,7 @@ namespace RAerp.Services.UserServices
             string searchQuery = null,
             DateTime? createdOn = null)
         {
-             var query = _erpContext.User.AsEnumerable();
+             var query = _erpContext.User.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrEmpty(searchQuery))
                 query = query.Where(c => 
@@ -43,7 +44,7 @@ namespace RAerp.Services.UserServices
             if (createdOn.HasValue)
                 query = query.Where(c => c.CreatedOn.ConvertToUTC() >= createdOn.Value.ConvertToUTC());
 
-            query = query.Where(c => c.AccountStatus == RA.Data.Data.UserAccountStatus.Active);
+            query = query.Where(c => c.AccountStatusId == (int)UserAccountStatus.Active);
 
             query = query.OrderBy(c => c.CreatedOn);
             
@@ -58,9 +59,18 @@ namespace RAerp.Services.UserServices
         {
             return await _erpContext.User.FirstOrDefaultAsync(c => c.Username.ToLower() == userName.ToLower());
         }
+        public async Task<User> GetUserByFirstNameAndLastNameAsync(string firstName, string lastName)
+        {
+            return await _erpContext.User.FirstOrDefaultAsync(c => c.FirstName.ToLower() == firstName.ToLower() && c.LastName.ToLower() == lastName.ToLower());
+        }
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
+            return await _erpContext.User.FirstOrDefaultAsync(c => EncryptionHelper.DecryptData(c.Email, c.Salt).Result == email);
+        }
 
         public virtual async Task Insert(User entity)
         {
+            entity.Id = Guid.NewGuid();
             entity.CreatedOn = DateTime.UtcNow;
             entity.LastActivityDate = DateTime.UtcNow;
             await _erpContext.User.AddAsync(entity);
@@ -69,14 +79,30 @@ namespace RAerp.Services.UserServices
 
         public virtual async Task Update(User entity)
         {
+            entity.ModifiedOn = DateTime.UtcNow;
             _erpContext.User.Update(entity);
             await _erpContext.SaveChangesAsync();
         }
 
         public virtual async Task Delete(User entity)
         {
-            _erpContext.User.Remove(entity);
+            entity.Deleted = true;
+            entity.DeletedOn = DateTime.UtcNow;
+            _erpContext.User.Update(entity);
             await _erpContext.SaveChangesAsync();
+        }
+
+        public virtual async Task<bool> CheckUserIfExists(string username, string email = null)
+        {
+            bool isExists = false;
+            var query = await _erpContext.User.AsNoTracking().AsQueryable().ToListAsync();
+
+            if (!string.IsNullOrEmpty(username))
+                isExists = query.Any(c => c.Username == username);
+            //if (!string.IsNullOrEmpty(email) && !isExists)
+            //    isExists = query.Any(c => EncryptionHelper.DecryptData(c.Email, c.Salt).Result == email);
+
+            return isExists;
         }
 
         #endregion
@@ -98,7 +124,7 @@ namespace RAerp.Services.UserServices
             DateTime? createdOn = null,
             bool includeDeleted = false)
         {
-            var query = _erpContext.UserRole.AsEnumerable();
+            var query = _erpContext.UserRole.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrEmpty(searchQuery))
                 query = query.Where(c => c.Rolename.Contains(searchQuery.Trim()));
@@ -125,6 +151,7 @@ namespace RAerp.Services.UserServices
 
         public async Task InsertRole(UserRole entity)
         {
+            entity.Id = Guid.NewGuid();
             entity.CreatedOn = DateTime.UtcNow;
             await _erpContext.UserRole.AddAsync(entity);
             await _erpContext.SaveChangesAsync();
@@ -140,7 +167,7 @@ namespace RAerp.Services.UserServices
         #region User > UserRole mapping
         public async Task<List<UserUserRoleMapping>> GetUserMappingList()
         {
-            return await _erpContext.UserUserRoleMapping.ToListAsync();
+            return await _erpContext.UserUserRoleMapping.AsNoTracking().ToListAsync();
         }
 
         public async Task<UserUserRoleMapping> GetUserRoleMappingByUserId(Guid id)
@@ -149,7 +176,7 @@ namespace RAerp.Services.UserServices
         }
         public async Task<List<UserUserRoleMapping>> GetUsersByUserRoleId(Guid id)
         {
-            return await _erpContext.UserUserRoleMapping.Where(c => c.UserRoleId == id).ToListAsync();
+            return await _erpContext.UserUserRoleMapping.Where(c => c.UserRoleId == id).AsNoTracking().ToListAsync();
         }
 
         public async Task InsertMapping(Guid userId, Guid userRoleId)

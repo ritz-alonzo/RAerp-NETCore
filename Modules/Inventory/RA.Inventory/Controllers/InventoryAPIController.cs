@@ -1,13 +1,18 @@
 ﻿using Asp.Versioning;
+using AutoMapper;
 using Azure.Core;
 using Humanizer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using RA.Core.PluginData.Inventory;
-using RA.Data.Domain.Application;
 using RA.Inventory.Domain;
+using RA.Inventory.DTO.InventoryReservation;
+using RA.Inventory.DTO.InventoryStock;
+using RA.Inventory.DTO.InventoryTransaction;
 using RA.Inventory.Models;
 using RA.Inventory.Services.InventoryReservationServices;
 using RA.Inventory.Services.InventoryServices;
@@ -15,7 +20,9 @@ using RA.Inventory.Services.InventoryStockServices;
 using RA.Inventory.Services.InventoryTransactionServices;
 using RA.WebFramework.Extensions;
 using RAerp.Controllers.Admin;
+using RAerp.Domain.Application;
 using RAerp.Helpers.UserHelper;
+using RAerp.Models.ApiModel;
 using RAerp.Security.AccessRightsControl;
 using RAerp.Services.ApplicationSettingServices;
 using System;
@@ -31,6 +38,7 @@ namespace RA.Inventory.Controllers
     [ApiController]
     [Route("api/v{version:ApiVersion}/inventory")]
     [ApiVersion("1.0")]
+    [Authorize]
     public class InventoryAPIController : AdminApiController
     {
         #region Constants
@@ -42,6 +50,7 @@ namespace RA.Inventory.Controllers
         private readonly IInventoryTransactionService _inventoryTransactionService;
         private readonly IApplicationSettingService _applicationSettingService;
         private readonly ApplicationSetting _applicationSetting;
+        private readonly IMapper _mapper;
         #endregion
 
         #region Ctor
@@ -51,7 +60,8 @@ namespace RA.Inventory.Controllers
             IInventoryStockService inventoryStockService,
             IInventoryReservationService inventoryReservationService,
             IInventoryTransactionService inventoryTransactionService,
-            IApplicationSettingService applicationSettingService)
+            IApplicationSettingService applicationSettingService,
+            IMapper mapper)
         {
             _inventoryManager = inventoryManager;
             _userIdentity = userIdentity;
@@ -61,29 +71,20 @@ namespace RA.Inventory.Controllers
             _inventoryTransactionService = inventoryTransactionService;
             _applicationSettingService = applicationSettingService;
             _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
+            _mapper = mapper;
         }
         #endregion
 
+        #region Inventory Stock
         // GET api/v1/inventory/stock
         [HttpGet("stock"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> GetAllStockList([FromQuery] InventoryStockSearchModel searchModel)
+        public async Task<IActionResult> GetAllStockList([FromQuery] InventoryStockQueryRequestDto searchModel)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
-            if (searchModel.PageNumber == 0 && searchModel.PageSize == 0)
-            {
-                var stockList = await _inventoryStockService.GetStockListAsync(
-                    catalogTypeId: searchModel.CatalogTypeId,
-                    catalogIds: searchModel.CatalogIds, 
-                    warehouseIds: searchModel.WarehouseIds,
-                    searchCreatedOn: searchModel.CreatedOn,
-                    showLowStockOnly: searchModel.ShowLowStockOnly,
-                    sortByCatalogName: searchModel.SortByCatalogName);
-                return Ok(GenerateListResponseModel<InventoryStock>(HttpStatusCode.OK, "Successfully get stock of catalog and warehouse", dataList: stockList));
-            }
-            else
-            {
-                var stockList = await _inventoryStockService.GetStockPagedResultListAsync(
+            var stockList = await _inventoryStockService.GetStockPagedResultListAsync(
                     catalogTypeId: searchModel.CatalogTypeId,
                     catalogIds: searchModel.CatalogIds,
                     warehouseIds: searchModel.WarehouseIds,
@@ -91,29 +92,54 @@ namespace RA.Inventory.Controllers
                     showLowStockOnly: searchModel.ShowLowStockOnly,
                     sortByCatalogName: searchModel.SortByCatalogName,
                     pageNumber: searchModel.PageNumber, pageSize: searchModel.PageSize);
-                return Ok(GenerateListResponseModel<InventoryStock>(HttpStatusCode.OK, "Successfully get stock of catalog and warehouse", dataList: stockList.Items));
+
+            List<InventoryStockResponseDto> stockResponseList = new List<InventoryStockResponseDto>();
+            if (stockList.Items.Any())
+            {
+                stockResponseList = stockList.Items.Select(stock =>
+                {
+                    InventoryStockResponseDto stockResponse = _mapper.Map<InventoryStockResponseDto>(stock);
+                    return stockResponse;
+
+                }).ToList();
             }
+            return Ok(GenerateListResponseModel(HttpStatusCode.OK, "Successfully get stock of catalog and warehouse", dataList: stockResponseList));
         }
 
         // GET api/v1/inventory/stock/catalog/{catalogTypeId}
         [HttpGet("stock/catalog/{catalogTypeId:guid}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetCatalogStockList(Guid catalogTypeId)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (catalogTypeId.IsNullOrEmpty())
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "CatalogId is invalid"));
 
             var stockList = await _inventoryStockService.GetStockListAsync(catalogTypeId);
 
-            return Ok(GenerateListResponseModel<InventoryStock>(HttpStatusCode.OK, "Successfully get stock of catalog and warehouse", dataList: stockList));
+            List<InventoryStockResponseDto> stockResponseList = new List<InventoryStockResponseDto>();
+            if (stockList.Any())
+            {
+                stockResponseList = stockList.Select(stock =>
+                {
+                    InventoryStockResponseDto stockResponse = _mapper.Map<InventoryStockResponseDto>(stock);
+                    return stockResponse;
+
+                }).ToList();
+            }
+
+            return Ok(GenerateListResponseModel(HttpStatusCode.OK, "Successfully get stock of catalog and warehouse", dataList: stockResponseList));
         }
 
         // GET api/v1/inventory/stock/warehouse/{catalogTypeId}/{warehouseId}
         [HttpGet("stock/warehouse/{catalogTypeId:guid}/{warehouseId:guid}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetWarehouseStockList(Guid catalogTypeId, Guid warehouseId)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (catalogTypeId.IsNullOrEmpty())
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "CatalogId is invalid"));
@@ -123,27 +149,65 @@ namespace RA.Inventory.Controllers
 
             var stockList = await _inventoryStockService.GetStockListByWarehouseId(catalogTypeId, warehouseId);
 
-            return Ok(GenerateListResponseModel<InventoryStock>(HttpStatusCode.OK, "Successfully get stock of catalog and warehouse", dataList: stockList));
+            List<InventoryStockResponseDto> stockResponseList = new List<InventoryStockResponseDto>();
+            if (stockList.Any())
+            {
+                stockResponseList = stockList.Select(stock =>
+                {
+                    InventoryStockResponseDto stockResponse = _mapper.Map<InventoryStockResponseDto>(stock);
+                    return stockResponse;
+
+                }).ToList();
+            }
+
+            return Ok(GenerateListResponseModel(HttpStatusCode.OK, "Successfully get stock of warehouse", dataList: stockResponseList));
+        }
+
+        // GET api/v1/inventory/stock/{catalogId}
+        [HttpGet("stock/{catalogId:guid}"), MapToApiVersion("1.0")]
+        public async Task<IActionResult> GetStockByCatalogId(Guid catalogId)
+        {
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
+
+            var stock = await _inventoryStockService.GetByCatalogIdAsync(catalogId);
+            if (stock is null)
+                return NotFound($"Stock for catalog {catalogId} not found.");
+
+            InventoryStockResponseDto stockResponse = _mapper.Map<InventoryStockResponseDto>(stock);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successfully get stock of catalog", stockResponse));
         }
 
         // GET api/v1/inventory/stock/{catalogId}/{warehouseId}
         [HttpGet("stock/{catalogId:guid}/{warehouseId:guid}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetStockByCatalogIdAndWarehouseId(Guid catalogId, Guid warehouseId)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             var stock = await _inventoryStockService.GetByCatalogIdAndWarehouseIdAsync(catalogId, warehouseId);
             if (stock is null)
                 return NotFound($"Stock for catalog {catalogId} and warehouse {warehouseId} not found.");
 
-            return Ok(GenerateResponseModel<InventoryStock>(HttpStatusCode.OK, "Successfully get stock of catalog and warehouse", stock));
+            InventoryStockResponseDto stockResponse = _mapper.Map<InventoryStockResponseDto>(stock);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successfully get stock of catalog and warehouse", stockResponse));
         }
 
+
+        #endregion
+
+        #region Inventory Transactions
         // POST api/v1/inventory/stock/initialize
         [HttpPost("stock/initialize"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> InitializeStock([FromBody] InventoryStock req)
+        public async Task<IActionResult> InitializeStock([FromBody] InventoryStockRequestDto req)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (req.QuantityOnHand <= 0)
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Cannot add stock with 0 qty or negative qty"));
@@ -164,14 +228,18 @@ namespace RA.Inventory.Controllers
 
             InventoryStock result = await _inventoryManager.InitializeStockAsync(stock);
 
-            return Ok(GenerateResponseModel<InventoryStock>(HttpStatusCode.OK, "Successfully initialize stock", result));
+            InventoryStockResponseDto stockResponse = _mapper.Map<InventoryStockResponseDto>(result);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successfully initialize stock", stockResponse));
         }
 
         // POST api/v1/inventory/stock/receive
         [HttpPost("stock/receive"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> ReceiveStock([FromBody] InventoryTransaction req)
+        public async Task<IActionResult> ReceiveStock([FromBody] InventoryTransactionRequestDto req)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (req.Quantity <= 0)
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Cannot receive stock with 0 qty or negative qty"));
@@ -181,6 +249,9 @@ namespace RA.Inventory.Controllers
 
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
 
+            if (!Enum.IsDefined(typeof(TransactionType), req.TransactionTypeId))
+                return BadRequest("Transaction type is invalid");
+
             await _inventoryManager.ReceiveStockAsync(
                 req.ReferenceId.Value,
                 req.ReferenceNbr,
@@ -189,16 +260,18 @@ namespace RA.Inventory.Controllers
                 req.Quantity,
                 currentUser.Id,
                 req.Note,
-                req.TransactionType);
+                ((TransactionType)req.TransactionTypeId));
 
             return Created();
         }
 
         // POST api/inventory/stock/release
         [HttpPost("stock/release"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> ReleaseStock([FromBody] InventoryTransaction req)
+        public async Task<IActionResult> ReleaseStock([FromBody] InventoryTransactionRequestDto req)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (req.Quantity <= 0)
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Cannot release stock with 0 qty or negative qty"));
@@ -208,6 +281,9 @@ namespace RA.Inventory.Controllers
 
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
 
+            if (!Enum.IsDefined(typeof(TransactionType), req.TransactionTypeId))
+                return BadRequest("Transaction type is invalid");
+
             await _inventoryManager.ReleaseStockAsync(
                 req.ReferenceId.Value,
                 req.ReferenceNbr,
@@ -216,16 +292,18 @@ namespace RA.Inventory.Controllers
                 req.Quantity,
                 currentUser.Id,
                 req.Note,
-                req.TransactionType);
+                ((TransactionType)req.TransactionTypeId));
 
             return Created();
         }
 
         // POST api/v1/inventory/stock/adjust
         [HttpPost("stock/adjust"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> ManualAdjustment([FromBody] InventoryTransaction req)
+        public async Task<IActionResult> ManualAdjustment([FromBody] InventoryTransactionRequestDto req)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (req.Quantity <= 0)
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Cannot adjust stock with 0 qty or negative qty"));
@@ -243,28 +321,13 @@ namespace RA.Inventory.Controllers
 
         // GET api/v1/inventory/transaction
         [HttpGet("transaction"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> GetTransactionList([FromQuery] InventoryTransactionSearchModel searchModel)
+        public async Task<IActionResult> GetTransactionList([FromQuery] InventoryTransactionQueryRequestDto searchModel)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
-            if (searchModel.PageNumber == 0 && searchModel.PageSize == 0)
-            {
-                var transactions = await _inventoryTransactionService.GetTransactionListAsync(
-                    referenceId: searchModel.ReferenceId,
-                    catalogTypeId: searchModel.CatalogTypeId,
-                    stockId: searchModel.StockId,
-                    catalogIds: searchModel.CatalogIds,
-                    warehouseIds: searchModel.WarehouseIds,
-                    referenceNbr: searchModel.ReferenceNbr,
-                    transactionTypeIds: searchModel.TransactionTypeIds,
-                    searchCreatedOn: searchModel.CreatedOn,
-                    showLowStockOnly: searchModel.ShowLowStockOnly,
-                    sortByCatalogName: searchModel.SortByCatalogName);
-                return Ok(GenerateListResponseModel<InventoryTransaction>(HttpStatusCode.OK, "Successfully get transactions", dataList: transactions));
-            }
-            else
-            {
-                var transactions = await _inventoryTransactionService.GetTransactionPagedResultListAsync(
+            var transactions = await _inventoryTransactionService.GetTransactionPagedResultListAsync(
                     referenceId: searchModel.ReferenceId,
                     catalogTypeId: searchModel.CatalogTypeId,
                     stockId: searchModel.StockId,
@@ -276,32 +339,31 @@ namespace RA.Inventory.Controllers
                     showLowStockOnly: searchModel.ShowLowStockOnly,
                     sortByCatalogName: searchModel.SortByCatalogName,
                     pageNumber: searchModel.PageNumber, pageSize: searchModel.PageSize);
-                return Ok(GenerateListResponseModel<InventoryTransaction>(HttpStatusCode.OK, "Successfully get transactions", dataList: transactions.Items));
+
+            List<InventoryTransactionResponseDto> transactionResponseList = new List<InventoryTransactionResponseDto>();
+            if (transactions.Items.Any())
+            {
+                transactionResponseList = transactions.Items.Select(tran =>
+                {
+                    InventoryTransactionResponseDto transactionResponse = _mapper.Map<InventoryTransactionResponseDto>(tran);
+                    return transactionResponse;
+
+                }).ToList();
             }
+
+            return Ok(GenerateListResponseModel(HttpStatusCode.OK, "Successfully get transactions", dataList: transactionResponseList));
         }
 
 
         // GET api/v1/inventory/reservation
         [HttpGet("reservation"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> GetReservationList([FromQuery] InventoryReservationSearchModel searchModel)
+        public async Task<IActionResult> GetReservationList([FromQuery] InventoryReservationQueryRequestDto searchModel)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
-            if (searchModel.PageNumber == 0 && searchModel.PageSize == 0)
-            {
-                var reservations = await _inventoryReservationService.GetReservationListAsync(
-                    referenceId: searchModel.ReferenceId,
-                    catalogTypeId: searchModel.CatalogTypeId,
-                    catalogIds: searchModel.CatalogIds,
-                    referenceNbr: searchModel.ReferenceNbr,
-                    searchReserveOn: searchModel.ReservedOn,
-                    showLowStockOnly: searchModel.ShowLowStockOnly,
-                    sortByCatalogName: searchModel.SortByCatalogName);
-                return Ok(GenerateListResponseModel<InventoryReservation>(HttpStatusCode.OK, "Successfully get transactions", dataList: reservations));
-            }
-            else
-            {
-                var reservations = await _inventoryReservationService.GetReservationPagedResultListAsync(
+            var reservations = await _inventoryReservationService.GetReservationPagedResultListAsync(
                     referenceId: searchModel.ReferenceId,
                     catalogTypeId: searchModel.CatalogTypeId,
                     catalogIds: searchModel.CatalogIds,
@@ -310,15 +372,28 @@ namespace RA.Inventory.Controllers
                     showLowStockOnly: searchModel.ShowLowStockOnly,
                     sortByCatalogName: searchModel.SortByCatalogName,
                     pageNumber: searchModel.PageNumber, pageSize: searchModel.PageSize);
-                return Ok(GenerateListResponseModel<InventoryReservation>(HttpStatusCode.OK, "Successfully get transactions", dataList: reservations.Items));
+
+            List<InventoryReservationResponseDto> reservationResponseList = new List<InventoryReservationResponseDto>();
+            if (reservations.Items.Any())
+            {
+                reservationResponseList = reservations.Items.Select(reservation =>
+                {
+                    InventoryReservationResponseDto reservationResponse = _mapper.Map<InventoryReservationResponseDto>(reservation);
+                    return reservationResponse;
+
+                }).ToList();
             }
+
+            return Ok(GenerateListResponseModel(HttpStatusCode.OK, "Successfully get transactions", dataList: reservationResponseList));
         }
 
         // POST api/inventory/reservation
         [HttpPost("reservation"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> ReserveStock([FromBody] InventoryReservation req)
+        public async Task<IActionResult> ReserveStock([FromBody] InventoryReservationRequestDto req)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (req.Quantity <= 0)
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Cannot release stock with 0 qty or negative qty"));
@@ -343,7 +418,9 @@ namespace RA.Inventory.Controllers
         [HttpGet("reservation/{reservationId:guid}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetReservation(Guid reservationId)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (reservationId.IsNullOrEmpty())
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "ReservationId cannot be empty"));
@@ -352,14 +429,18 @@ namespace RA.Inventory.Controllers
             if (reservation is null)
                 return NotFound($"Reservation {reservationId} not found.");
 
-            return Ok(GenerateResponseModel<InventoryReservation>(HttpStatusCode.OK, "Successfully get reservation", reservation));
+            InventoryReservationResponseDto reservationResponse = _mapper.Map<InventoryReservationResponseDto>(reservation);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successfully get reservation", reservationResponse));
         }
 
         // POST api/v1/inventory/reservation/fulfill
         [HttpPost("reservation/fulfill")]
-        public async Task<IActionResult> FulfillReservation([FromBody] InventoryReservation req)
+        public async Task<IActionResult> FulfillReservation([FromBody] InventoryReservationRequestDto req)
         {
-            await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<InventoryStock>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (req.Id.IsNullOrEmpty())
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "ReservationId is invalid"));
@@ -378,5 +459,7 @@ namespace RA.Inventory.Controllers
 
             return NoContent();
         }
+
+        #endregion
     }
 }

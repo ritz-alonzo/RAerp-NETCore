@@ -1,5 +1,5 @@
 using FluentMigrator;
-using RA.Data.Domain.Application;
+using RAerp.Domain.Application;
 
 namespace RAerp.Domain.Migrations.ApplicationSettings
 {

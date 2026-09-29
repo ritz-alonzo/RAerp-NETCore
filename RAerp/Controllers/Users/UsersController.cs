@@ -2,16 +2,17 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using RA.Data.App_Data;
 using RA.Data.Data;
-using RA.Data.Domain.Application;
-using RA.Data.Domain.Users;
 using RA.WebFramework.Extensions;
+using RAerp.App_Data;
 using RAerp.Attributes;
 using RAerp.Controllers.Admin;
 using RAerp.Data.Security;
+using RAerp.Domain.Application;
+using RAerp.Domain.Users;
 using RAerp.Factories.UserFactory;
 using RAerp.Helpers.Constants;
+using RAerp.Helpers.OTPHelper;
 using RAerp.Helpers.PluginHelper;
 using RAerp.Helpers.Security;
 using RAerp.Helpers.SMSHelper;
@@ -206,7 +207,7 @@ namespace RAErp.Controllers.Users
                 {
                     if (_applicationSetting.IsEmailVerificationEnabled)
                     {
-                        var generatedOTP = SendSMSHelper.GenerateOTP();
+                        var generatedOTP = OneTimePINHelper.GenerateOTP();
                         // Send One Time PIN in Email
                         await _emailService.SendEmailAsync(model.Email, "Email Verification",
                             $"""
@@ -366,7 +367,7 @@ namespace RAErp.Controllers.Users
                 return RedirectToAction("Verify Account", new { id = id });
             }
 
-            var generatedOTP = SendSMSHelper.GenerateOTP();
+            var generatedOTP = OneTimePINHelper.GenerateOTP();
             entity.OneTimePINValidUntil = DateTime.UtcNow.AddHours(1); 
             entity.OneTimePIN = generatedOTP;
             entity.EmailResendAttempt = entity.EmailResendAttempt.GetValueOrDefault() + 1;

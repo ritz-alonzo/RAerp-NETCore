@@ -30,6 +30,7 @@ namespace RA.Catalogs.Domain
             set { StatusId = (int)value; }
         }
         public string SKU { get; set; }
+        public string BarcodeValue { get; set; }
         public string ImagePath { get; set; }
         public decimal Price { get; set; }
     }

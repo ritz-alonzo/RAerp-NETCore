@@ -7,6 +7,9 @@ using RA.OrdersManagement.Data;
 using RA.OrdersManagement.Domain.Carts;
 using RA.OrdersManagement.Domain.Orders;
 using RA.OrdersManagement.Domain.Payments;
+using RA.OrdersManagement.DTO.Carts;
+using RA.OrdersManagement.DTO.Orders;
+using RA.OrdersManagement.DTO.Payments;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,6 +56,32 @@ namespace RA.OrdersManagement.Mapping
 
             CreateMap<PaymentSetting, FormSettingsModel>();
             CreateMap<FormSettingsModel, PaymentSetting>();
+            #endregion
+
+            #region Dto
+            CreateMap<Cart, CartResponseDto>();
+            CreateMap<CartRequestDto, Cart>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<CartItem, CartItemResponseDto>();
+            CreateMap<CartItemRequestDto, CartItem>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<Order, OrderResponseDto>();
+            CreateMap<OrderRequestDto, Order>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<OrderItem, OrderItemResponseDto>();
+            CreateMap<OrderItemRequestDto, OrderItem>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<Payment, PaymentResponseDto>();
+            CreateMap<PaymentRequestDto, Payment>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<PaymentItem, PaymentItemResponseDto>();
+            CreateMap<PaymentItemRequestDto, PaymentItem>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             #endregion
         }
     }

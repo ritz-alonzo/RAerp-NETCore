@@ -10,11 +10,9 @@ namespace RA.Core.Models.PluginModels.OrdersManagement.Payments
 {
     public class PaymentConfigureModel : BaseFormConfigureModel
     {
-        public PaymentConfigureModel()
-        {
-            AvailableCatalogTypes = new List<SelectListItem>();
-        }
         public List<Guid> MappedCatalogTypeIds { get; set; }
-        public List<SelectListItem> AvailableCatalogTypes { get; set; }
+        public List<Guid> MappedCategoryTypeIds { get; set; }
+        public List<SelectListItem> AvailableCatalogTypes { get; set; } = new List<SelectListItem>();
+        public List<SelectListItem> AvailableCategoryTypes { get; set; } = new List<SelectListItem>();
     }
 }

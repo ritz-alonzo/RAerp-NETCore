@@ -2,10 +2,10 @@
 using RAerp.Helpers.PublicAPIEndpoints;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using RA.Data.App_Data;
-using RA.Data.Domain.Addresses;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
+using RAerp.App_Data;
+using RAerp.Domain.Addresses;
 
 namespace RAerp.Services.AddressServices
 {
@@ -24,7 +24,7 @@ namespace RAerp.Services.AddressServices
 
         public async Task<IEnumerable<Address>> GetList()
         {
-            return await _erpContext.Address.ToListAsync();
+            return await _erpContext.Address.AsNoTracking().ToListAsync();
         }
 
         public async Task<Address> GetById(Guid id)

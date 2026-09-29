@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
@@ -6,6 +8,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using RA.Core.DataCaching.CacheManagement;
 using RA.WebServiceEndpoints.App_Data;
@@ -51,7 +54,14 @@ namespace RA.WebServiceEndpoints.Infrastructure
             {
                 c.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 c.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(c =>
+
+                // IMPORTANT:
+                // Google needs a sign-in scheme
+                c.DefaultSignInScheme =
+                    CookieAuthenticationDefaults.AuthenticationScheme;
+            })
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddJwtBearer(c =>
             {
                 c.RequireHttpsMetadata = false;
                 c.SaveToken = true;
@@ -62,6 +72,32 @@ namespace RA.WebServiceEndpoints.Infrastructure
                     ValidateIssuer = false,
                     ValidateAudience = false
                 };
+
+                // ✅ Add this block to extract the token from the cookie
+                c.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        // The cookie name "AccessToken" must exactly match what you set in your Login endpoint
+                        if (context.Request.Cookies.TryGetValue("AccessToken", out var token))
+                        {
+                            context.Token = token;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+            })
+            .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+            {
+                options.ClientId =
+                    configuration[
+                        "OAuth2.0:Google:ClientId"]!;
+
+                options.ClientSecret =
+                    configuration[
+                        "OAuth2.0:Google:ClientSecret"]!;
+
+                options.CallbackPath = "/signin-google";
             });
 
             // rate limiting for requests

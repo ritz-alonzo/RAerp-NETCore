@@ -37,11 +37,20 @@ namespace RA.Core.Services
             return await _context.Set<TEntity>().FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public virtual async Task<IEnumerable<TEntity>> GetListAsync()
+        public virtual async Task<IEnumerable<TEntity>> GetListAsync(string cacheKey = null)
         {
-            return _cacheManager.EntityCacheNotExists(typeof(TEntity).FullName) ?
-                await _cacheManager.GenerateCacheAsync(await _context.Set<TEntity>().ToListAsync(), typeof(TEntity).FullName)
-                : _cacheManager.GetEntityCacheData(typeof(TEntity).FullName);
+            if (string.IsNullOrEmpty(cacheKey))
+                cacheKey = typeof(TEntity).FullName;
+
+            if (_cacheManager.EntityCacheNotExists(cacheKey))
+            {
+                // AsNoTracking() is mandatory here to prevent IDisposable errors
+                var data = await _context.Set<TEntity>().AsNoTracking().ToListAsync();
+                await _cacheManager.GenerateCacheAsync(data, cacheKey);
+                return data;
+            }
+
+            return _cacheManager.GetEntityCacheData(cacheKey);
         }
 
         public virtual async Task InsertAsync(TEntity entity)
@@ -105,7 +114,7 @@ namespace RA.Core.Services
                 pageNumber = 1;
 
             if (pageSize <= 0)
-                pageSize = 10;
+                pageSize = int.MaxValue;
 
             // Skip rows
             var skip = (pageNumber - 1) * pageSize;

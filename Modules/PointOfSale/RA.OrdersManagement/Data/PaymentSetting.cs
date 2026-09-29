@@ -9,10 +9,7 @@ namespace RA.OrdersManagement.Data
 {
     public class PaymentSetting : BaseFormSetting
     {
-        public PaymentSetting()
-        {
-            MappedCatalogTypeIds = new List<Guid>();
-        }
-        public List<Guid> MappedCatalogTypeIds { get; set; }
+        public List<Guid> MappedCatalogTypeIds { get; set; } = new List<Guid>();
+        public List<Guid> MappedCategoryTypeIds { get; set; } = new List<Guid>();
     }
 }

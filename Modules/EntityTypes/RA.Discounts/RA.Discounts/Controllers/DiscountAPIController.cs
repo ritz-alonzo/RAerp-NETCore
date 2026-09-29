@@ -2,17 +2,22 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RA.Data.Domain.Application;
-using RA.Data.Domain.EntityTypes;
 using RA.Discounts.Domain;
+using RA.Discounts.DTO.DiscountRedemptions;
+using RA.Discounts.DTO.Discounts;
 using RA.Discounts.Models;
 using RA.Discounts.Services;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
 using RAerp.Controllers.Admin;
+using RAerp.Domain.Application;
+using RAerp.Domain.EntityTypes;
+using RAerp.Domain.Users;
 using RAerp.Helpers.UserHelper;
+using RAerp.Models.ApiModel;
 using RAerp.Security.AccessRightsControl;
 using RAerp.Services.ApplicationSettingServices;
+using RAerp.Services.EntityAttributeServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,6 +43,7 @@ namespace RA.Discounts.Controllers
         private readonly EntityType _discountEntityType;
         private readonly IApplicationSettingService _applicationSettingService;
         private readonly ApplicationSetting _applicationSetting;
+        private readonly IEntityAttributeService _entityAttributeService;
         #endregion
 
         #region Ctor
@@ -46,7 +52,8 @@ namespace RA.Discounts.Controllers
             IEntityTypeManager entityTypeManager,
             IAccessControl accessControl,
             IUserIdentity userIdentity,
-            IApplicationSettingService applicationSettingService)
+            IApplicationSettingService applicationSettingService,
+            IEntityAttributeService entityAttributeService)
         {
             _discountService = discountService;
             _mapper = mapper;
@@ -56,78 +63,172 @@ namespace RA.Discounts.Controllers
             _discountEntityType = _entityTypeManager.GetTypeBySystemNameAsync(typeof(Discount).FullName).Result;
             _applicationSettingService = applicationSettingService;
             _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
+            _entityAttributeService = entityAttributeService;
         }
         #endregion
 
         #region Discount
         [HttpGet, MapToApiVersion("1.0")]
-        public async Task<IActionResult> GetDiscountList([FromQuery] DiscountSearchModel searchModel)
+        public async Task<IActionResult> GetDiscountList([FromQuery] DiscountQueryRequestDto searchModel)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (_discountEntityType == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
 
+            List<DiscountResponseDto> discountResponseList = new List<DiscountResponseDto>();
             if (searchModel.PageNumber == 0 && searchModel.PageSize == 0)
             {
-                var discountList = await _discountService.GetDiscountListAsync();
-                return Ok(GenerateListResponseModel<Discount>(HttpStatusCode.OK, "Successfully get Discount list", dataList: discountList));
+                var discountList = await _discountService.GetDiscountListAsync(
+                    searchQuery: searchModel.SearchQuery,
+                    discountTypeIds: searchModel.SearchDiscountTypeIds,
+                    discountScopeIds: searchModel.SearchDiscountScopeIds,
+                    createdOn: searchModel.SearchCreatedOn,
+                    showActiveDiscountsOnly: searchModel.ShowActiveDiscountsOnly);
+
+                if (discountList.Any())
+                {
+                    discountResponseList = discountList.Select(disc =>
+                    {
+                        DiscountResponseDto discountResponse = new DiscountResponseDto();
+                        discountResponse = _mapper.Map<DiscountResponseDto>(disc);
+                        User createdByUser = _userIdentity.GetUserDetailsAsync(disc.CreatedById).Result;
+                        discountResponse.CreatedBy = createdByUser?.FirstName + ' ' + createdByUser?.LastName;
+                        User modifiedByUser = disc.ModifiedById.IsNotNullOrEmpty() ? _userIdentity.GetUserDetailsAsync(disc.ModifiedById.Value).Result : null;
+                        discountResponse.ModifiedBy = modifiedByUser != null ? modifiedByUser?.FirstName + ' ' + modifiedByUser?.LastName : null;
+                        // Attributes
+                        discountResponse.Attributes = _entityAttributeService.GetEntityAttributeValueListAsync(entityId: disc.Id).Result.ToList();
+                        return discountResponse;
+
+                    }).ToList();
+                }
+
+                return Ok(GenerateListResponseModel(HttpStatusCode.OK, "Successfully get Discount list", dataList: discountResponseList));
             }
             else
             {
                 var discountList = await _discountService.GetDiscountPagedResultListAsync(
                     searchQuery: searchModel.SearchQuery,
-                    discountTypeIds: searchModel.DiscountTypeIds,
-                    discountScopeIds: searchModel.DiscountScopeIds,
+                    discountTypeIds: searchModel.SearchDiscountTypeIds,
+                    discountScopeIds: searchModel.SearchDiscountScopeIds,
                     createdOn: searchModel.SearchCreatedOn,
-                    createdById: searchModel.CreatedById,
                     showActiveDiscountsOnly: searchModel.ShowActiveDiscountsOnly,
                     pageNumber: searchModel.PageNumber,
                     pageSize: searchModel.PageSize);
-                return Ok(GenerateListResponseModel<Discount>(HttpStatusCode.OK, "Successfully get Discount list", dataList: discountList.Items));
+
+                if (discountList.Items.Any())
+                {
+                    discountResponseList = discountList.Items.Select(disc =>
+                    {
+                        DiscountResponseDto discountResponse = new DiscountResponseDto();
+                        discountResponse = _mapper.Map<DiscountResponseDto>(disc);
+                        User createdByUser = _userIdentity.GetUserDetailsAsync(disc.CreatedById).Result;
+                        discountResponse.CreatedBy = createdByUser?.FirstName + ' ' + createdByUser?.LastName;
+                        User modifiedByUser = disc.ModifiedById.IsNotNullOrEmpty() ? _userIdentity.GetUserDetailsAsync(disc.ModifiedById.Value).Result : null;
+                        discountResponse.ModifiedBy = modifiedByUser != null ? modifiedByUser?.FirstName + ' ' + modifiedByUser?.LastName : null;
+                        // Attributes
+                        discountResponse.Attributes = _entityAttributeService.GetEntityAttributeValueListAsync(entityId: disc.Id).Result.ToList();
+                        return discountResponse;
+
+                    }).ToList();
+                }
+
+                return Ok(GenerateListResponseModel(HttpStatusCode.OK, "Successfully get Discount list", dataList: discountResponseList));
             }
         }
 
-        [HttpPost, MapToApiVersion("1.0")]
-        public async Task<IActionResult> CreateDiscount([FromBody] Discount discount)
+        [HttpGet("{id:guid}"), MapToApiVersion("1.0")]
+        public async Task<IActionResult> GetDiscountById(Guid id)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (_discountEntityType == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
 
-            var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
+            Discount discount = await _discountService.GetByIdAsync(id);
+            if (discount == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Discount doesn't exists"));
 
+            DiscountResponseDto discountResponse = _mapper.Map<DiscountResponseDto>(discount);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successfully Created Discount", discountResponse));
+        }
+
+        [HttpPost, MapToApiVersion("1.0")]
+        public async Task<IActionResult> CreateDiscount([FromBody] DiscountRequestDto discountRequest)
+        {
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
+
+            if (_discountEntityType == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
+
+            if (discountRequest.ValidFrom != DateTime.MinValue)
+                discountRequest.ValidFrom = discountRequest.ValidFrom.ConvertToUTC();
+            if (discountRequest.ValidTo != DateTime.MinValue)
+                discountRequest.ValidTo = discountRequest.ValidTo.ConvertToUTC();
+            discountRequest.UsageCount = 0;
+
+            var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
+            
+            Discount discount = _mapper.Map<Discount>(discountRequest);
             discount.CreatedById = currentUser.Id;
+
             await _discountService.InsertAsync(discount);
             // Map Dto here
+            DiscountResponseDto discountResponse = _mapper.Map<DiscountResponseDto>(discount);
 
-            return Ok(GenerateResponseModel<Discount>(HttpStatusCode.OK, "Successfully get Discount list", discount));
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successfully Created Discount", discountResponse));
         }
 
         [HttpPut, MapToApiVersion("1.0")]
-        public async Task<IActionResult> UpdateDiscount([FromBody] Discount discount)
+        public async Task<IActionResult> UpdateDiscount([FromBody] DiscountRequestDto discountRequest)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
+
+            if (discountRequest.Id.IsNullOrEmpty())
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Discount Id doesn't have value"));
 
             if (_discountEntityType == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
 
-            if (discount == null)
+            if (discountRequest == null)
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Discount body doesn't have value"));
+
+            Discount existingDiscount = await _discountService.GetByIdAsync(discountRequest.Id);
+            if (existingDiscount == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Discount doesn't exists"));
 
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
 
+            if (discountRequest.ValidFrom != DateTime.MinValue)
+                discountRequest.ValidFrom = discountRequest.ValidFrom.ConvertToUTC();
+            if (discountRequest.ValidTo != DateTime.MinValue)
+                discountRequest.ValidTo = discountRequest.ValidTo.ConvertToUTC();
+
+            Discount discount = _mapper.Map(discountRequest, existingDiscount);
             discount.ModifiedById = currentUser.Id;
+
             await _discountService.UpdateAsync(discount);
 
-            return Ok(GenerateResponseModel<Discount>(HttpStatusCode.OK, "Successfully updated Discount", discount));
+            DiscountResponseDto discountResponse = _mapper.Map<DiscountResponseDto>(discount);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successfully updated Discount", discount));
         }
 
         [HttpDelete("{discountId:guid}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> DeleteDiscount(Guid discountId)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (_discountEntityType == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
@@ -136,65 +237,129 @@ namespace RA.Discounts.Controllers
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Invalid discount Id"));
 
             var discount = await _discountService.GetByIdAsync(discountId);
+            if (discount == null)
+                return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Discount doesn't exists"));
+            
             await _discountService.DeleteAsync(discount);
 
-            return Ok(GenerateResponseModel<Discount>(HttpStatusCode.OK, "Successfully deleted Discount", discount));
+            return Ok("Successfully deleted Discount");
         }
         #endregion
 
         #region Discount Redemption
         [HttpGet("redemption"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> GetDiscountRedemptionList()
+        public async Task<IActionResult> GetDiscountRedemptionList([FromQuery] DiscountRedemptionQueryRequestDto searchModel)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (_discountEntityType == null)
-                return NotFound(GenerateResponseModel<Discount>(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
+                return NotFound(GenerateResponseModel<DiscountRedemption>(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
 
-            var discountRedemptionList = await _discountService.GetDiscountRedemptionListAsync();
+            List<DiscountRedemptionResponseDto> discountRedemptionResponseList = new List<DiscountRedemptionResponseDto>();
+            if (searchModel.PageNumber == 0 && searchModel.PageSize == 0)
+            {
+                var discountRedemptionList = await _discountService.GetDiscountRedemptionListAsync(
+                    searchOrderId: searchModel.SearchOrderId,
+                    searchOrderNbr: searchModel.SearchOrderNbr,
+                    searchDiscountCode: searchModel.SearchDiscountCode,
+                    searchCustomerId: searchModel.SearchCustomerId);
 
-            return Ok(GenerateListResponseModel<DiscountRedemption>(HttpStatusCode.OK, "Successfully get discount redemption list", dataList: discountRedemptionList));
+                if (discountRedemptionList.Any())
+                {
+                    discountRedemptionResponseList = discountRedemptionList.Select(disc =>
+                    {
+                        DiscountRedemptionResponseDto discountRedemptionResponse = new DiscountRedemptionResponseDto();
+                        discountRedemptionResponse = _mapper.Map<DiscountRedemptionResponseDto>(disc);
+                        return discountRedemptionResponse;
+
+                    }).ToList();
+                }
+                return Ok(GenerateListResponseModel(HttpStatusCode.OK, "Successfully Get discount redemption list", dataList: discountRedemptionResponseList));
+            }
+            else
+            {
+                var discountRedemptionList = await _discountService.GetDiscountRedemptionPagedResultListAsync(
+                    searchOrderId: searchModel.SearchOrderId,
+                    searchOrderNbr: searchModel.SearchOrderNbr,
+                    searchDiscountCode: searchModel.SearchDiscountCode,
+                    searchCustomerId: searchModel.SearchCustomerId,
+                    pageNumber: searchModel.PageNumber, pageSize: searchModel.PageSize
+                );
+                if (discountRedemptionList.Items.Any())
+                {
+                    discountRedemptionResponseList = discountRedemptionList.Items.Select(disc =>
+                    {
+                        DiscountRedemptionResponseDto discountRedemptionResponse = new DiscountRedemptionResponseDto();
+                        discountRedemptionResponse = _mapper.Map<DiscountRedemptionResponseDto>(disc);
+                        return discountRedemptionResponse;
+
+                    }).ToList();
+                }
+                return Ok(GenerateListResponseModel(HttpStatusCode.OK, "Successfully Get discount redemption list", dataList: discountRedemptionResponseList));
+            }
         }
 
         [HttpPost("redemption"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> CreateDiscountRedemption([FromBody] DiscountRedemption discountRedemption)
+        public async Task<IActionResult> CreateDiscountRedemption([FromBody] DiscountRedemptionRequestDto discountRedemptionRequest)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (_discountEntityType == null)
-                return NotFound(GenerateResponseModel<Discount>(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
+                return NotFound(GenerateResponseModel<DiscountRedemption>(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
 
-            if (discountRedemption == null)
+            if (discountRedemptionRequest == null)
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Invalid discount redemption"));
 
-            await _discountService.CreateDiscountRedemptionAsync(discountRedemption);
+            DiscountRedemption discRedemption = _mapper.Map<DiscountRedemption>(discountRedemptionRequest);
+            await _discountService.CreateDiscountRedemptionAsync(discRedemption);
 
-            return Ok(GenerateResponseModel<DiscountRedemption>(HttpStatusCode.OK, "Successfully redeemed discount", discountRedemption));
+            DiscountRedemptionResponseDto discountRedemptionResponse = _mapper.Map<DiscountRedemptionResponseDto>(discRedemption);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successfully redeemed discount", discountRedemptionResponse));
         }
 
         [HttpPut("redemption"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> UpdateDiscountRedemption([FromBody] DiscountRedemption discountRedemption)
+        public async Task<IActionResult> UpdateDiscountRedemption([FromBody] DiscountRedemptionRequestDto discountRedemptionRequest)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
+
+            if (discountRedemptionRequest.Id.IsNullOrEmpty())
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Invalid Id"));
 
             if (_discountEntityType == null)
-                return NotFound(GenerateResponseModel<Discount>(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
+                return NotFound(GenerateResponseModel<DiscountRedemption>(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
 
-            if (discountRedemption == null)
+            if (discountRedemptionRequest == null)
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Invalid discount redemption"));
 
-            await _discountService.UpdateDiscountRedemptionAsync(discountRedemption);
+            DiscountRedemption existingDiscRedemption = await _discountService.GetDiscountRedemptionByIdAsync(discountRedemptionRequest.Id);
+            if (existingDiscRedemption == null)
+                return NotFound(GenerateResponseModel<DiscountRedemption>(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
 
-            return Ok(GenerateResponseModel<DiscountRedemption>(HttpStatusCode.OK, "Successfully updated redeemed discount", discountRedemption));
+            DiscountRedemption discRedemption = _mapper.Map(discountRedemptionRequest, existingDiscRedemption);
+
+            await _discountService.UpdateDiscountRedemptionAsync(discRedemption);
+
+            DiscountRedemptionResponseDto discountRedemptionResponse = _mapper.Map<DiscountRedemptionResponseDto>(discRedemption);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successfully updated redeemed discount", discountRedemptionResponse));
         }
 
         [HttpDelete("redemption/{discountRedemptionId:guid}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> DeleteDiscountRedemption(Guid discountRedemptionId)
         {
-            await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Discount>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (_discountEntityType == null)
-                return NotFound(GenerateResponseModel<Discount>(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Discount entity type not yet installed or configured"));
 
             if (discountRedemptionId.IsNullOrEmpty())
                 return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Invalid discount Id"));
@@ -205,7 +370,7 @@ namespace RA.Discounts.Controllers
 
             await _discountService.DeleteDiscountRedemptionAsync(discountRedemption);
 
-            return Ok(GenerateResponseModel<DiscountRedemption>(HttpStatusCode.OK, "Successfully deleted redeemed discount", discountRedemption));
+            return Ok("Successfully deleted redeemed discount");
 
         }
         #endregion

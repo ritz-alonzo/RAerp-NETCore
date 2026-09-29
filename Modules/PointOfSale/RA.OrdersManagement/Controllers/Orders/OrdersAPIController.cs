@@ -4,16 +4,20 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RA.Core.Models.PluginModels.OrdersManagement.Carts;
 using RA.Core.Models.PluginModels.OrdersManagement.Orders;
-using RA.Data.Domain.Application;
+using RA.Discounts.Domain;
+using RA.Discounts.Services;
 using RA.FormTypes.Services;
 using RA.OrdersManagement.Data;
 using RA.OrdersManagement.Domain.Carts;
 using RA.OrdersManagement.Domain.Orders;
+using RA.OrdersManagement.DTO.Orders;
 using RA.OrdersManagement.Services.Carts;
 using RA.OrdersManagement.Services.Orders;
 using RA.WebFramework.Extensions;
 using RAerp.Controllers.Admin;
+using RAerp.Domain.Application;
 using RAerp.Helpers.UserHelper;
+using RAerp.Models.ApiModel;
 using RAerp.Security.AccessRightsControl;
 using RAerp.Services.ApplicationSettingServices;
 using System;
@@ -44,6 +48,7 @@ namespace RA.OrdersManagement.Controllers.Orders
         private readonly OrderSetting _orderSettings;
         private readonly IApplicationSettingService _applicationSettingService;
         private readonly ApplicationSetting _applicationSetting;
+        private readonly IDiscountService _discountService;
         #endregion
 
         #region Ctor
@@ -53,7 +58,8 @@ namespace RA.OrdersManagement.Controllers.Orders
             ICartService cartService,
             IMapper mapper,
             IFormTypeManager formTypeManager,
-            IApplicationSettingService applicationSettingService)
+            IApplicationSettingService applicationSettingService,
+            IDiscountService discountService)
         {
             _accessControl = accessControl;
             _userIdentity = userIdentity;
@@ -64,16 +70,27 @@ namespace RA.OrdersManagement.Controllers.Orders
             _orderSettings = _formTypeManager.GetSettingDataOfFormAsync<Order, OrderSetting>().Result;
             _applicationSettingService = applicationSettingService;
             _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
+            _discountService = discountService;
         }
         #endregion
 
         #region Version 1.0
 
         #region Order
+        [HttpPost("test"), MapToApiVersion("1.0")]
+        [Idempotent] // Protects this endpoint
+        public async Task<IActionResult> TestIdempotent([FromBody] object testdata)
+        {
+            return Ok("Success");
+        }
+
+
         [HttpGet, MapToApiVersion("1.0")]
         public async Task<IActionResult> GetOrderList([FromQuery] OrderSearchModel orderSearchModel)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             var orderList = await _orderService.GetOrderListAsync(
                 searchQuery: orderSearchModel?.SearchQuery,
@@ -93,10 +110,12 @@ namespace RA.OrdersManagement.Controllers.Orders
         [HttpGet("{idOrFormNbr}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetOrderByIdOrFormNbr(string idOrFormNbr)
         {
-            if (!string.IsNullOrEmpty(idOrFormNbr))
+            if (string.IsNullOrEmpty(idOrFormNbr))
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "FormId or FormNbr doesn't have value"));
 
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             Order order = null;
             if (Guid.TryParse(idOrFormNbr, out Guid result))
@@ -110,18 +129,42 @@ namespace RA.OrdersManagement.Controllers.Orders
             return Ok(GenerateResponseModel<Order>(HttpStatusCode.OK, "Successful", order));
         }
 
-        [HttpPost, MapToApiVersion("1.0")]
-        public async Task<IActionResult> CreateOrder([FromBody] Order order)
+        [HttpGet("cart/{cartId:guid}"), MapToApiVersion("1.0")]
+        public async Task<IActionResult> GetPendingOrderByCartId(Guid cartId)
         {
+            if (cartId.IsNullOrEmpty())
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "CartId doesn't have value"));
+
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
+
+            Order order = await _orderService.GetPendingOrderByCartIdAsync(cartId);
             if (order == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order doesn't exists"));
+
+            OrderResponseDto orderResponse = _mapper.Map<OrderResponseDto>(order);
+
+            return Ok(GenerateResponseModel<OrderResponseDto>(HttpStatusCode.OK, "Successful", orderResponse));
+        }
+
+        [HttpPost, MapToApiVersion("1.0")]
+        public async Task<IActionResult> CreateOrder([FromBody] OrderRequestDto orderRequest)
+        {
+            if (orderRequest == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order is empty"));
 
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
 
+            Order order = _mapper.Map<Order>(orderRequest);
+
             order.CreatedById = currentUser.Id;
             order.OrderDate = DateTime.UtcNow;
+            order.Status = Core.PluginData.FormTypes.FormStatus.Onhold;
             await _orderService.InsertFormAsync(order);
 
             // Check if has CartId
@@ -158,7 +201,7 @@ namespace RA.OrdersManagement.Controllers.Orders
                 order.TotalDiscountAmount = 0m;
                 order.TotalGrossAmount = totalSubTotal;
                 order.TotalVatAmount = order.TotalGrossAmount * 0.12m;
-                order.TotalNetAmount = order.TotalGrossAmount * 1.12m;
+                order.TotalNetAmount = order.TotalGrossAmount;
                 #endregion
 
                 order.OrderDate = order.OrderDate == DateTime.MinValue ? DateTime.UtcNow : order.OrderDate;
@@ -166,16 +209,20 @@ namespace RA.OrdersManagement.Controllers.Orders
                 await _orderService.UpdateFormAsync(order);
             }
 
-            return Ok(GenerateResponseModel<Order>(HttpStatusCode.OK, "Successfully Created Order", order));
+            OrderResponseDto orderResponse = _mapper.Map<OrderResponseDto>(order);
+
+            return Ok(GenerateResponseModel<OrderResponseDto>(HttpStatusCode.OK, "Successfully Created Order", orderResponse));
         }
 
         [HttpPut, MapToApiVersion("1.0")]
-        public async Task<IActionResult> UpdateOrder([FromBody] Order order)
+        public async Task<IActionResult> UpdateOrder([FromBody] OrderRequestDto orderRequest)
         {
-            if (order == null)
+            if (orderRequest == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order is empty"));
 
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (_orderSettings == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order configuration not yet configured"));
@@ -183,6 +230,15 @@ namespace RA.OrdersManagement.Controllers.Orders
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
             if (currentUser == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "User doesn't exists please login"));
+
+            if (orderRequest.Id.IsNullOrEmpty())
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order Id is invalid"));
+
+            Order existingOrder = await _orderService.GetFormByIdAsync(orderRequest.Id);
+            if (existingOrder == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order doesn't exists"));
+
+            Order order = _mapper.Map(orderRequest, existingOrder);
 
             order.ModifiedById = currentUser?.Id;
             // Check if has CartId
@@ -250,20 +306,22 @@ namespace RA.OrdersManagement.Controllers.Orders
                 order.TotalQty = totalQty;
                 order.TotalGrossAmount = totalSubTotal;
                 order.TotalVatAmount = (order.TotalGrossAmount - order.TotalDiscountAmount) * 0.12m;
-                order.TotalNetAmount = (order.TotalGrossAmount - order.TotalDiscountAmount) * 1.12m;
+                order.TotalNetAmount = order.TotalGrossAmount - order.TotalDiscountAmount;
                 #endregion
-
-                order.OrderDate = DateTime.UtcNow;
             }
             await _orderService.UpdateFormAsync(order);
 
-            return Ok(GenerateResponseModel<Order>(HttpStatusCode.OK, "Successfully Updated Order", order));
+            OrderResponseDto orderResponse = _mapper.Map<OrderResponseDto>(order);
+
+            return Ok(GenerateResponseModel<OrderResponseDto>(HttpStatusCode.OK, "Successfully Updated Order", orderResponse));
         }
 
         [HttpDelete("{idOrFormNbr}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> DeleteOrder(string idOrFormNbr)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             Order order = null;
             if (Guid.TryParse(idOrFormNbr, out Guid id))
@@ -279,15 +337,63 @@ namespace RA.OrdersManagement.Controllers.Orders
             order.ModifiedById = currentUser?.Id;
             await _orderService.DeleteFormAsync(order);
 
-            return Ok(GenerateResponseModel<Order>(HttpStatusCode.OK, "Successfully Deleted Order"));
+            return NoContent();
         }
+
+        #region Order Discount
+        [HttpGet("discount/{orderId:guid}")]
+        public async Task<IActionResult> GetPendingOrderDiscount(Guid orderId)
+        {
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
+
+            if (orderId.IsNullOrEmpty())
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Request body doesn't exists"));
+
+            Order order = await _orderService.GetFormByIdAsync(orderId);
+            if (order == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order doesn't exists"));
+
+            List<DiscountRedemption> discountRedemptionList = new List<DiscountRedemption>();
+            discountRedemptionList = (List<DiscountRedemption>)await _discountService.GetPendingDiscountRedemptionListByOrderIdAsync(order.Id);
+
+            return Ok(GenerateListResponseModel<DiscountRedemption>(HttpStatusCode.OK, "Successful", dataList: discountRedemptionList));
+        }
+
+        [HttpPost("discount"), MapToApiVersion("1.0")]
+        public async Task<IActionResult> ApplyPendingOrderDiscount([FromBody] OrderDiscountRequestDto orderRequest)
+        {
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
+
+            if (orderRequest == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Request body doesn't exists"));
+
+            Order order = await _orderService.GetFormByIdAsync(orderRequest.Id);
+            if (order == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order doesn't exists"));
+            // Create Discount Redemption
+            await CreateOrderDiscountRedemption(order, orderRequest.DiscountId, orderRequest.DiscountAmount);
+            // Recompute Total
+            await RecomputeOrderTotals(order, orderRequest.DiscountAmount);
+
+            OrderResponseDto orderResponse = _mapper.Map<OrderResponseDto>(order);
+
+            return Ok(GenerateResponseModel<OrderResponseDto>(HttpStatusCode.OK, "Successful", orderResponse));
+        }
+        #endregion
+
         #endregion
 
         #region Order Item
         [HttpGet("item/{formId}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetOrderItemList(string formId)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             List<OrderItem> orderItemList = new List<OrderItem>();
             if (Guid.TryParse(formId, out Guid result))
@@ -302,7 +408,9 @@ namespace RA.OrdersManagement.Controllers.Orders
         [HttpPost("item"), MapToApiVersion("1.0")]
         public async Task<IActionResult> InsertOrderItems([FromBody] List<OrderItem> orderItems)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (!orderItems.Any())
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order item doesn't have value"));
@@ -323,47 +431,53 @@ namespace RA.OrdersManagement.Controllers.Orders
         }
 
         [HttpPut("item"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> UpdateOrderItems([FromBody] List<OrderItem> orderItems)
+        public async Task<IActionResult> UpdateOrderItem([FromBody] OrderItemRequestDto orderItemRequest)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
-            if (!orderItems.Any())
+            if (orderItemRequest == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order item doesn't have value"));
 
-            var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
+            Order order = await _orderService.GetFormByIdAsync(orderItemRequest.FormId);
+            if (order == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order doesn't exists"));
 
-            foreach (var item in orderItems)
-            {
-                if (item.FormId.IsNullOrEmpty())
-                    return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "FormId is invalid"));
+            OrderItem existingOrderItem = await _orderService.GetItemByIdAsync(orderItemRequest.Id);
+            if (existingOrderItem == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order item doesn't exists"));
 
-                item.ModifiedById = currentUser?.Id;
-                await _orderService.UpdateItemAsync(item, saveChangesToDb: true);
-            }
+            OrderItem orderItem = _mapper.Map(orderItemRequest, existingOrderItem);
+            await _orderService.UpdateItemAsync(orderItem, saveChangesToDb: true);
 
-            return Ok(GenerateListResponseModel<OrderItem>(HttpStatusCode.OK, "Successfully added order items", dataList: orderItems));
+            // Recompute Totals
+            await RecomputeOrderTotals(order, order.TotalDiscountAmount);
+
+            return NoContent();
         }
 
-        [HttpDelete("item"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> DeleteOrderItem([FromBody] List<OrderItem> orderItems)
+        [HttpDelete("item/{orderItemId:guid}"), MapToApiVersion("1.0")]
+        public async Task<IActionResult> DeleteOrderItem([FromRoute] Guid orderItemId)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
-            if (!orderItems.Any())
-                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order item doesn't have value"));
+            OrderItem existingOrderItem = await _orderService.GetItemByIdAsync(orderItemId);
+            if (existingOrderItem == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order item doesn't exists"));
 
-            var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
+            Order order = await _orderService.GetFormByIdAsync(existingOrderItem.FormId);
+            if (order == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Order doesn't exists"));
 
-            foreach (var item in orderItems)
-            {
-                if (item.FormId.IsNullOrEmpty())
-                    return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "FormId is invalid"));
+            await _orderService.DeleteItemAsync(existingOrderItem, saveChangesToDb: true);
 
-                item.ModifiedById = currentUser?.Id;
-                await _orderService.DeleteItemAsync(item, saveChangesToDb: true);
-            }
+            // Recompute Totals
+            await RecomputeOrderTotals(order, order.TotalDiscountAmount);
 
-            return Ok(GenerateListResponseModel<OrderItem>(HttpStatusCode.OK, "Successfully added order items", dataList: orderItems));
+            return NoContent();
         }
         #endregion
 
@@ -373,7 +487,10 @@ namespace RA.OrdersManagement.Controllers.Orders
         [HttpGet, MapToApiVersion("2.0")]
         public async Task<IActionResult> GetOrderListv2([FromQuery] OrderSearchModel orderSearchModel)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
+
 
             var orderList = await _orderService.GetOrderListAsync(
                 searchQuery: orderSearchModel?.SearchQuery,
@@ -388,6 +505,82 @@ namespace RA.OrdersManagement.Controllers.Orders
             );
 
             return Ok(GenerateListResponseModel<Order>(HttpStatusCode.OK, "Successful", orderSearchModel.PageNumber, orderSearchModel.PageSize, orderList));
+        }
+        #endregion
+
+        #region Methods (will move this to order service)
+        private async Task RecomputeOrderTotals(Order order, decimal? totalDiscountAmount = null)
+        {
+            // Get Sum of Items Subtotal
+            decimal itemsSubTotal = (await _orderService.GetItemsByFormIdAsync(order.Id)).ToList().Sum(c => c.SubTotal);
+            order.TotalGrossAmount = itemsSubTotal;
+            order.TotalNetAmount = order.TotalGrossAmount - order.TotalDiscountAmount;
+            order.TotalVatAmount = order.TotalNetAmount * 0.12m;
+            if (totalDiscountAmount != null)
+            {
+                decimal updatedNetAmount = order.TotalGrossAmount - totalDiscountAmount.GetValueOrDefault();
+                order.TotalDiscountAmount = totalDiscountAmount.GetValueOrDefault();
+                order.TotalVatAmount = updatedNetAmount * 0.12m;
+                order.TotalNetAmount = updatedNetAmount;
+            }
+            await _orderService.UpdateFormAsync(order);
+        }
+
+        private async Task CreateOrderDiscountRedemption(Order order, Guid discountId, decimal discountAmount)
+        {
+            if (order == null || discountAmount <= 0)
+                return;
+            if (order.CustomerId.IsNullOrEmpty())
+                return;
+            if (discountId.IsNullOrEmpty())
+                return;
+
+            Discount discount = await _discountService.GetByIdAsync(discountId);
+            if (discount == null) return;
+
+            List<DiscountRedemption> discountRedemptionList = (List<DiscountRedemption>)await _discountService.GetPendingDiscountRedemptionListByOrderIdAsync(order.Id);
+            if (discountRedemptionList != null && discountRedemptionList.Any())
+            {
+                foreach (var discRedemption in discountRedemptionList)
+                {
+                    if (discRedemption.DiscountId != discount.Id)
+                    {
+                        await _discountService.DeleteDiscountRedemptionAsync(discRedemption);
+
+                        var discountRedemption = new DiscountRedemption
+                        {
+                            DiscountId = discountId,
+                            DiscountCode = discount.Code,
+                            OrderId = order.Id,
+                            OrderNbr = order.FormNbr,
+                            CustomerId = order.CustomerId.Value,
+                            OriginalAmount = order.TotalGrossAmount,
+                            DiscountAmount = discountAmount,
+                            DiscountedAmount = order.TotalGrossAmount - discountAmount,
+                            RedeemedAt = DateTime.UtcNow,
+                            IsPending = true
+                        };
+                        await _discountService.CreateDiscountRedemptionAsync(discountRedemption);
+                    }
+                }
+            }
+            else
+            {
+                var discountRedemption = new DiscountRedemption
+                {
+                    DiscountId = discountId,
+                    DiscountCode = discount.Code,
+                    OrderId = order.Id,
+                    OrderNbr = order.FormNbr,
+                    CustomerId = order.CustomerId.Value,
+                    OriginalAmount = order.TotalGrossAmount,
+                    DiscountAmount = discountAmount,
+                    DiscountedAmount = order.TotalGrossAmount - discountAmount,
+                    RedeemedAt = DateTime.UtcNow,
+                    IsPending = true
+                };
+                await _discountService.CreateDiscountRedemptionAsync(discountRedemption);
+            }
         }
         #endregion
     }

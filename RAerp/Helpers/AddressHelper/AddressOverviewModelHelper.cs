@@ -1,5 +1,5 @@
 ﻿using RA.Core.Models.OverviewModels;
-using RA.Data.Domain.Addresses;
+using RAerp.Domain.Addresses;
 
 namespace RAerp.Helpers.AddressHelper
 {

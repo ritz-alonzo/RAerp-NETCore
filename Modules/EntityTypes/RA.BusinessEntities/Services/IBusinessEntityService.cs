@@ -8,5 +8,6 @@ namespace RA.BusinessEntities.Services
     public interface IBusinessEntityService : IEntityTypeService<BusinessEntity, BusinessEntitySetting, RABusinessEntityContext>
     {
         void Test();
+        Task<BusinessEntity> GetBusinessEntityByUserId(Guid userId);
     }
 }

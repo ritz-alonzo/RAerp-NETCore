@@ -17,11 +17,18 @@ namespace RA.Discounts.Services
         Task CreateDiscountRedemptionAsync(DiscountRedemption redemption);
         Task DeleteDiscountRedemptionAsync(DiscountRedemption redemption);
         Task<DiscountRedemption> GetDiscountRedemptionByIdAsync(Guid redemptionId);
-        Task<IEnumerable<DiscountRedemption>> GetDiscountRedemptionListAsync(Guid? searchDiscountId = null, Guid? searchOrderId = null, string searchDiscountCode = null, Guid? searchCustomerId = null, int pageNumber = 0, int pageSize = 0);
-        Task<IEnumerable<DiscountRedemption>> GetDiscountRedemptionListByOrderId(Guid orderId);
+        Task<IEnumerable<DiscountRedemption>> GetDiscountRedemptionListAsync(Guid? searchDiscountId = null, 
+            Guid? searchOrderId = null,
+            string searchOrderNbr = null, 
+            string searchDiscountCode = null, 
+            Guid? searchCustomerId = null, 
+            int pageNumber = 0, int pageSize = 0);
+        Task<IEnumerable<DiscountRedemption>> GetDiscountRedemptionListByOrderIdAsync(Guid orderId);
+        Task<IEnumerable<DiscountRedemption>> GetPendingDiscountRedemptionListByOrderIdAsync(Guid orderId);
         Task UpdateDiscountRedemptionAsync(DiscountRedemption redemption);
         Task<PagedResult<DiscountRedemption>> GetDiscountRedemptionPagedResultListAsync(Guid? searchDiscountId = null,
             Guid? searchOrderId = null,
+            string searchOrderNbr = null,
             string searchDiscountCode = null,
             Guid? searchCustomerId = null,
             int pageNumber = 0,

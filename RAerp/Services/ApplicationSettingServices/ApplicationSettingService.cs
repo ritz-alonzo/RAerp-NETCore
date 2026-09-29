@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using RA.Data.App_Data;
-using RA.Data.Domain.Application;
+using RAerp.App_Data;
+using RAerp.Domain.Application;
 
 namespace RAerp.Services.ApplicationSettingServices
 {
@@ -30,6 +30,7 @@ namespace RAerp.Services.ApplicationSettingServices
         {
             var query = _applicationSettingRepository
                 .Where(x => !x.Deleted)
+                .AsNoTracking()
                 .OrderByDescending(x => x.CreatedOn);
 
             if (pageSize != int.MaxValue)

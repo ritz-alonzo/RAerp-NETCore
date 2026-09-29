@@ -6,6 +6,7 @@ using RA.OrdersManagement.Data;
 using RA.OrdersManagement.Domain.Carts;
 using RA.OrdersManagement.Domain.Orders;
 using RA.WebFramework.Extensions;
+using RA.WebFramework.Models.Pagination;
 using RAerp.Services.DataChangeServices;
 using System;
 using System.Collections.Generic;
@@ -38,17 +39,28 @@ namespace RA.OrdersManagement.Services.Carts
         #endregion
 
         #region CRUD
+        public async Task<Cart> GetCartByCustomerUserNameAsync(string customerUserName)
+        {
+            return await _cart.FirstOrDefaultAsync(c => c.CustomerName.ToLower() ==  customerUserName.ToLower());
+        }
+
+        public async Task<Cart> GetCartByCustomerIdAsync(Guid customerId)
+        {
+            return await _cart.FirstOrDefaultAsync(c => c.CustomerId == customerId);
+        }
+
         public async Task<IEnumerable<Cart>> GetCartListAsync(
             string searchQuery = null,
             string searchCustomerName = null,
+            Guid? searchCustomerId = null,
             List<Guid> searchServiceIds = null,
-            DateTime? searchCreatedDate = null,
+            DateTime? searchCreatedOn = null,
             List<int> formStatusIds = null,
             bool showDeleted = false,
             int? pageNumber = 0,
             int? pageSize = int.MaxValue)
         {
-            var query = await GetFormListAsync();
+            var query = _cart.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrEmpty(searchQuery))
                 query = query.Where(c =>
@@ -58,6 +70,9 @@ namespace RA.OrdersManagement.Services.Carts
                 query = query.Where(c =>
                 c.CustomerName.ToLower().Contains(searchCustomerName.ToLower()));
 
+            if (searchCustomerId.IsNotNullOrEmpty())
+                query = query.Where(c => c.CustomerId == searchCustomerId);
+
             if (searchServiceIds.HasAny())
                 query = query.Where(c =>
                 searchServiceIds.Contains(c.ServiceId.Value));
@@ -66,12 +81,14 @@ namespace RA.OrdersManagement.Services.Carts
                 query = query.Where(c =>
                 formStatusIds.Contains(c.StatusId));
 
-            if (searchCreatedDate.HasValue)
+            if (searchCreatedOn.HasValue)
                 query = query.Where(c =>
-                c.CreatedOn.Date.Equals(searchCreatedDate.Value));
+                c.CreatedOn.Date.Equals(searchCreatedOn.Value));
 
             if (showDeleted)
                 query = query.Where(c => !c.Deleted);
+
+            query = query.OrderBy(c => c.CreatedOn);
 
             return await ToPagedListAsync(query, pageNumber ?? 0, pageSize ?? 0);
         }
@@ -82,6 +99,50 @@ namespace RA.OrdersManagement.Services.Carts
             tempOrderForm.TotalQty = 0m;
             tempOrderForm.TotalAmount = 0m;
             return tempOrderForm;
+        }
+        #endregion
+
+        #region PagedResult 
+        public async Task<PagedResult<Cart>> GetCartPagedResultListAsync(
+            string searchQuery = null,
+            string searchCustomerName = null,
+            Guid? searchCustomerId = null,
+            List<Guid> searchServiceIds = null,
+            DateTime? searchCreatedOn = null,
+            List<int> formStatusIds = null,
+            bool showDeleted = false,
+            int? pageNumber = 0,
+            int? pageSize = int.MaxValue)
+        {
+            var query = _cart.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchQuery))
+                query = query.Where(c =>
+                c.FormNbr.ToLower().Contains(searchQuery.ToLower()));
+
+            if (!string.IsNullOrEmpty(searchCustomerName))
+                query = query.Where(c =>
+                c.CustomerName.ToLower().Contains(searchCustomerName.ToLower()));
+
+            if (searchCustomerId.IsNotNullOrEmpty())
+                query = query.Where(c => c.CustomerId == searchCustomerId);
+
+            if (searchServiceIds.HasAny())
+                query = query.Where(c =>
+                searchServiceIds.Contains(c.ServiceId.Value));
+
+            if (formStatusIds.HasAny())
+                query = query.Where(c =>
+                formStatusIds.Contains(c.StatusId));
+
+            if (searchCreatedOn.HasValue)
+                query = query.Where(c =>
+                c.CreatedOn.Date.Equals(searchCreatedOn.Value));
+
+            if (showDeleted)
+                query = query.Where(c => !c.Deleted);
+
+            return query.ToPagedResult(pageNumber, pageSize);
         }
         #endregion
     }

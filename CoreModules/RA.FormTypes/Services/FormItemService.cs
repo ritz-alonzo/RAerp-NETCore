@@ -4,10 +4,10 @@ using Newtonsoft.Json;
 using RA.Core.Data;
 using RA.Core.DataCaching.CacheManagement;
 using RA.Core.PluginData.FormTypes;
-using RA.Data.Domain.DataChanges;
 using RA.FormTypes.Data;
 using RA.FormTypes.Domain;
 using RA.WebFramework.Extensions;
+using RAerp.Domain.DataChanges;
 using RAerp.Services.DataChangeServices;
 using System;
 using System.Collections.Generic;
@@ -66,11 +66,20 @@ namespace RA.FormTypes.Services
             return await _erpContext.Set<TForm>().FirstOrDefaultAsync(c => c.FormNbr == formNbr);
         }
 
-        public virtual async Task<IEnumerable<TForm>> GetFormListAsync()
+        public virtual async Task<IEnumerable<TForm>> GetFormListAsync(string cacheKey = null)
         {
-            return _cacheFormManager.EntityCacheNotExists(typeof(TForm).FullName) ?
-                await _cacheFormManager.GenerateCacheAsync(await _erpContext.Set<TForm>().ToListAsync(), typeof(TForm).FullName)
-                : _cacheFormManager.GetEntityCacheData(typeof(TForm).FullName);
+            if (string.IsNullOrEmpty(cacheKey))
+                cacheKey = typeof(TForm).FullName;
+
+            if (_cacheFormManager.EntityCacheNotExists(cacheKey))
+            {
+                // AsNoTracking() is mandatory here to prevent IDisposable errors
+                var data = await _erpContext.Set<TForm>().AsNoTracking().ToListAsync();
+                await _cacheFormManager.GenerateCacheAsync(data, cacheKey);
+                return data;
+            }
+
+            return _cacheFormManager.GetEntityCacheData(cacheKey);
         }
 
         public virtual async Task InsertFormAsync(TForm form)
@@ -94,13 +103,16 @@ namespace RA.FormTypes.Services
                 }
             }
 
-            if (settings.OpenDocOnCreate)
+            if (form.Status != FormStatus.Pending)
             {
-                form.Status = FormStatus.Open;
-            }
-            else
-            {
-                form.Status = FormStatus.Onhold;
+                if (settings.OpenDocOnCreate)
+                {
+                    form.Status = FormStatus.Open;
+                }
+                else
+                {
+                    form.Status = FormStatus.Onhold;
+                }
             }
 
             form.Id = Guid.NewGuid();
@@ -224,7 +236,7 @@ namespace RA.FormTypes.Services
         public virtual async Task<IEnumerable<TItem>> GetItemsByFormIdAsync(Guid formId)
         {
             IEnumerable<TItem> formItems = _cacheFormItemManager.EntityCacheNotExists(formId) ?
-                                            await _cacheFormItemManager.GenerateCacheAsync(await _erpContext.Set<TItem>().Where(c => c.FormId == formId).ToListAsync(), formId)
+                                            await _cacheFormItemManager.GenerateCacheAsync(await _erpContext.Set<TItem>().Where(c => c.FormId == formId).AsNoTracking().ToListAsync(), formId)
                                             : _cacheFormItemManager.GetEntityCacheData(formId);
 
             IEnumerable<DataChange> dataChangeList = await _dataChangeService.GetListByDataIdAsync(formId);
@@ -255,11 +267,20 @@ namespace RA.FormTypes.Services
             return formItems.ToList();
         }
 
-        public virtual async Task<IEnumerable<TItem>> GetItemListAsync()
+        public virtual async Task<IEnumerable<TItem>> GetItemListAsync(string cacheKey = null)
         {
-            return _cacheFormItemManager.EntityCacheNotExists(typeof(TItem).FullName) ?
-                await _cacheFormItemManager.GenerateCacheAsync(await _erpContext.Set<TItem>().ToListAsync(), typeof(TItem).FullName)
-                : _cacheFormItemManager.GetEntityCacheData(typeof(TItem).FullName);
+            if (string.IsNullOrEmpty(cacheKey))
+                cacheKey = typeof(TItem).FullName;
+
+            if (_cacheFormItemManager.EntityCacheNotExists(cacheKey))
+            {
+                // AsNoTracking() is mandatory here to prevent IDisposable errors
+                var data = await _erpContext.Set<TItem>().AsNoTracking().ToListAsync();
+                await _cacheFormItemManager.GenerateCacheAsync(data, cacheKey);
+                return data;
+            }
+
+            return _cacheFormItemManager.GetEntityCacheData(cacheKey);
         }
 
         public virtual async Task<TItem> GetItemByFormIdAndCatalogId(Guid formId, Guid catalogId)
@@ -296,6 +317,7 @@ namespace RA.FormTypes.Services
         public virtual async Task UpdateItemAsync(TItem formItem, bool saveChangesToDb = false)
         {
             formItem.ModifiedOn = DateTime.UtcNow;
+            formItem.SubTotal = formItem.Qty * formItem.Price;
             using var transaction = await _erpContext.Database.BeginTransactionAsync();
             try
             {
@@ -396,7 +418,7 @@ namespace RA.FormTypes.Services
                 pageNumber = 1;
 
             if (pageSize <= 0)
-                pageSize = 10;
+                pageSize = int.MaxValue;
 
             // Skip rows
             var skip = (pageNumber - 1) * pageSize;

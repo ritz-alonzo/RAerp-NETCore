@@ -1,6 +1,5 @@
 ﻿using FluentMigrator;
-using RA.Data.Domain.AccessRightControl;
-using RA.Data.Domain.Addresses;
+using RAerp.Domain.Addresses;
 
 namespace RAerp.Domain.Migrations.Addresses
 {

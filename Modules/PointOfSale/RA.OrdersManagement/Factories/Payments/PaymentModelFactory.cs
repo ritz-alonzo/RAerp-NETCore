@@ -1,18 +1,19 @@
 ﻿using AutoMapper;
 using RA.Catalogs.Services;
+using RA.Categories.Services;
 using RA.Core.Helpers;
 using RA.Core.Models.PluginModels.BusinessEntities;
 using RA.Core.Models.PluginModels.OrdersManagement.Carts;
 using RA.Core.Models.PluginModels.OrdersManagement.Payments;
 using RA.Core.PluginData.EntityTypes.Catalogs;
 using RA.Core.PluginData.FormTypes.OrdersManagement.Payments;
-using RA.Data.Domain.Application;
 using RA.FormTypes.Factories;
 using RA.FormTypes.Services;
 using RA.OrdersManagement.Data;
 using RA.OrdersManagement.Domain.Payments;
 using RA.OrdersManagement.Services.Payments;
 using RA.WebFramework.Extensions;
+using RAerp.Domain.Application;
 using RAerp.Helpers.UserHelper;
 using RAerp.Security.AccessRightsControl;
 using RAerp.Services.ApplicationSettingServices;
@@ -37,6 +38,7 @@ namespace RA.OrdersManagement.Factories.Payments
         private readonly PaymentSetting _paymentSettings;
         private readonly IApplicationSettingService _applicationSettingService;
         private readonly ApplicationSetting _applicationSetting;
+        private readonly ICategoryService _categoryService;
         #endregion
 
         #region Ctor
@@ -47,7 +49,8 @@ namespace RA.OrdersManagement.Factories.Payments
             IAccessControl accessControl,
             ICatalogService catalogService,
             IPaymentService paymentService,
-            IApplicationSettingService applicationSettingService)
+            IApplicationSettingService applicationSettingService,
+            ICategoryService categoryService)
         {
             _baseFormModelFactory = baseFormModelFactory;
             _formTypeManager = formTypeManager;
@@ -59,6 +62,7 @@ namespace RA.OrdersManagement.Factories.Payments
             _paymentSettings = _formTypeManager.GetSettingDataOfFormAsync<Payment, PaymentSetting>().Result;
             _applicationSettingService = applicationSettingService;
             _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
+            _categoryService = categoryService;
         }
         #endregion
 
@@ -182,8 +186,14 @@ namespace RA.OrdersManagement.Factories.Payments
                 {
                     paymentConfigureModel.MappedCatalogTypeIds = _paymentSettings.MappedCatalogTypeIds;
                 }
+
+                if (_paymentSettings.MappedCategoryTypeIds.Any())
+                {
+                    paymentConfigureModel.MappedCategoryTypeIds = _paymentSettings.MappedCategoryTypeIds;
+                }
             }
             paymentConfigureModel.AvailableCatalogTypes = await _catalogService.GetCatalogTypesSelectListAsync();
+            paymentConfigureModel.AvailableCategoryTypes = await _categoryService.GetCategoryTypesSelectListAsync();
 
             return paymentConfigureModel;
         }

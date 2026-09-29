@@ -19,5 +19,6 @@ namespace RA.Categories.Domain
             get { return (CategoryStatus)StatusId; }
             set { StatusId = (int)value; }
         }
+        public string ImagePath { get; set; }
     }
 }

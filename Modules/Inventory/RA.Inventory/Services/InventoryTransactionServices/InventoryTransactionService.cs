@@ -42,19 +42,19 @@ namespace RA.Inventory.Services.InventoryTransactionServices
 
         public async Task<IEnumerable<InventoryTransaction>> GetTransactionListByReferenceId(Guid referenceId, int pageNumber = 0, int pageSize = 0)
         {
-            var query = _context.InventoryTransaction.Where(c => c.ReferenceId == referenceId).OrderBy(c => c.CreatedOn);
+            var query = _context.InventoryTransaction.Where(c => c.ReferenceId == referenceId).AsNoTracking().OrderBy(c => c.CreatedOn);
             return await ToPagedListAsync(query, pageNumber, pageSize);
         }
 
         public async Task<IEnumerable<InventoryTransaction>> GetTransactionListByCatalogIdAsync(Guid catalogId, int pageNumber = 0, int pageSize = 0)
         {
-            var query = _context.InventoryTransaction.Where(c => c.CatalogId == catalogId).OrderBy(c => c.CreatedOn);
+            var query = _context.InventoryTransaction.Where(c => c.CatalogId == catalogId).AsNoTracking().OrderBy(c => c.CreatedOn);
             return await ToPagedListAsync(query, pageNumber, pageSize);
         }
 
         public async Task<IEnumerable<InventoryTransaction>> GetTransactionListByWarehouseIdAsync(Guid warehouseId, int pageNumber = 0, int pageSize = 0)
         {
-            var query = _context.InventoryTransaction.Where(c => c.WarehouseId == warehouseId).OrderBy(c => c.CreatedOn);
+            var query = _context.InventoryTransaction.Where(c => c.WarehouseId == warehouseId).AsNoTracking().OrderBy(c => c.CreatedOn);
             return await ToPagedListAsync(query, pageNumber, pageSize);
         }
 
@@ -77,7 +77,7 @@ namespace RA.Inventory.Services.InventoryTransactionServices
             int pageNumber = 0,
             int pageSize = 0)
         {
-            var query = await GetListAsync();
+            var query = _context.InventoryTransaction.AsNoTracking().AsQueryable();
 
             if (referenceId.IsNotNullOrEmpty())
                 query = query.Where(c => c.ReferenceId == referenceId);
@@ -130,7 +130,7 @@ namespace RA.Inventory.Services.InventoryTransactionServices
             int pageNumber = 0,
             int pageSize = int.MaxValue)
         {
-            var query = await GetListAsync();
+            var query = _context.InventoryTransaction.AsNoTracking().AsQueryable();
 
             if (referenceId.IsNotNullOrEmpty())
                 query = query.Where(c => c.ReferenceId == referenceId);

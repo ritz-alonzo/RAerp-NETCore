@@ -1,4 +1,4 @@
-﻿using RA.Data.Domain.EntityTypes;
+﻿using RAerp.Domain.EntityTypes;
 using RAerp.Models.NavigationModel;
 using RAerp.PluginServiceProvider;
 using RAerp.Security.AccessRightsControl;

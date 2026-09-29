@@ -8,6 +8,7 @@ namespace RA.Inventory.Helper
 {
     public class InventoryConstants
     {
+        public const string InventoryModuleName = "Inventory";
         public const string InventorySettingName = "Inventory";
         public const string InventorySystemName = "RA.Inventory";
     }

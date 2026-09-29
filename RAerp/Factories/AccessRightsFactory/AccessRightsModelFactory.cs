@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using Newtonsoft.Json;
-using RA.Data.Domain.AccessRightControl;
 using RA.WebFramework.Extensions;
+using RAerp.Domain.AccessRightControl;
 using RAerp.Factories.CoreFactories;
 using RAerp.Helpers.PluginHelper;
 using RAerp.Models.AccessRightsControlModel;

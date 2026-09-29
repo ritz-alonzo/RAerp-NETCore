@@ -37,6 +37,8 @@ namespace RA.Core.Models.PluginModels.Catalogs
         public string ImagePath { get; set; }
         [DisplayName("Use Image URL")]
         public bool UseImageUrlEnabled { get; set; }
+        public string SKU { get; set; }
+        public string BarcodeValue { get; set; }
         public List<SelectListItem> AvailableCategories { get; set; }
         public List<SelectListItem> AvailableCatalogTypes { get; set; }
     }

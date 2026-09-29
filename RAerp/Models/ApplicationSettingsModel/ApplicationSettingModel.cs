@@ -39,7 +39,7 @@ namespace RAerp.Models.ApplicationSettingsModel
         [Display(Name = "Email Limit")]
         public int EmailLimit { get; set; }
         [Display(Name = "Email Verification Enabled")]
-        public int IsEmailVerificationEnabled { get; set; }
+        public bool IsEmailVerificationEnabled { get; set; }
         [Display(Name = "Default TimeZone")]
         public string DefaultTimeZone { get; set; }
         public List<SelectListItem> AvailableTimeZones { get; set; } = new List<SelectListItem>();

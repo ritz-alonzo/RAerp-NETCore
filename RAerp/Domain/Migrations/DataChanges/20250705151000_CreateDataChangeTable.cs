@@ -1,6 +1,6 @@
 ﻿using FluentMigrator;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
-using RA.Data.Domain.DataChanges;
+using RAerp.Domain.DataChanges;
 
 namespace RAerp.Domain.Migrations.DataChanges
 {

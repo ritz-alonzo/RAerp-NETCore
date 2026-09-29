@@ -44,6 +44,11 @@
 			<CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
 			<CopyLocal>False</CopyLocal>
 		</ProjectReference>
+		<ProjectReference Include="..\..\Inventory\RA.Inventory\RA.Inventory.csproj" >
+			<Private>False</Private>
+			<CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+			<CopyLocal>False</CopyLocal>
+		</ProjectReference>
 	</ItemGroup>
 
 </Project>

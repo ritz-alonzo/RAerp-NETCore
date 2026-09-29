@@ -10,8 +10,8 @@ using Newtonsoft.Json;
 using RA.WebFramework.Extensions;
 using RAerp.Services.UserServices;
 using RAerp.Models.UsersModel;
-using RA.Data.Domain.AccessRightControl;
 using RAerp.Helpers.UserHelper;
+using RAerp.Domain.AccessRightControl;
 
 namespace RAerp.Controllers.Admin
 {

@@ -34,6 +34,11 @@ namespace RA.BusinessEntities.Services
         }
         #endregion
 
+        public async Task<BusinessEntity> GetBusinessEntityByUserId(Guid userId)
+        {
+            return await _businessEntity.FirstOrDefaultAsync(be => be.UserId == userId);
+        }
+
         // override when there's an additional
         public override async Task InsertAsync(BusinessEntity entity)
         {

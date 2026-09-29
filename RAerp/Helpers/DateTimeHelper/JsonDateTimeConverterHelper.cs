@@ -1,11 +1,12 @@
-﻿using RA.Data.Domain.Application;
-using RAerp.Services.ApplicationSettingServices;
+﻿using RAerp.Services.ApplicationSettingServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RAerp.Helpers.DateTimeHelper
 {
+    /// <summary>
+    /// Convert Incoming/Outgoing DateTime to UTC 
+    /// </summary>
     public class JsonDateTimeConverterHelper : JsonConverter<DateTime>
     {
         private readonly IHttpContextAccessor _httpContextAccessor;

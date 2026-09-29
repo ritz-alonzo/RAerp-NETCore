@@ -1,7 +1,7 @@
 using AutoMapper;
 using RA.Core.Models.PluginModels.BusinessEntities;
-using RA.Data.Domain.Application;
 using RA.WebFramework.Extensions;
+using RAerp.Domain.Application;
 using RAerp.Factories.CoreFactories;
 using RAerp.Models.ApplicationSettingsModel;
 using RAerp.Services.ApplicationSettingServices;
@@ -38,7 +38,7 @@ namespace RAerp.Factories.ApplicationSettingFactory
             if (model == null)
             {
                 model = new ApplicationSettingModel();
-                
+                model.CreatedOn = DateTime.UtcNow;
                 // Map entity to model if entity exists
                 if (applicationSetting != null)
                 {

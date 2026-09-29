@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
-using RA.Data.Domain.Addresses;
+using RAerp.Domain.Addresses;
 using RAerp.Models.AddressesModel;
 
 namespace RAerp.Services.AddressServices

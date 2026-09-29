@@ -69,7 +69,7 @@ namespace RA.Inventory.Services.InventoryReservationServices
             int pageNumber = 0,
             int pageSize = 0)
         {
-            var query = await GetListAsync();
+            var query = _context.InventoryReservation.AsNoTracking().AsQueryable();
 
             if (referenceId.IsNotNullOrEmpty())
                 query = query.Where(c => c.ReferenceId == referenceId);
@@ -114,7 +114,7 @@ namespace RA.Inventory.Services.InventoryReservationServices
             int pageNumber = 0,
             int pageSize = int.MaxValue)
         {
-            var query = await GetListAsync();
+            var query = _context.InventoryReservation.AsNoTracking().AsQueryable();
 
             if (referenceId.IsNotNullOrEmpty())
                 query = query.Where(c => c.ReferenceId == referenceId);

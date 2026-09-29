@@ -1,13 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RA.Core.DataCaching.CacheManagement;
-using RA.Data.App_Data;
-using RA.Data.Domain.EntityTypes;
 using RA.Discounts.App_Data;
 using RA.Discounts.Data;
 using RA.Discounts.Domain;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
 using RA.WebFramework.Models.Pagination;
+using RAerp.Domain.EntityTypes;
 
 namespace RA.Discounts.Services
 {
@@ -69,13 +68,14 @@ namespace RA.Discounts.Services
         #region Discount Redemption
         public async Task<IEnumerable<DiscountRedemption>> GetDiscountRedemptionListAsync(Guid? searchDiscountId = null,
             Guid? searchOrderId = null,
+            string searchOrderNbr = null,
             string searchDiscountCode = null,
             Guid? searchCustomerId = null,
             int pageNumber = 0,
             int pageSize = 0)
         {
             var query = _redemptionCacheManager.EntityCacheNotExists(typeof(DiscountRedemption).FullName) ?
-                await _redemptionCacheManager.GenerateCacheAsync(await _context.DiscountRedemption.ToListAsync(), typeof(DiscountRedemption).FullName)
+                await _redemptionCacheManager.GenerateCacheAsync(await _context.DiscountRedemption.AsNoTracking().ToListAsync(), typeof(DiscountRedemption).FullName)
                 : _redemptionCacheManager.GetEntityCacheData(typeof(DiscountRedemption).FullName);
             
             if (searchDiscountId.IsNotNullOrEmpty())
@@ -83,6 +83,9 @@ namespace RA.Discounts.Services
 
             if (searchOrderId.IsNotNullOrEmpty())
                 query = query.Where(c => c.OrderId == searchOrderId.Value);
+
+            if (!string.IsNullOrEmpty(searchOrderNbr))
+                query = query.Where(c => c.OrderNbr.ToLower() == searchOrderNbr.ToLower());
 
             if (!string.IsNullOrEmpty(searchDiscountCode))
                 query = query.Where(c => c.DiscountCode.Equals(searchDiscountCode));
@@ -102,12 +105,20 @@ namespace RA.Discounts.Services
             return await _context.DiscountRedemption.FirstOrDefaultAsync(c => c.Id == redemptionId);
         }
 
-        public async Task<IEnumerable<DiscountRedemption>> GetDiscountRedemptionListByOrderId(Guid orderId)
+        public async Task<IEnumerable<DiscountRedemption>> GetDiscountRedemptionListByOrderIdAsync(Guid orderId)
         {
             if (orderId.IsNullOrEmpty())
                 throw new ArgumentNullException("OrderId is empty. Cannot retrieve discount redemption");
 
-            return await _context.DiscountRedemption.Where(c => c.OrderId == orderId && c.CustomerId.IsNotNullOrEmpty()).ToListAsync();
+            return await _context.DiscountRedemption.Where(c => c.OrderId == orderId && c.CustomerId != Guid.Empty).AsNoTracking().ToListAsync();
+        }
+
+        public async Task<IEnumerable<DiscountRedemption>> GetPendingDiscountRedemptionListByOrderIdAsync(Guid orderId)
+        {
+            if (orderId.IsNullOrEmpty())
+                throw new ArgumentNullException("OrderId is empty. Cannot retrieve discount redemption");
+
+            return await _context.DiscountRedemption.Where(c => c.OrderId == orderId && c.CustomerId != Guid.Empty && c.IsPending == true).AsNoTracking().ToListAsync();
         }
 
         public async Task CreateDiscountRedemptionAsync(DiscountRedemption redemption)
@@ -115,6 +126,7 @@ namespace RA.Discounts.Services
             if (redemption == null)
                 throw new ArgumentNullException(nameof(DiscountRedemption));
 
+            redemption.Id = Guid.NewGuid();
             redemption.RedeemedAt = DateTime.UtcNow;
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -208,13 +220,14 @@ namespace RA.Discounts.Services
 
         public async Task<PagedResult<DiscountRedemption>> GetDiscountRedemptionPagedResultListAsync(Guid? searchDiscountId = null,
             Guid? searchOrderId = null,
+            string searchOrderNbr = null,
             string searchDiscountCode = null,
             Guid? searchCustomerId = null,
             int pageNumber = 0,
             int pageSize = int.MaxValue)
         {
             var query = _redemptionCacheManager.EntityCacheNotExists(typeof(DiscountRedemption).FullName) ?
-                await _redemptionCacheManager.GenerateCacheAsync(await _context.DiscountRedemption.ToListAsync(), typeof(DiscountRedemption).FullName)
+                await _redemptionCacheManager.GenerateCacheAsync(await _context.DiscountRedemption.AsNoTracking().ToListAsync(), typeof(DiscountRedemption).FullName)
                 : _redemptionCacheManager.GetEntityCacheData(typeof(DiscountRedemption).FullName);
 
             if (searchDiscountId.IsNotNullOrEmpty())
@@ -222,6 +235,9 @@ namespace RA.Discounts.Services
 
             if (searchOrderId.IsNotNullOrEmpty())
                 query = query.Where(c => c.OrderId == searchOrderId.Value);
+
+            if (!string.IsNullOrEmpty(searchOrderNbr))
+                query = query.Where(c => c.OrderNbr.ToLower() == searchOrderNbr.ToLower());
 
             if (!string.IsNullOrEmpty(searchDiscountCode))
                 query = query.Where(c => c.DiscountCode.Equals(searchDiscountCode));

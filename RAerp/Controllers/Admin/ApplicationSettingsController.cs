@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using RA.Data.Domain.Application;
+using RAerp.Domain.Application;
 using RAerp.Factories.ApplicationSettingFactory;
 using RAerp.Helpers.Security;
 using RAerp.Helpers.UserHelper;

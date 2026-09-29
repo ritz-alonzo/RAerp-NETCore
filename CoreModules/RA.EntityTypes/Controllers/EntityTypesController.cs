@@ -2,13 +2,12 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
 using RA.Core.Models.PluginModels.EntityTypes;
-using RA.Data.Domain.EntityTypes;
-using RA.Data.Domain.Users;
 using RA.EntityTypes.Factories;
 using RA.EntityTypes.Helpers;
 using RA.EntityTypes.Services;
 using RA.WebFramework.Extensions;
 using RAerp.Controllers.Admin;
+using RAerp.Domain.EntityTypes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

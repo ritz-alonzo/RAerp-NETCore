@@ -4,7 +4,10 @@ using FluentMigrator.Runner;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
-using RA.Data.App_Data;
+using RA.Core.DataCaching.CacheManagement;
+using RAerp.App_Data;
+using RAerp.Domain.EntityAttributes;
+using RAerp.Domain.Users;
 using RAerp.Factories.AccessRightsFactory;
 using RAerp.Factories.ApplicationSettingFactory;
 using RAerp.Factories.CoreFactories;
@@ -17,6 +20,9 @@ using RAerp.Models.ApplicationSettingsModel;
 using RAerp.Models.EmailModel;
 using RAerp.PluginServiceProvider;
 using RAerp.Security.AccessRightsControl;
+using RAerp.Security.Idempontency.Services.Idempotency;
+using RAerp.Security.Idempontency.Services.RedisCacheService;
+using RAerp.Security.Idempontency.Services.SqlLock;
 using RAerp.Services.AccessRightsServices;
 using RAerp.Services.AddressServices;
 using RAerp.Services.ApplicationServices;
@@ -24,6 +30,8 @@ using RAerp.Services.ApplicationSettingServices;
 using RAerp.Services.Configurations;
 using RAerp.Services.DataChangeServices;
 using RAerp.Services.EmailServices;
+using RAerp.Services.EntityAttributeServices;
+using RAerp.Services.ExternalLoginServices;
 using RAerp.Services.FileServices;
 using RAerp.Services.PluginNavigationServices;
 using RAerp.Services.UserServices;
@@ -92,6 +100,10 @@ namespace RAerp.Extensions
             services.AddTransient<IApplicationService, ApplicationService>();
             services.AddTransient<IAddressService, AddressService>();
             services.AddTransient<IDataChangeService, DataChangeService>();
+            services.AddTransient<IEntityAttributeService, EntityAttributeService>();
+            services.AddTransient<ICacheManager<EntityAttribute>, CacheManager<EntityAttribute>>();
+            services.AddTransient<ICacheManager<EntityAttributeOption>, CacheManager<EntityAttributeOption>>();
+            services.AddTransient<ICacheManager<EntityAttributeValue>, CacheManager<EntityAttributeValue>>();
 
             // navigation service
             services.AddTransient<INavigationService, NavigationService>();
@@ -110,6 +122,14 @@ namespace RAerp.Extensions
             services.AddScoped<IValidator<ApplicationSettingModel>, ApplicationSettingValidator>();
             // Main Services
             services.AddTransient<IFileService, FileService>();
+            // Idempontecy Services
+            services.AddDistributedMemoryCache();
+            services.AddTransient<ISqlLockService, SqlLockService>();
+            services.AddTransient<IRedisCacheService, RedisCacheService>();
+            services.AddTransient<IIdempotencyService, IdempotencyService>();
+            // External Login Services
+            services.AddTransient<IExternalLoginService, ExternalLoginService>();
+            services.AddTransient<ICacheManager<ExternalLogin>, CacheManager<ExternalLogin>>();
         }
 
         public static void RegisterFluentValidators(this IServiceCollection services)
@@ -157,7 +177,25 @@ namespace RAerp.Extensions
             });
 
             // webservice endpoint api
-            services.AddSwaggerGen();
+            services.AddSwaggerGen(options =>
+            {
+                // Resolves duplicate actions by choosing the first one (common in versioning)
+                options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+
+                // Automatically hooks into the API Explorer version groups (v1, v2, etc.)
+                using (var serviceProvider = services.BuildServiceProvider())
+                {
+                    var provider = serviceProvider.GetRequiredService<IApiVersionDescriptionProvider>();
+                    foreach (var description in provider.ApiVersionDescriptions)
+                    {
+                        options.SwaggerDoc(description.GroupName, new Microsoft.OpenApi.Models.OpenApiInfo
+                        {
+                            Title = $"My Web Service API {description.ApiVersion}",
+                            Version = description.ApiVersion.ToString()
+                        });
+                    }
+                }
+            });
         }
 
         public static void RegisterPluginDependency(this IServiceCollection services, IConfiguration configuration)
@@ -221,8 +259,20 @@ namespace RAerp.Extensions
 
         public static void RegisterEmailConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
+            // For SMTP
             services.Configure<SmtpSettings>(configuration.GetSection("SmtpSettings"));
+            // For Brevo
+            services.Configure<BrevoEmailSettings>(configuration.GetSection("BrevoEmailSettings"));
             services.AddTransient<IEmailService, EmailService>();
+        }
+
+        public static void RegisterRedisCacheConfiguration(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration =
+                    configuration.GetConnectionString("Redis");
+            });
         }
     }
 }

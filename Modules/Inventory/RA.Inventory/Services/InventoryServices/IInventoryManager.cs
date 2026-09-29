@@ -1,7 +1,7 @@
 ﻿using RA.Core.PluginData.Inventory;
-using RA.Data.Domain.Settings;
 using RA.Inventory.Data;
 using RA.Inventory.Domain;
+using RAerp.Domain.Settings;
 
 namespace RA.Inventory.Services.InventoryServices
 {

@@ -1,4 +1,5 @@
 ﻿using RA.Core.Domain;
+using RAerp.Domain.EntityAttributes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -23,5 +24,7 @@ namespace RA.EntityTypes.Domain
         public DateTime? ModifiedOn { get; set; }
         public DateTime? DeletedOn { get; set; }
         public bool Deleted { get; set; }
+        [NotMapped]
+        public List<EntityAttributeValue> Attributes { get; set; } = new List<EntityAttributeValue>();
     }
 }

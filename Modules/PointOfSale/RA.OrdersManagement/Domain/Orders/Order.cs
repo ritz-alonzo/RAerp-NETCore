@@ -11,6 +11,7 @@ namespace RA.OrdersManagement.Domain.Orders
     {
         public Guid? CartId { get; set; }
         public Guid? ServiceId { get; set; }
+        public Guid? CustomerId { get; set; }
         public string CustomerName { get; set; }
         public DateTime OrderDate { get; set; }
         public decimal TotalQty { get; set; }

@@ -1,4 +1,4 @@
-﻿using RA.Data.Domain.Users;
+﻿using RAerp.Domain.Users;
 using RAerp.Security.AccessRights;
 
 namespace RAerp.Data.Security.Users

@@ -1,4 +1,4 @@
-using RA.Data.Domain.Application;
+using RAerp.Domain.Application;
 
 namespace RAerp.Services.ApplicationSettingServices
 {

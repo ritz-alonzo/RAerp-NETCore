@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
-using RA.Data.Domain.Users;
+using RAerp.Domain.Users;
 using RAerp.Models.UsersModel;
 using System.Collections.Generic;
 

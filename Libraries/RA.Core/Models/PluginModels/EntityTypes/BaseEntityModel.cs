@@ -1,4 +1,5 @@
-﻿using RA.Core.Models.BaseModels;
+﻿using RA.Core.Models.AdminModels;
+using RA.Core.Models.BaseModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -34,6 +35,10 @@ namespace RA.Core.Models.PluginModels.EntityTypes
         public bool Enabled { get; set; }
         public bool AddressEnabled { get; set; }
 
+        #endregion
+
+        #region Entity Attributes 
+        public List<EntityAttributeValueModel> Attributes { get; set; } = new List<EntityAttributeValueModel>();
         #endregion
     }
 }

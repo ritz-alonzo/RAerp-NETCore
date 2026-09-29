@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using RA.Data.Domain.Users;
+using RAerp.Domain.Users;
 using System.Security.Claims;
 
 namespace RAerp.Helpers.UserHelper

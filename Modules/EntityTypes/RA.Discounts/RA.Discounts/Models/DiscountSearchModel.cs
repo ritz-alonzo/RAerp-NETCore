@@ -9,8 +9,8 @@ namespace RA.Discounts.Models
 {
     public class DiscountSearchModel : BaseEntitySearchModel
     {
-        public List<int> DiscountTypeIds { get; set; } = new();
-        public List<int> DiscountScopeIds { get; set; } = new();
+        public List<int> SearchDiscountTypeIds { get; set; } = new();
+        public List<int> SearchDiscountScopeIds { get; set; } = new();
         public bool ShowActiveDiscountsOnly { get; set; }
     }
 }

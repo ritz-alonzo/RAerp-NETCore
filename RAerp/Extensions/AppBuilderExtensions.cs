@@ -1,8 +1,8 @@
 ﻿using FluentMigrator.Runner;
 using Microsoft.EntityFrameworkCore;
-using RA.Data.App_Data;
 using RA.Data.Data;
-using RA.Data.Domain.Users;
+using RAerp.App_Data;
+using RAerp.Domain.Users;
 using RAerp.Helpers.Constants;
 using RAerp.Helpers.PluginHelper;
 using RAerp.Helpers.Security;
@@ -59,9 +59,13 @@ namespace RAerp.Extensions
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             // needed for Angular
-            app.UseCors(options => options.WithOrigins("http://localhost:4200", "http://localhost:5173", "https://raerpv1-app.netlify.app")
-            .AllowAnyMethod()
-            .AllowAnyHeader());
+            app.UseCors(options => 
+                options.WithOrigins("http://localhost:4200", 
+                "http://localhost:5173", 
+                "https://raerpv1-app.netlify.app")
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials());
             // end
 
             app.UseRouting();

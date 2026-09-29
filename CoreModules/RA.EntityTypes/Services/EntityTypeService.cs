@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RA.Core.DataCaching.CacheManagement;
-using RA.Data.App_Data;
 using RA.EntityTypes.Data;
 using RA.EntityTypes.Domain;
 using System;
@@ -55,9 +54,15 @@ namespace RA.EntityTypes.Services
         /// <returns></returns>
         public virtual async Task<IEnumerable<TEntity>> GetListAsync(List<Guid> entityTypeIds)
         {
-            return _cacheManager.EntityCacheNotExists(entityTypeIds) ?
-                await _cacheManager.GenerateCacheAsync(await _erpContext.Set<TEntity>().Where(c => entityTypeIds.Contains(c.EntityTypeId)).ToListAsync(), entityTypeIds)
-                : _cacheManager.GetEntityCacheData(entityTypeIds).ToList();
+            if (_cacheManager.EntityCacheNotExists(entityTypeIds))
+            {
+                // AsNoTracking() is mandatory here to prevent IDisposable errors
+                var data = await _erpContext.Set<TEntity>().Where(c => entityTypeIds.Contains(c.EntityTypeId)).AsNoTracking().ToListAsync();
+                await _cacheManager.GenerateCacheAsync(data, entityTypeIds);
+                return data;
+            }
+
+            return _cacheManager.GetEntityCacheData(entityTypeIds);
         }
         
         /// <summary>
@@ -67,9 +72,15 @@ namespace RA.EntityTypes.Services
         /// <returns></returns>
         public virtual async Task<IEnumerable<TEntity>> GetListAsync(Guid entityTypeId)
         {
-            return _cacheManager.EntityCacheNotExists(entityTypeId) ?
-                await _cacheManager.GenerateCacheAsync(await _erpContext.Set<TEntity>().Where(c => c.EntityTypeId == entityTypeId).ToListAsync(), entityTypeId) 
-                : _cacheManager.GetEntityCacheData(entityTypeId).ToList();
+            if (_cacheManager.EntityCacheNotExists(entityTypeId))
+            {
+                // AsNoTracking() is mandatory here to prevent IDisposable errors
+                var data = await _erpContext.Set<TEntity>().Where(c => c.EntityTypeId == entityTypeId).AsNoTracking().ToListAsync();
+                await _cacheManager.GenerateCacheAsync(data, entityTypeId);
+                return data;
+            }
+
+            return _cacheManager.GetEntityCacheData(entityTypeId);
         }
 
         public virtual async Task InsertAsync(TEntity entity)
@@ -92,6 +103,7 @@ namespace RA.EntityTypes.Services
                 }
             }
 
+            entity.Id = Guid.NewGuid();
             entity.CreatedOn = DateTime.UtcNow;
             using var transaction = await _erpContext.Database.BeginTransactionAsync();
             try

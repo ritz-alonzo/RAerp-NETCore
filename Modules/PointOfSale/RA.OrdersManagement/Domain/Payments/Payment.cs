@@ -12,6 +12,8 @@ namespace RA.OrdersManagement.Domain.Payments
     public class Payment : BaseForm
     {
         public Guid OrderId { get; set; }
+        public Guid? CustomerId { get; set; }
+        public string CustomerName { get; set; }
         public string PaymentRefNbr { get; set; }
         public int PaymentStatusId { get; set; }
         [NotMapped]
@@ -20,6 +22,7 @@ namespace RA.OrdersManagement.Domain.Payments
             get { return (PaymentStatus)PaymentStatusId; }
             set { PaymentStatusId = (int)value; }
         }
+        public Guid PaymentMethodId { get; set; }
         public DateTime PaymentDate { get; set; }
         public decimal TotalQty { get; set; }
         public decimal TotalDiscountAmount { get; set; }

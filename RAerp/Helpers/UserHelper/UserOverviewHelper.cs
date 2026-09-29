@@ -1,6 +1,5 @@
 ﻿using RA.Core.Models.OverviewModels;
-using RA.Data.App_Data;
-using RA.Data.Domain.Users;
+using RAerp.Domain.Users;
 using System;
 using System.Collections.Generic;
 using System.Linq;

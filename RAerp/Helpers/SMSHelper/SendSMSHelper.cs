@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
-using RA.Data.Domain.Users;
+using RAerp.Domain.Users;
+using RAerp.Helpers.OTPHelper;
 using RAerp.Helpers.PublicAPIEndpoints;
 using RAerp.Models.SMSModel;
 using System;
@@ -18,7 +19,7 @@ namespace RAerp.Helpers.SMSHelper
             if (string.IsNullOrEmpty(smsApiKey))
                 throw new ArgumentNullException(nameof(smsApiKey));
 
-            var generatedOTP = GenerateOTP(smsApiKey);
+            var generatedOTP = OneTimePINHelper.GenerateOTP(smsApiKey);
 
             var requestModel = new SendSMSRequestModel()
             {
@@ -39,25 +40,6 @@ namespace RAerp.Helpers.SMSHelper
             user.IsVerified = false;
 
             return user;
-        }
-
-        #endregion
-
-        #region OTP Generation
-        public static string GenerateOTP()
-        {
-            return new Random().Next(000001, 999999).ToString();
-        }
-
-        public static string GenerateOTP(string smsApiKey)
-        {
-            var generatedOTP = "";
-            if (string.IsNullOrEmpty(smsApiKey))
-                throw new ArgumentNullException(nameof(smsApiKey));
-
-            generatedOTP = new Random().Next(000001, 999999).ToString();
-
-            return generatedOTP;
         }
 
         #endregion

@@ -11,9 +11,8 @@ namespace RA.Core.Domain
     /// users, logs, etc. 
     /// only admin entities will be able to use this class
     /// </summary>
-    public class BaseAdminEntity
+    public class BaseAdminEntity : BaseEntity
     {
-        public Guid Id { get; set; }
         public Guid? CreatedById { get; set; }
         public DateTime CreatedOn { get; set; }
         public Guid? ModifiedById { get; set; }

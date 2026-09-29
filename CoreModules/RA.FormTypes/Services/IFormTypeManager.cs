@@ -1,6 +1,6 @@
-﻿using RA.Data.Domain.Settings;
-using RA.FormTypes.Data;
+﻿using RA.FormTypes.Data;
 using RA.FormTypes.Domain;
+using RAerp.Domain.Settings;
 
 namespace RA.FormTypes.Services
 {

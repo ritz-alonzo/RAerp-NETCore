@@ -1,5 +1,5 @@
 ﻿using FluentMigrator;
-using RA.Data.Domain.EntityTypes;
+using RAerp.Domain.EntityTypes;
 
 namespace RA.EntityTypes.Domain.Migrations
 {

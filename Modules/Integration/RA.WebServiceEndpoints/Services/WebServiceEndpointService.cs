@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using RA.Data.App_Data;
 using RA.WebFramework.Extensions;
 using RA.WebServiceEndpoints.App_Data;
 using RA.WebServiceEndpoints.Domain;
@@ -38,7 +37,7 @@ namespace RA.WebServiceEndpoints.Services
             string searchQuery = null,
             DateTime? createdOn = null)
         {
-            var query = _webServiceEndpoint.AsQueryable();
+            var query = _webServiceEndpoint.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrEmpty(searchQuery))
                 query = query.Where(c =>

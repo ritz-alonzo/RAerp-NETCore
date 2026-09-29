@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json;
-using RA.Data.Domain.UserActivityLogs;
 using System;
 using System.Linq;
 using RA.WebFramework.Extensions;
-using RA.Data.App_Data;
 using RAerp.Services.UserServices;
+using RAerp.App_Data;
+using RAerp.Domain.UserActivityLogs;
 
 namespace RAerp.Helpers.UserActivityTracking
 {

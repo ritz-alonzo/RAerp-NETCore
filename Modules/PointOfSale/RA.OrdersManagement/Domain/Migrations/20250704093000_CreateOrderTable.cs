@@ -17,6 +17,7 @@ namespace RA.OrdersManagement.Domain.Migrations
                 .WithColumn(nameof(Order.FormNbr)).AsString().Nullable()
                 .WithColumn(nameof(Order.CartId)).AsGuid().Nullable()
                 .WithColumn(nameof(Order.ServiceId)).AsGuid().Nullable()
+                .WithColumn(nameof(Order.CustomerId)).AsGuid().Nullable()
                 .WithColumn(nameof(Order.CustomerName)).AsString().Nullable()
                 .WithColumn(nameof(Order.OrderDate)).AsDateTime()
                 .WithColumn(nameof(Order.Description)).AsString().Nullable()

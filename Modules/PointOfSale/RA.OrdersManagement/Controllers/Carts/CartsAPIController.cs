@@ -3,14 +3,22 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.SqlServer.Server;
+using RA.BusinessEntities.Domain;
+using RA.BusinessEntities.Services;
 using RA.Core.Models.PluginModels.OrdersManagement.Carts;
-using RA.Data.Domain.Application;
+using RA.Core.PluginData.FormTypes;
+using RA.Inventory.Domain;
 using RA.OrdersManagement.Domain.Carts;
 using RA.OrdersManagement.Domain.Orders;
+using RA.OrdersManagement.DTO.Carts;
 using RA.OrdersManagement.Services.Carts;
+using RA.OrdersManagement.Services.Orders;
 using RA.WebFramework.Extensions;
 using RAerp.Controllers.Admin;
+using RAerp.Domain.Application;
+using RAerp.Domain.Users;
 using RAerp.Helpers.UserHelper;
+using RAerp.Models.ApiModel;
 using RAerp.Security.AccessRightsControl;
 using RAerp.Services.ApplicationSettingServices;
 using RAerp.Services.UserServices;
@@ -30,49 +38,94 @@ namespace RA.OrdersManagement.Controllers.Carts
         private readonly ICartService _cartService;
         private readonly IApplicationSettingService _applicationSettingService;
         private readonly ApplicationSetting _applicationSetting;
+        private readonly IMapper _mapper;
+        private readonly IOrderService _orderService;
+        private readonly IBusinessEntityService _businessEntityService;
         #endregion
 
         #region Ctor
         public CartsAPIController(IAccessControl accessControl,
             IUserIdentity userIdentity,
             ICartService cartService,
-            IApplicationSettingService applicationSettingService)
+            IApplicationSettingService applicationSettingService,
+            IMapper mapper,
+            IOrderService orderService,
+            IBusinessEntityService businessEntityService)
         {
             _accessControl = accessControl;
             _userIdentity = userIdentity;
             _cartService = cartService;
             _applicationSettingService = applicationSettingService;
             _applicationSetting = _applicationSettingService.GetCurrentApplicationSettingAsync()?.Result;
+            _mapper = mapper;
+            _orderService = orderService;
+            _businessEntityService = businessEntityService;
         }
         #endregion
 
         #region Cart
         [HttpGet, MapToApiVersion("1.0")]
-        public async Task<IActionResult> GetCartList([FromQuery] CartSearchModel cartSearchModel)
+        public async Task<IActionResult> GetCartList([FromQuery] CartQueryRequestDto cartSearchModel)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
-            var cartList = (await _cartService.GetCartListAsync(
+            List<CartResponseDto> cartResponseList = new List<CartResponseDto>();
+            var cartList = await _cartService.GetCartPagedResultListAsync(
                     searchQuery: cartSearchModel?.SearchQuery,
                     searchCustomerName: cartSearchModel?.SearchCustomerName,
-                    searchServiceIds: cartSearchModel.SearchServiceId.HasValue ? new List<Guid> { cartSearchModel.SearchServiceId.Value } : null,
-                    searchCreatedDate: cartSearchModel.SearchCreatedOn,
-                    formStatusIds: cartSearchModel.SearchStatusId > 0 ? new List<int> { cartSearchModel.SearchStatusId } : null,
+                    searchCustomerId: cartSearchModel?.SearchCustomerId,
+                    searchServiceIds: cartSearchModel.SearchServiceIds,
+                    searchCreatedOn: cartSearchModel.SearchCreatedOn,
+                    formStatusIds: cartSearchModel.SearchStatusIds,
                     showDeleted: cartSearchModel.ShowDeleted,
-                    pageNumber: cartSearchModel.PageNumber,
-                    pageSize: cartSearchModel.PageSize
-                )).ToList();
+                    pageSize: cartSearchModel.PageSize, pageNumber: cartSearchModel.PageNumber
+                );
+            if (cartList.Items.Any())
+            {
+                cartResponseList = cartList.Items.Select(cart =>
+                {
+                    CartResponseDto cartResponse = _mapper.Map<CartResponseDto>(cart);
+                    return cartResponse;
 
-            return Ok(GenerateListResponseModel<Cart>(HttpStatusCode.OK, "Successful", cartSearchModel.PageNumber, cartSearchModel.PageSize, cartList));
+                }).ToList();
+            }
+
+            return Ok(GenerateListResponseModel(HttpStatusCode.OK, "Successful", cartSearchModel.PageNumber, cartSearchModel.PageSize, cartResponseList));
+        }
+
+        [HttpGet("current"), MapToApiVersion("1.0")]
+        public async Task<IActionResult> GetCartByCurrentUser()
+        {
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
+
+            User currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
+
+            BusinessEntity customerEntity = await _businessEntityService.GetBusinessEntityByUserId(currentUser.Id);
+            if (customerEntity == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Customer entity doesn't exists"));
+
+            Cart cart = await _cartService.GetCartByCustomerIdAsync(customerEntity.Id);
+            if (cart == null)
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Cart doesn't exists"));
+
+            CartResponseDto cartResponse = _mapper.Map<CartResponseDto>(cart);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successful", cartResponse));
         }
 
         [HttpGet("{idOrFormNbr}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetCartByIdOrFormNbr(string idOrFormNbr)
         {
-            if (!string.IsNullOrEmpty(idOrFormNbr))
+            if (string.IsNullOrEmpty(idOrFormNbr))
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "FormId or FormNbr doesn't have value"));
 
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             Cart cart = null;
             if (Guid.TryParse(idOrFormNbr, out Guid id))
@@ -83,45 +136,67 @@ namespace RA.OrdersManagement.Controllers.Carts
             if (cart == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Cart doesn't exists"));
 
-            return Ok(GenerateResponseModel<Cart>(HttpStatusCode.OK, "Successful", cart));
+            CartResponseDto cartResponse = _mapper.Map<CartResponseDto>(cart);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successful", cartResponse));
         }
 
         [HttpPost, MapToApiVersion("1.0")]
-        public async Task<IActionResult> CreateCart([FromBody] Cart cart)
+        public async Task<IActionResult> CreateCart([FromBody] CartRequestDto cartRequest)
         {
-            if (cart == null)
+            if (cartRequest == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Cart is empty"));
 
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
 
+            Cart cart = _mapper.Map<Cart>(cartRequest);
             cart.CreatedById = currentUser.Id;
             await _cartService.InsertFormAsync(cart);
 
-            return Ok(GenerateResponseModel<Cart>(HttpStatusCode.OK, "Successfully Created Cart", cart));
+            CartResponseDto cartResponse = _mapper.Map<CartResponseDto>(cart);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successfully Created Cart", cartResponse));
         }
 
         [HttpPut, MapToApiVersion("1.0")]
-        public async Task<IActionResult> UpdateCart([FromBody] Cart cart)
+        public async Task<IActionResult> UpdateCart([FromBody] CartRequestDto cartRequest)
         {
-            if (cart == null)
+            if (cartRequest == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Cart is empty"));
 
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
+
+            if (cartRequest.Id.IsNullOrEmpty())
+                return NotFound("Cart Id doesn't exists");
+
+            Cart existingCart = await _cartService.GetFormByIdAsync(cartRequest.Id);
+            if (existingCart == null)
+                return NotFound("Cart doesn't exists");
 
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
+
+            Cart cart = _mapper.Map(cartRequest, existingCart);
 
             cart.ModifiedById = currentUser?.Id;
             await _cartService.UpdateFormAsync(cart);
 
-            return Ok(GenerateResponseModel<Cart>(HttpStatusCode.OK, "Successfully Updated Cart", cart));
+            CartResponseDto cartResponse = _mapper.Map<CartResponseDto>(cart);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successfully Updated Cart", cartResponse));
         }
 
         [HttpDelete("{idOrFormNbr}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> DeleteCart(string idOrFormNbr)
         {
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             Cart cart = null;
             if (Guid.TryParse(idOrFormNbr, out Guid id))
@@ -137,7 +212,109 @@ namespace RA.OrdersManagement.Controllers.Carts
             cart.ModifiedById = currentUser?.Id;
             await _cartService.DeleteFormAsync(cart);
 
-            return Ok(GenerateResponseModel<Cart>(HttpStatusCode.OK, "Successfully Deleted Cart"));
+            return Ok("Successfully Deleted Cart");
+        }
+
+        [HttpPost("checkout/{formId:guid}"), MapToApiVersion("1.0")]
+        public async Task<IActionResult> CheckoutCart(Guid formId)
+        {
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
+
+            if (formId.IsNullOrEmpty())
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "FormId is not provided"));
+
+            Cart cart = await _cartService.GetFormByIdAsync(formId);
+            if (cart == null) 
+                return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Cart doesn't exists"));
+
+            List<CartItem> cartItems = (await _cartService.GetItemsByFormIdAsync(formId)).ToList();
+            if (!cartItems.Any())
+                return BadRequest(GenerateErrorResponseModel(HttpStatusCode.BadRequest, "Cart doesn't have any items"));
+
+            Order order = await _orderService.GetPendingOrderByCartIdAsync(cart.Id);
+            List<OrderItem> orderItems = new List<OrderItem>();
+            if (order == null)
+            {
+                // Create a new pending order based on cart items
+                Order newOrder = new Order
+                {
+                    CartId = cart.Id,
+                    ServiceId = cart.ServiceId,
+                    CustomerId = cart.CustomerId,
+                    CustomerName = cart.CustomerName,
+                    OrderDate = DateTime.UtcNow,
+                    Status = FormStatus.Pending,
+                    Description = cart.Description,
+                    TotalQty = cart.TotalQty,
+                    TotalDiscountAmount = 0m, // Calculate discount if applicable
+                    TotalGrossAmount = cart.TotalAmount, // Assuming no discount or VAT for simplicity
+                    TotalVatAmount = cart.TotalAmount * 0.12m, // Calculate VAT if applicable
+                    TotalNetAmount = cart.TotalAmount // Assuming no discount or VAT for simplicity
+                };
+                await _orderService.InsertFormAsync(newOrder);
+                order = newOrder;
+            }
+            else
+            {
+                // Update the existing pending order based on cart items
+                order.ServiceId = cart.ServiceId;
+                order.CustomerId = cart.CustomerId;
+                order.CustomerName = cart.CustomerName;
+                order.OrderDate = DateTime.UtcNow;
+                order.Status = FormStatus.Pending;
+                order.Description = cart.Description;
+                order.TotalQty = cart.TotalQty;
+                order.TotalDiscountAmount = 0m;
+                order.TotalGrossAmount = cart.TotalAmount; // Assuming no discount or VAT for simplicity
+                order.TotalVatAmount = cart.TotalAmount * 0.12m; // Calculate VAT if applicable
+                order.TotalNetAmount = cart.TotalAmount; // Assuming no discount or VAT for simplicity
+                await _orderService.UpdateFormAsync(order);
+
+                orderItems = (await _orderService.GetItemsByFormIdAsync(order.Id)).ToList();
+            }
+
+            // Remove existing order items that are not in the cart anymore
+            if (orderItems != null && orderItems.Any())
+            {
+                var cartItemCatalogIds = cartItems.Select(c => c.CatalogId).ToList();
+                var orderItemsToRemove = orderItems.Where(oi => !cartItemCatalogIds.Contains(oi.CatalogId)).ToList();
+                foreach (var orderItem in orderItemsToRemove)
+                {
+                    await _orderService.DeleteItemAsync(orderItem, true);
+                }
+            }
+
+            foreach (CartItem cartItem in cartItems)
+            {
+                if (orderItems != null && orderItems.Any(c => c.CatalogId == cartItem.CatalogId))
+                {
+                    // Update existing order item
+                    OrderItem existingOrderItem = orderItems.First(c => c.CatalogId == cartItem.CatalogId);
+                    existingOrderItem.Qty = cartItem.Qty;
+                    existingOrderItem.Price = cartItem.Price;
+                    existingOrderItem.SubTotal = cartItem.SubTotal;
+                    existingOrderItem.DiscountAmount = 0m;
+                    await _orderService.UpdateItemAsync(existingOrderItem, true);
+                }
+                else
+                {
+                    // Add new order item
+                    OrderItem newOrderItem = new OrderItem
+                    {
+                        FormId = order.Id,
+                        CatalogId = cartItem.CatalogId,
+                        Qty = cartItem.Qty,
+                        Price = cartItem.Price,
+                        SubTotal = cartItem.SubTotal,
+                        DiscountAmount = 0m
+                    };
+                    await _orderService.InsertItemAsync(newOrderItem, true);
+                }
+            }
+
+            return Created();
         }
         #endregion
 
@@ -145,22 +322,36 @@ namespace RA.OrdersManagement.Controllers.Carts
         [HttpGet("item/{formId}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetCartItemList(string formId)
         {
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
-            List<CartItem> cartItemList = new List<CartItem>();
+            List<CartItemResponseDto> cartItemResponseList = new List<CartItemResponseDto>();
             if (Guid.TryParse(formId, out Guid result))
             {
                 if (result.IsNotNullOrEmpty())
-                    cartItemList = _cartService.GetItemsByFormIdAsync(result).Result.ToList();
+                {
+                    var cartItemList = _cartService.GetItemsByFormIdAsync(result).Result.ToList();
+                    if (cartItemList.Any())
+                    {
+                        cartItemResponseList = cartItemList.Select(cartItem =>
+                        {
+                            CartItemResponseDto cartItemResponse = _mapper.Map<CartItemResponseDto>(cartItem);
+                            return cartItemResponse;
+                        }).ToList();
+                    }
+                }
             }
 
-            return Ok(GenerateListResponseModel<CartItem>(HttpStatusCode.OK, "Succesful", dataList: cartItemList));
+            return Ok(GenerateListResponseModel(HttpStatusCode.OK, "Succesful", dataList: cartItemResponseList));
         }
 
         [HttpGet("item/{formId}/{catalogId}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> GetCartItemByFormIdAndCatalogId(string formId, string catalogId)
         {
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             if (string.IsNullOrEmpty(formId) || string.IsNullOrEmpty(catalogId))
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Both FormId and CatalogId should have values"));
@@ -177,18 +368,24 @@ namespace RA.OrdersManagement.Controllers.Carts
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "FormId or CatalogId is invalid"));
 
             var cartItem = await _cartService.GetItemByFormIdAndCatalogId(cartItemFormId.Value, cartItemCatalogId.Value);
-            
-            return Ok(GenerateResponseModel<CartItem>(HttpStatusCode.OK, "Successfull", cartItem));
+
+            CartItemResponseDto cartItemResponse = _mapper.Map<CartItemResponseDto>(cartItem);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successfull", cartItemResponse));
         }
 
         [HttpPost("item"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> InsertCartItems([FromBody] List<CartItem> cartItems)
+        public async Task<IActionResult> InsertCartItems([FromBody] List<CartItemRequestDto> cartItemRequestList)
         {
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
-            if (!cartItems.Any())
+            if (!cartItemRequestList.Any())
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Cart item doesn't have value"));
-            
+
+            List<CartItem> cartItems = _mapper.Map<List<CartItem>>(cartItemRequestList);
+
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
             
             var formId = Guid.Empty;
@@ -224,23 +421,29 @@ namespace RA.OrdersManagement.Controllers.Carts
                 }
             }
 
-            return Ok(GenerateListResponseModel<CartItem>(HttpStatusCode.OK, "Successfully added cart items", dataList: cartItems));
+            List<CartItemResponseDto> cartItemResponseList = _mapper.Map<List<CartItemResponseDto>>(cartItems);
+
+            return Ok(GenerateListResponseModel(HttpStatusCode.OK, "Successfully added cart items", dataList: cartItemResponseList));
         }
 
         [HttpPut("item"), MapToApiVersion("1.0")]
-        public async Task<IActionResult> UpdateCartItems([FromBody] CartItem cartItem)
+        public async Task<IActionResult> UpdateCartItem([FromBody] CartItemRequestDto cartItemRequest)
         {
-            await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Order>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
-            if (cartItem == null)
+            if (cartItemRequest == null)
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "Cart item doesn't have value"));
             
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
 
-            if (cartItem.FormId.IsNullOrEmpty())
+            if (cartItemRequest.FormId.IsNullOrEmpty())
                 return NotFound(GenerateErrorResponseModel(HttpStatusCode.NotFound, "FormId is invalid"));
+
+            CartItem cartItem = _mapper.Map<CartItem>(cartItemRequest);
             
-            var existingCartItem = await _cartService.GetItemByIdAsync(cartItem.Id);
+            var existingCartItem = await _cartService.GetItemByIdAsync(cartItemRequest.Id);
             if (existingCartItem == null)
             {
                 // Create cart item
@@ -275,13 +478,17 @@ namespace RA.OrdersManagement.Controllers.Carts
                 await _cartService.UpdateFormAsync(cart);
             }
 
-            return Ok(GenerateResponseModel<CartItem>(HttpStatusCode.OK, "Successfully added cart items", cartItem));
+            CartItemResponseDto cartItemResponse = _mapper.Map<CartItemResponseDto>(cartItem);
+
+            return Ok(GenerateResponseModel(HttpStatusCode.OK, "Successfully updated cart items", cartItemResponse));
         }
 
         [HttpDelete("item/{itemId}"), MapToApiVersion("1.0")]
         public async Task<IActionResult> DeleteCartItem(string itemId)
         {
-            await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            ApiValidationModel validationModel = await ValidateUserAccessAndCredentials<Cart>(_accessControl, _userIdentity, _applicationSetting);
+            if (validationModel != null && validationModel.IsPassed == false)
+                return StatusCode((int)validationModel.StatusCode, GenerateErrorResponseModel(validationModel.StatusCode, validationModel.Message));
 
             var currentUser = await _userIdentity.GetCurrentApiUserAsync(HttpContext.User);
 
@@ -298,7 +505,7 @@ namespace RA.OrdersManagement.Controllers.Carts
             cartItem.ModifiedById = currentUser?.Id;
             await _cartService.DeleteItemAsync(cartItem, saveChangesToDb: true);
 
-            return Ok(GenerateResponseModel<CartItem>(HttpStatusCode.OK, "Successfully added cart items", cartItem));
+            return Ok("Successfully removed from cart");
         }
         #endregion
     }

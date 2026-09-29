@@ -1,4 +1,4 @@
-﻿using RA.Data.Domain.DataChanges;
+﻿using RAerp.Domain.DataChanges;
 
 namespace RAerp.Services.DataChangeServices
 {

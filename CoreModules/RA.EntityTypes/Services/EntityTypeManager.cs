@@ -1,12 +1,12 @@
 ﻿using Newtonsoft.Json;
-using RA.Data.App_Data;
-using RA.Data.Domain.Settings;
 using RA.EntityTypes.Data;
 using RA.EntityTypes.Domain;
-using RA.Data.Domain.EntityTypes;
 using RA.WebFramework.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using RAerp.App_Data;
+using RAerp.Domain.EntityTypes;
+using RAerp.Domain.Settings;
 
 namespace RA.EntityTypes.Services
 {
@@ -37,6 +37,11 @@ namespace RA.EntityTypes.Services
             return await _erpContext.EntityType.FirstOrDefaultAsync(c => c.EntitySystemName.ToLower() == systemName.ToLower());
         }
 
+        public virtual async Task<EntityType> GetTypeByEntityNameAsync(string entityName)
+        {
+            return await _erpContext.EntityType.FirstOrDefaultAsync(c => c.EntityName.ToLower() == entityName.ToLower());
+        }
+
         public virtual async Task<List<EntityType>> GetTypesBySystemNameAsync(string systemName)
         {
             return await _erpContext.EntityType.Where(c => c.EntitySystemName.Contains(systemName) && c.ParentEntityTypeId.HasValue).ToListAsync();
@@ -54,7 +59,7 @@ namespace RA.EntityTypes.Services
             bool showAllChildEntities = false,
             Guid? parentEntityTypeId = null)
         {
-            var query = _erpContext.EntityType.AsEnumerable();
+            var query = _erpContext.EntityType.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrEmpty(searchQuery))
                 query = query.Where(c =>
@@ -98,7 +103,7 @@ namespace RA.EntityTypes.Services
 
         public virtual async Task<IEnumerable<EntityType>> GetChildEntitiesAsync(Guid parentTypeId)
         {
-            var query = _erpContext.EntityType.AsEnumerable();
+            var query = _erpContext.EntityType.AsNoTracking().AsQueryable();
 
             if (parentTypeId.IsNullOrEmpty())
                 throw new Exception("Parent type id cannot be null");

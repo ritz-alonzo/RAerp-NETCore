@@ -1,5 +1,5 @@
 ﻿using FluentMigrator;
-using RA.Data.Domain.Users;
+using RAerp.Domain.Users;
 
 namespace RAerp.Domain.Migrations.Users
 {

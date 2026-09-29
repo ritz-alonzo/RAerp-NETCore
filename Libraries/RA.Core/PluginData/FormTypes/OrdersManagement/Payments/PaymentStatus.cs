@@ -9,7 +9,7 @@ namespace RA.Core.PluginData.FormTypes.OrdersManagement.Payments
     public enum PaymentStatus
     {
         Pending = 1,
-        AwaitingPayment = 10,
+        ForConfirmation = 10,
         Completed = 20,
         Voided = 30
     }

@@ -1,8 +1,8 @@
-﻿using RA.Data.App_Data;
-using RA.Data.Domain.Settings;
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using RAerp.App_Data;
+using RAerp.Domain.Settings;
 
 namespace RAerp.Services.Configurations
 {
@@ -17,17 +17,17 @@ namespace RAerp.Services.Configurations
 
         public async Task<Setting> GetSettingById(Guid id)
         {
-            return await _erpContext.Setting.FirstAsync(c => c.Id == id);
+            return await _erpContext.Setting.FirstOrDefaultAsync(c => c.Id == id);
         }
 
         public async Task<Setting> GetSettingByName(string name)
         {
-            return await _erpContext.Setting.FirstAsync(c => c.Name.Equals(nameof(name), StringComparison.InvariantCultureIgnoreCase));
+            return await _erpContext.Setting.FirstOrDefaultAsync(c => c.Name.Equals(nameof(name), StringComparison.InvariantCultureIgnoreCase));
         }
 
         public async Task<Setting> GetSettingBySystemName(string systemName)
         {
-            return await _erpContext.Setting.FirstAsync(c => c.SystemName.Equals(systemName, StringComparison.InvariantCultureIgnoreCase));
+            return await _erpContext.Setting.FirstOrDefaultAsync(c => c.SystemName.Equals(systemName, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public async Task InsertSetting(Setting setting)

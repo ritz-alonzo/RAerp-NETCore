@@ -4,7 +4,6 @@ using FluentMigrator.Runner;
 using System.Reflection;
 using FluentValidation.AspNetCore;
 using RAerp.PluginServiceProvider;
-using RA.Data.App_Data;
 using RAerp.Services.Configurations;
 using RAerp.Helpers.HtmlHelper;
 using RAerp.Helpers.PluginHelper;
@@ -14,7 +13,6 @@ using RAerp.Services.PluginNavigationServices;
 using RAerp.Factories.CoreFactories;
 using RAerp.Factories.UserFactory;
 using RAerp.Helpers.Constants;
-using RA.Data.Domain.Users;
 using RAerp.Helpers.Security;
 using RA.Data.Data;
 using RAerp.Mapping;
@@ -23,6 +21,8 @@ using RAerp.Security.AccessRightsControl;
 using RAerp.Factories.AccessRightsFactory;
 using RAerp.Services.ApplicationServices;
 using RAerp.Services.AddressServices;
+using RAerp.App_Data;
+using RAerp.Domain.Users;
 #endregion
 
 namespace RAerp

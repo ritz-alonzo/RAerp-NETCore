@@ -1,0 +1,70 @@
+﻿@model PaymentConfigureModel
+
+@{
+    Layout = null;
+}
+
+@Html.HiddenFor(c => c.SystemName)
+
+<ul class="nav nav-tabs" id="configTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active"
+                id="config-main-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#configMain"
+                type="button" role="tab"
+                aria-controls="configMain"
+                aria-selected="true">
+            @HtmlContentConstants.MainTab
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link"
+                id="config-mapping-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#configMapping"
+                type="button"
+                role="tab"
+                aria-controls="configMapping"
+                aria-selected="false">
+            @HtmlContentConstants.MappingsTab
+        </button>
+    </li>
+</ul>
+<div class="tab-content" id="configTabContent">
+    <div class="tab-pane fade show active" id="configMain" role="tabpanel" aria-labelledby="config-main-tab">
+        @await Html.PartialAsync("_Configuration.Main.cshtml", Model)
+    </div>
+    <div class="tab-pane fade" id="configMapping" role="tabpanel" aria-labelledby="config-mapping-tab">
+        @await Html.PartialAsync("_Configuration.Mapping.cshtml", Model)
+    </div>
+</div>
+
+<script>
+    $(document).ready(() => {
+        $('#config-mapping-tab').on('click', (e) => {
+            // Catalog Types
+            $('#MappedCatalogTypeIds').multiselect({
+                includeSelectAllOption: true,
+                templates: {
+                    button: '<button type="button" class="multiselect dropdown-toggle btn btn-primary" data-toggle="dropdown" aria-expanded="false" id="selectCatalogTypeIdsBtn"><span class="multiselect-selected-text"></span></button>',
+                },
+            });
+            $('#selectCatalogTypeIdsBtn').on('click', (e) => {
+                $('#selectCatalogTypeIdsBtn').siblings('ul.multiselect-container').css('display', 'contents');
+            });
+            // Service Types
+            $('#MappedCategoryTypeIds').multiselect({
+                includeSelectAllOption: true,
+                templates: {
+                    button: '<button type="button" class="multiselect dropdown-toggle btn btn-primary" data-toggle="dropdown" aria-expanded="false" id="selectCategoryTypeIdsBtn"><span class="multiselect-selected-text"></span></button>',
+                },
+            });
+            $('#selectCategoryTypeIdsBtn').on('click', (e) => {
+                $('#selectCategoryTypeIdsBtn').siblings('ul.multiselect-container').css('display', 'contents');
+            });
+        });
+    });
+</script>
+
+

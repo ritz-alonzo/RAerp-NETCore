@@ -19,6 +19,7 @@ namespace RA.EntityTypes.Domain.Migrations
                 .WithColumn(nameof(Category.Code)).AsString().Nullable()
                 .WithColumn(nameof(Category.Name)).AsString().Nullable()
                 .WithColumn(nameof(Category.Description)).AsString().Nullable()
+                .WithColumn(nameof(Category.ImagePath)).AsString(Int32.MaxValue).Nullable()
                 .WithColumn(nameof(Category.CreatedById)).AsGuid()
                 .WithColumn(nameof(Category.ModifiedById)).AsGuid().Nullable()
                 .WithColumn(nameof(Category.CreatedOn)).AsDateTime()

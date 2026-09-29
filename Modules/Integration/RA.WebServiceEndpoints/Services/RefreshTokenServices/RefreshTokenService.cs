@@ -41,25 +41,34 @@ namespace RA.WebServiceEndpoints.Services.RefreshTokenServices
 
         public async Task RevokeAllForUserAsync(Guid userId)
         {
-            var tokens = _db.RefreshToken.Where(r => r.UserId == userId && !r.IsRevoked);
-            await tokens.ForEachAsync(t => t.IsRevoked = true);
+            var tokens = await _db.RefreshToken.Where(r => r.UserId == userId && !r.IsRevoked).AsNoTracking().ToListAsync();
+            foreach (var token in tokens)
+            {
+                token.IsRevoked = true;
+                _db.RefreshToken.Update(token);
+            }
             await _db.SaveChangesAsync();
         }
 
         public async Task RevokeByFamilyAsync(string family)
         {
             // Breach detected — someone reused an old token — kill the whole family
-            var tokens = _db.RefreshToken.Where(r => r.Family == family && !r.IsRevoked);
-            await tokens.ForEachAsync(t => t.IsRevoked = true);
+            var tokens = await _db.RefreshToken.Where(r => r.Family == family && !r.IsRevoked).AsNoTracking().ToListAsync();
+            foreach (var token in tokens)
+            {
+                token.IsRevoked = true;
+                _db.RefreshToken.Update(token);
+            }
             await _db.SaveChangesAsync();
         }
 
         public async Task MarkAsUsedAsync(Guid id)
         {
-            var token = await _db.RefreshToken.FindAsync(id);
+            var token = await _db.RefreshToken.FirstOrDefaultAsync(c => c.Id == id);
             if (token != null) 
             { 
-                token.IsUsed = true; 
+                token.IsUsed = true;
+                _db.RefreshToken.Update(token);
                 await _db.SaveChangesAsync(); 
             }
         }

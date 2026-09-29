@@ -2,8 +2,6 @@
 using Newtonsoft.Json;
 using RA.Catalogs.Domain;
 using RA.Core.PluginData.Inventory;
-using RA.Data.App_Data;
-using RA.Data.Domain.Settings;
 using RA.Inventory.Data;
 using RA.Inventory.Domain;
 using RA.Inventory.Helper;
@@ -11,6 +9,8 @@ using RA.Inventory.Services.InventoryReservationServices;
 using RA.Inventory.Services.InventoryStockServices;
 using RA.Inventory.Services.InventoryTransactionServices;
 using RA.WebFramework.Extensions;
+using RAerp.App_Data;
+using RAerp.Domain.Settings;
 using RAerp.Helpers.UserHelper;
 using System;
 using System.Collections;
